@@ -36,7 +36,7 @@
  *  </tr>
  *  <tr>
  *   <td><b>Usable Speeds:</b></td>
- *   <td>Low Speed Mode, Full Speed Mode</td>
+ *   <td>Full Speed Mode</td>
  *  </tr>
  * </table>
  *
@@ -44,9 +44,9 @@
  *
  *  Firmware for a USB AVR powered USB TTL magnetic stripe reader (using a card
  *  reader such as the Omron V3B-4K) by Denver Gingerich. This project is designed
- *  to be used with the open source Stripe Snoop project at http://stripesnoop.sourceforge.net/.
+ *  to be used with the open source Stripe Snoop project at <a>http://stripesnoop.sourceforge.net/</a>.
  * 
- *  See http://ossguy.com/ss_usb/ for the USB reader hardware project website,
+ *  See <a>http://ossguy.com/ss_usb/</a> for the USB reader hardware project website,
  *  including construction and support details.
  * 
  *  To use, connect your magnetic card reader device to the USB AVR as follows (pin and port mapping may be adjusted
@@ -109,6 +109,56 @@
  *    <td>MAX_BITS</td>
  *    <td>CircularBitBuffer.h</td>
  *    <td>Gives the maximum number of bits per track which can be buffered by the device for later transmission to a host.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_T1_CLOCK</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>Mask for the magnetic card reader's CLOCK line for the reader's track 1 output.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_T1_DATA</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>Mask for the magnetic card reader's DATA line for the reader's track 1 output.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_T2_CLOCK</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>Mask for the magnetic card reader's CLOCK line for the reader's track 2 output.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_T2_DATA</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>Mask for the magnetic card reader's DATA line for the reader's track 2 output.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_T3_CLOCK</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>Mask for the magnetic card reader's CLOCK line for the reader's track 3 output.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_T3_DATA</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>Mask for the magnetic card reader's DATA line for the reader's track 3 output.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_CARDPRESENT</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>Mask for the magnetic card reader's card detection output.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_PIN</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>PIN register that the magnetic card reader device is attached to.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_PORT</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>PORT register that the magnetic card reader device is attached to.</td>
+ *   </tr>
+ *   <tr>
+ *    <td>MAG_DDR</td>
+ *    <td>Makefile CDEFS</td>
+ *    <td>DDR register that the magnetic card reader device is attached to.</td>
  *   </tr>
  *  </table>
  */

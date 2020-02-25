@@ -52,17 +52,6 @@
 		#include <LUFA/Drivers/Board/Buttons.h>
 		#include <LUFA/Drivers/USB/USB.h>
 		#include <LUFA/Drivers/USB/Class/HID.h>
-
-	/* Type Defines: */
-		/** Type define for the mouse HID report structure, for creating and sending HID reports to the host PC.
-		 *  This mirrors the layout described to the host in the HID report descriptor, in Descriptors.c.
-		 */
-		typedef struct
-		{
-			uint8_t Button; /**< Bit mask of the currently pressed mouse buttons */
-			int8_t  X; /**< Current mouse delta X movement, as a signed 8-bit integer */
-			int8_t  Y; /**< Current mouse delta Y movement, as a signed 8-bit integer */
-		} USB_MouseReport_Data_t;
 		
 	/* Macros: */
 		/** LED mask for the library LED driver, to indicate that the USB interface is not ready. */
@@ -84,6 +73,7 @@
 		void EVENT_USB_Device_Disconnect(void);
 		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_UnhandledControlRequest(void);
+		void EVENT_USB_Device_StartOfFrame(void);
 
 		bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, uint8_t* const ReportID,
                                                  void* ReportData, uint16_t* ReportSize);

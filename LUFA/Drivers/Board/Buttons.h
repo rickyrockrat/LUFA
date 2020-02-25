@@ -64,7 +64,6 @@
 	/* Macros: */
 	#if !defined(__DOXYGEN__)
 		#define INCLUDE_FROM_BUTTONS_H
-		#define INCLUDE_FROM_BOARD_DRIVER
 	#endif
 
 	/* Includes: */
@@ -82,6 +81,8 @@
 		#include "ATAVRUSBRF01/Buttons.h"
 	#elif (BOARD == BOARD_USER)
 		#include "Board/Buttons.h"		
+	#elif (BOARD == BOARD_BUMBLEB)
+		#include "BUMBLEB/Buttons.h"
 	#else
 		#error The selected board does not contain any GPIO buttons.
 	#endif

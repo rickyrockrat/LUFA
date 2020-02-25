@@ -12,13 +12,13 @@
  *  further at the expense of a loss of flexibility).
  *
  *  With one or two exceptions (e.g. proprietary classes such as RNDIS) all the included demos will work across all OSes without
- *  the need for special drivers. One Windows, some demos require the supplied .INF file to be used as the device driver, which
+ *  the need for special drivers. On Windows, some demos require the supplied .INF file to be used as the device driver, which
  *  directs the OS to use its inbuilt class drivers for the device.
  *
  *  Also included with the library are three fully functional bootloaders, located in the /Bootloaders/ subdirectory.
  *  The DFU class bootloader is compatible with Atmel's FLIP software or the open source dfu-programmer project, the
  *  CDC class (AVR109 protocol) is compatible with such open source software as AVRDUDE and AVR-OSP, and the TeensyLoader
- *  HID class bootloader is compatible with the software from PJRC (http://www.pjrc.com/teensy/index.html).
+ *  HID class bootloader is compatible with the software from PJRC (<a>http://www.pjrc.com/teensy/index.html</a>).
  *
  *  User-submitted projects are located in the /Projects/ subdirectory. If you wish to have your LUFA project included,
  *  please email it to the Library author.
@@ -41,6 +41,7 @@
  *        - <b>Keyboard</b> - USB Keyboard demo, using the library USB HID Class driver framework
  *        - <b>KeyboardMouse</b> - Dual Keyboard/Mouse demo, using the library USB HID Class driver framework
  *        - <b>MassStorage</b> - Dual Drive Mass Storage demo, using the library USB Mass Storage Class driver framework
+ *        - <b>MassStorageKeyboard</b> - Mass Storage and Keyboard demo, using the library USB Mass Storage Class driver framework
  *        - <b>MIDI</b> - MIDI In demo, using the library USB MIDI-Audio Class driver framework
  *        - <b>Mouse</b> - USB Mouse demo, using the library USB HID driver framework
  *        - <b>RNDISEthernet</b> - RNDIS Ethernet Webserver demo, using the library USB RNDIS driver framework
@@ -64,7 +65,6 @@
  *    - <b>Host</b>
  *      - <b>ClassDriver</b>
  *        - <b>CDCHost</b> - Virtual Serial Port host demo, using the library USB CDC Class driver framework
- *        - <b>GenericHIDHost</b> - Generic HID host demo, using the library USB HID Class driver framework
  *        - <b>KeyboardHost</b> - USB Keyboard host demo, using the library USB HID Class driver framework
  *        - <b>KeyboardHostWithParser</b> - USB Keyboard host demo with HID Descriptor parser, using the library USB HID Class
  *                                          driver framework

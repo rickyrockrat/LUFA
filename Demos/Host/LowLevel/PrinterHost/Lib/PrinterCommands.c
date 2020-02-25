@@ -30,7 +30,7 @@
 
 /** \file
  *
- *  Printer Device commands, to send/recieve data to and from an attached USB
+ *  Printer Device commands, to send/receive data to and from an attached USB
  *  printer, and to send and receive Printer Class control requests.
  */
 
@@ -39,18 +39,19 @@
 /** Sends the given data directly to the printer via the data endpoints, for the sending of print commands in printer
  *  languages accepted by the attached printer (e.g. PCL).
  *
- *  \param[in] PrinterCommands  Pointer to a structure containing the commands and length of the data to send
+ *  \param[in] PrinterCommands  Pointer to the data to send to the attached printer
+ *  \param[in] CommandSize  Size of the data to send to the attached printer
  *
  *  \return A value from the Pipe_Stream_RW_ErrorCodes_t enum
  */
-uint8_t Printer_SendData(Printer_Data_t* PrinterCommands)
+uint8_t Printer_SendData(void* PrinterCommands, uint16_t CommandSize)
 {
 	uint8_t ErrorCode;
 
 	Pipe_SelectPipe(PRINTER_DATA_OUT_PIPE);
 	Pipe_Unfreeze();
 	
-	if ((ErrorCode = Pipe_Write_Stream_LE(PrinterCommands->Data, PrinterCommands->Length)) != PIPE_RWSTREAM_NoError)
+	if ((ErrorCode = Pipe_Write_Stream_LE(PrinterCommands, CommandSize)) != PIPE_RWSTREAM_NoError)
 	  return ErrorCode;
 
 	Pipe_ClearOUT();

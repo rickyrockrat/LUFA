@@ -28,39 +28,65 @@
   this software.
 */
 
-/** \ingroup Group_USBClassMIDI
- *  @defgroup Group_USBClassMIDIHost MIDI Class Host Mode Driver
+/** \file
  *
- *  \section Sec_Dependencies Module Source Dependencies
- *  The following files must be built with any user project that uses this module:
- *    - LUFA/Drivers/USB/Class/Host/Audio.c
+ *  Board specific Buttons driver header for the BUMBLEB. The BUMBLEB third-party board does not include any on-board
+ *  peripherals, but does have an officially recommended external peripheral layout for buttons, LEDs and a Joystick.
  *
- *  \section Module Description
- *  Host Mode USB Class driver framework interface, for the MIDI USB Class driver.
+ *  \note This file should not be included directly. It is automatically included as needed by the Buttons driver
+ *        dispatch header located in LUFA/Drivers/Board/Buttons.h.
+ */
+
+/** \ingroup Group_Buttons
+ *  @defgroup Group_Buttons_BUMBLEB BUMBLEB
  *
  *  @{
  */
 
-#ifndef __MIDI_CLASS_HOST_H__
-#define __MIDI_CLASS_HOST_H__
+#ifndef __BUTTONS_BUMBLEB_H__
+#define __BUTTONS_BUMBLEB_H__
 
 	/* Includes: */
-		#include "../../USB.h"
-		#include "../Common/MIDI.h"
-		
+		#include <avr/io.h>
+		#include <stdbool.h>
+
+		#include "../../../Common/Common.h"
+
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
 		#endif
 
-	/* Public Interface - May be used in end-application: */
-		/* Function Prototypes: */
+	/* Preprocessor Checks: */
+		#if !defined(INCLUDE_FROM_BUTTONS_H)
+			#error Do not include this file directly. Include LUFA/Drivers/Board/Buttons.h instead.
+		#endif
 		
+	/* Public Interface - May be used in end-application: */
+		/* Macros: */
+			/** Button mask for the first button on the board. */
+			#define BUTTONS_BUTTON1      (1 << 7)
+	
+		/* Inline Functions: */
+		#if !defined(__DOXYGEN__)
+			static inline void Buttons_Init(void)
+			{
+				DDRD  &= ~BUTTONS_BUTTON1;
+				PORTD |=  BUTTONS_BUTTON1;
+			}
+
+			static inline uint8_t Buttons_GetStatus(void) ATTR_WARN_UNUSED_RESULT;
+			static inline uint8_t Buttons_GetStatus(void)
+			{
+				return ((PIND & BUTTONS_BUTTON1) ^ BUTTONS_BUTTON1);
+			}
+		#endif
+
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			}
 		#endif
-
+			
 #endif
 
 /** @} */

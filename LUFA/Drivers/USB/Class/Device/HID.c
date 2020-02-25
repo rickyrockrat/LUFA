@@ -38,11 +38,8 @@ void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* const HIDInter
 	if (!(Endpoint_IsSETUPReceived()))
 	  return;
 	  
-	if ((USB_ControlRequest.wIndex   != HIDInterfaceInfo->Config.InterfaceNumber) &&
-	    (USB_ControlRequest.bRequest != REQ_SetIdle))
-	{
-		return;
-	}
+	if (USB_ControlRequest.wIndex != HIDInterfaceInfo->Config.InterfaceNumber)
+	  return;
 
 	switch (USB_ControlRequest.bRequest)
 	{
@@ -51,8 +48,8 @@ void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* const HIDInter
 			{
 				Endpoint_ClearSETUP();	
 
-				uint16_t ReportINSize;
-				uint8_t  ReportID = (USB_ControlRequest.wValue & 0xFF);
+				uint16_t ReportINSize = 0;
+				uint8_t  ReportID     = (USB_ControlRequest.wValue & 0xFF);
 
 				memset(HIDInterfaceInfo->Config.PrevReportINBuffer, 0, HIDInterfaceInfo->Config.PrevReportINBufferSize);
 				
@@ -106,15 +103,11 @@ void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* const HIDInter
 		case REQ_SetIdle:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				if ((USB_ControlRequest.wIndex         == HIDInterfaceInfo->Config.InterfaceNumber) ||
-				    (USB_ControlRequest.wValue & 0xFF) == 0)
-				{
-					Endpoint_ClearSETUP();
+				Endpoint_ClearSETUP();
 					
-					HIDInterfaceInfo->State.IdleCount = ((USB_ControlRequest.wValue & 0xFF00) >> 6);
+				HIDInterfaceInfo->State.IdleCount = ((USB_ControlRequest.wValue & 0xFF00) >> 6);
 					
-					Endpoint_ClearStatusStage();
-				}
+				Endpoint_ClearStatusStage();
 			}
 			
 			break;
@@ -158,8 +151,8 @@ void HID_Device_USBTask(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo)
 	if (Endpoint_IsReadWriteAllowed())
 	{
 		uint8_t  ReportINData[HIDInterfaceInfo->Config.PrevReportINBufferSize];
-		uint8_t  ReportID = 0;
-		uint16_t ReportINSize;
+		uint8_t  ReportID     = 0;
+		uint16_t ReportINSize = 0;
 
 		memset(ReportINData, 0, sizeof(ReportINData));
 
@@ -175,12 +168,12 @@ void HID_Device_USBTask(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo)
 			HIDInterfaceInfo->State.IdleMSRemaining = HIDInterfaceInfo->State.IdleCount;
 
 			if (ReportID)
-			  Endpoint_Write_Stream_LE(&ReportID, sizeof(ReportID), NO_STREAM_CALLBACK);
+			  Endpoint_Write_Byte(ReportID);
 
 			Endpoint_Write_Stream_LE(ReportINData, ReportINSize, NO_STREAM_CALLBACK);
+			
+			Endpoint_ClearIN();
 		}
-		
-		Endpoint_ClearIN();
 	}
 }
 

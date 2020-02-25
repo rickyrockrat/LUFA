@@ -99,12 +99,6 @@ void SetupHardware(void)
 	/* Hardware Initialization */
 	Magstripe_Init();
 	USB_Init();
-
-	/* Millisecond timer initialization, with output compare interrupt enabled for the idle timing */
-	OCR0A  = ((F_CPU / 64) / 1000);
-	TCCR0A = (1 << WGM01);
-	TCCR0B = ((1 << CS01) | (1 << CS00));
-	TIMSK0 = (1 << OCIE0A);
 }
 
 /** Determines if a card has been inserted, and if so reads in each track's contents into the bit buffers
@@ -148,6 +142,8 @@ void ReadMagstripeData(void)
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
 	HID_Device_ConfigureEndpoints(&Keyboard_HID_Interface);
+	
+	USB_Device_EnableSOFEvents();
 }
 
 /** Event handler for the library USB Unhandled Control Packet event. */
@@ -156,8 +152,8 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 	HID_Device_ProcessControlRequest(&Keyboard_HID_Interface);
 }
 
-/** Timer 0 CTC ISR, firing once each millisecond to keep track of elapsed idle time in the HID interface. */
-ISR(TIMER0_COMPA_vect, ISR_BLOCK)
+/** Event handler for the USB device Start Of Frame event. */
+void EVENT_USB_Device_StartOfFrame(void)
 {
 	HID_Device_MillisecondElapsed(&Keyboard_HID_Interface);
 }
@@ -184,18 +180,18 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 	if ((IsKeyReleaseReport) || (CurrentTrackBuffer == &TrackDataBuffers[TOTAL_TRACKS]))
 	{
 		/* No more data to send, or key release report between key presses */
-		KeyboardReport->KeyCode = KEY_NONE;
+		KeyboardReport->KeyCode[0] = KEY_NONE;
 	}
 	else if (!(CurrentTrackBuffer->Elements))
 	{
 		/* End of current track, send an enter press and change to the next track's buffer */
-		KeyboardReport->KeyCode = KEY_ENTER;
+		KeyboardReport->KeyCode[0] = KEY_ENTER;
 		CurrentTrackBuffer++;
 	}
 	else
 	{
 		/* Still data in the current track; convert next bit to a 1 or 0 keypress */
-		KeyboardReport->KeyCode = BitBuffer_GetNextBit(CurrentTrackBuffer) ? KEY_1 : KEY_0;
+		KeyboardReport->KeyCode[0] = BitBuffer_GetNextBit(CurrentTrackBuffer) ? KEY_1 : KEY_0;
 	}
 	
 	*ReportSize = sizeof(USB_KeyboardReport_Data_t);

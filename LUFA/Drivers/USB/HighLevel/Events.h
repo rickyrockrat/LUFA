@@ -97,7 +97,7 @@
 			
 			/** Event for USB device attachment. This event fires when a the USB interface is in host mode, and
 			 *  a USB device has been connected to the USB interface. This is interrupt driven, thus fires before
-			 *  the standard \ref EVENT_USB_Device_Connect event and so can be used to programmatically start the USB
+			 *  the standard \ref EVENT_USB_Device_Connect() event and so can be used to programmatically start the USB
 			 *  management task to reduce CPU consumption.
 			 *
 			 *  \note This event only exists on USB AVR models which supports host mode.
@@ -148,12 +148,15 @@
 			/** Event for USB device connection. This event fires when the AVR in device mode and the device is connected
 			 *  to a host, beginning the enumeration process, measured by a rising level on the AVR's VBUS pin.
 			 *
-			 *  \note For the smaller USB AVRs (AT90USBXX2) with limited USB controllers, VBUS is not available to the USB controller.
+			 *  \note For the smaller series 2 USB AVRs with limited USB controllers, VBUS is not available to the USB controller.
 			 *        this means that the current connection state is derived from the bus suspension and wake up events by default,
 			 *        which is not always accurate (host may suspend the bus while still connected). If the actual connection state
 			 *        needs to be determined, VBUS should be routed to an external pin, and the auto-detect behaviour turned off by
 			 *        passing the NO_LIMITED_CONTROLLER_CONNECT token to the compiler via the -D switch at compile time. The connection
 			 *        and disconnection events may be manually fired, and the \ref USB_DeviceState global changed manually.
+			 *
+			 *  \note This event may fire multiple times during device enumeration on the series 2 USB AVRs with limited USB controllers
+			 *        if NO_LIMITED_CONTROLLER_CONNECT is not defined.
 			 *
 			 *  \see USBTask.h for more information on the USB management task and reducing CPU usage.
 			 */
@@ -162,12 +165,15 @@
 			/** Event for USB device disconnection. This event fires when the AVR in device mode and the device is disconnected
 			 *  from a host, measured by a falling level on the AVR's VBUS pin.
 			 *
-			 *  \note For the smaller USB AVRs (AT90USBXX2) with limited USB controllers, VBUS is not available to the USB controller.
+			 *  \note For the smaller series 2 USB AVRs with limited USB controllers, VBUS is not available to the USB controller.
 			 *        this means that the current connection state is derived from the bus suspension and wake up events by default,
 			 *        which is not always accurate (host may suspend the bus while still connected). If the actual connection state
 			 *        needs to be determined, VBUS should be routed to an external pin, and the auto-detect behaviour turned off by
 			 *        passing the NO_LIMITED_CONTROLLER_CONNECT token to the compiler via the -D switch at compile time. The connection
 			 *        and disconnection events may be manually fired, and the \ref USB_DeviceState global changed manually.
+			 *
+			 *  \note This event may fire multiple times during device enumeration on the series 2 USB AVRs with limited USB controllers
+			 *        if NO_LIMITED_CONTROLLER_CONNECT is not defined.
 			 *
 			 *  \see USBTask.h for more information on the USB management task and reducing CPU usage.
 			 */
@@ -234,6 +240,18 @@
 			 *        \ref Group_USBManagement documentation).
 			 */
 			void EVENT_USB_Device_Reset(void);
+
+			/** Event for USB Start Of Frame detection, when enabled. This event fires at the start of each USB
+			 *  frame, once per millisecond, and is synchronised to the USB bus. This can be used as an accurate
+			 *  millisecond timer source when the USB bus is enumerated in device mode to a USB host.
+			 *
+			 *  This event is not normally active - it must be manually enabled and disabled via the
+			 *  \ref USB_Device_EnableSOFEvents() and \ref USB_Device_DisableSOFEvents() commands after enumeration.
+			 *
+			 *  \note This event does not exist if the USB_HOST_ONLY token is supplied to the compiler (see
+			 *        \ref Group_USBManagement documentation).
+			 */
+			void EVENT_USB_Device_StartOfFrame(void);
 		#endif
 		
 	/* Private Interface - For use in library only: */
@@ -264,6 +282,7 @@
 					void EVENT_USB_Device_Suspend(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 					void EVENT_USB_Device_WakeUp(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 					void EVENT_USB_Device_Reset(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
+					void EVENT_USB_Device_StartOfFrame(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 				#endif
 			#endif
 	#endif

@@ -92,6 +92,7 @@ uint16_t StartAddr = 0x0000;
  */
 uint16_t EndAddr = 0x0000;
 
+
 /** Main program entry point. This routine configures the hardware required by the bootloader, then continuously 
  *  runs the bootloader processing routine until instructed to soft-exit, or hard-reset via the watchdog to start
  *  the loaded application code.
@@ -139,15 +140,6 @@ void ResetHardware(void)
 	/* Relocate the interrupt vector table back to the application section */
 	MCUCR = (1 << IVCE);
 	MCUCR = 0;
-}
-
-/** Event handler for the USB_Disconnect event. This indicates that the bootloader should exit and the user
- *  application started.
- */
-void EVENT_USB_Device_Disconnect(void)
-{
-	/* Upon disconnection, run user application */
-	RunBootloader = false;
 }
 
 /** Event handler for the USB_UnhandledControlRequest event. This is used to catch standard and class specific

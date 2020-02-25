@@ -166,13 +166,17 @@ void Keyboard_HID_Task(void)
 				break;
 			}
 				
-			puts_P(PSTR("Processing HID Report.\r\n"));
-
+			printf_P(PSTR("Processing HID Report (Size %d Bytes).\r\n"), HIDReportSize);
+						
 			/* Get and process the device's first HID report descriptor */
 			if ((ErrorCode = GetHIDReportData()) != ParseSuccessful)
 			{
 				puts_P(PSTR(ESC_FG_RED "Report Parse Error.\r\n"));
-				printf_P(PSTR(" -- Error Code: %d\r\n" ESC_FG_WHITE), ErrorCode);
+
+				if (!(HIDReportInfo.TotalReportItems))
+					puts_P(PSTR("Not a valid Keyboard." ESC_FG_WHITE));
+				else
+					printf_P(PSTR(" -- Error Code: %d\r\n" ESC_FG_WHITE), ErrorCode);
 			
 				/* Indicate error via status LEDs */
 				LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
@@ -180,6 +184,24 @@ void Keyboard_HID_Task(void)
 				/* Wait until USB device disconnected */
 				USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 				break;	
+			}
+
+			printf("Total Reports: %d\r\n", HIDReportInfo.TotalDeviceReports);
+
+			for (uint8_t i = 0; i < HIDReportInfo.TotalDeviceReports; i++)
+			{
+				HID_ReportSizeInfo_t* CurrReportIDInfo = &HIDReportInfo.ReportIDSizes[i];
+				
+				uint8_t ReportSizeInBits      = CurrReportIDInfo->ReportSizeBits[REPORT_ITEM_TYPE_In];
+				uint8_t ReportSizeOutBits     = CurrReportIDInfo->ReportSizeBits[REPORT_ITEM_TYPE_Out];
+				uint8_t ReportSizeFeatureBits = CurrReportIDInfo->ReportSizeBits[REPORT_ITEM_TYPE_Feature];
+
+				/* Print out the byte sizes of each report within the device */
+				printf_P(PSTR("  + Report ID %d - In: %d bytes, Out: %d bytes, Feature: %d bytes\r\n"),
+				         CurrReportIDInfo->ReportID,
+				         ((ReportSizeInBits      >> 3) + ((ReportSizeInBits      & 0x07) != 0)),
+				         ((ReportSizeOutBits     >> 3) + ((ReportSizeOutBits     & 0x07) != 0)),
+				         ((ReportSizeFeatureBits >> 3) + ((ReportSizeFeatureBits & 0x07) != 0)));
 			}
 
 			puts_P(PSTR("Keyboard Enumerated.\r\n"));

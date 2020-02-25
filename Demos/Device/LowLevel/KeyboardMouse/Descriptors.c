@@ -194,9 +194,9 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
 			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_IN | KEYBOARD_IN_EPNUM),
-			.Attributes             = EP_TYPE_INTERRUPT,
+			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = HID_EPSIZE,
-			.PollingIntervalMS      = 0x02
+			.PollingIntervalMS      = 0x0A
 		},
 
 	.KeyboardOutEndpoint = 
@@ -204,9 +204,9 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
 			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_OUT | KEYBOARD_OUT_EPNUM),
-			.Attributes             = EP_TYPE_INTERRUPT,
+			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = HID_EPSIZE,
-			.PollingIntervalMS      = 0x02
+			.PollingIntervalMS      = 0x0A
 		},
 
 	.MouseInterface = 
@@ -241,9 +241,9 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
 			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_IN | MOUSE_IN_EPNUM),
-			.Attributes             = EP_TYPE_INTERRUPT,
+			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = HID_EPSIZE,
-			.PollingIntervalMS      = 0x02
+			.PollingIntervalMS      = 0x0A
 		}
 };
 

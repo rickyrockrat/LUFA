@@ -6,10 +6,77 @@
 
  /** \page Page_ChangeLog Project Changelog
   *
+  *  \section Sec_ChangeLog090924 Version 090924
+  *
+  *  <b>New:</b>
+  *  - Added new host mode class drivers and matching demos to the library for rapid application development
+  *  - Added flag to the HID report parser to indicate if a device has multiple reports
+  *  - Added new EVENT_USB_Device_StartOfFrame() event, controlled by the new USB_Device_EnableSOFEvents() and
+  *    USB_Device_DisableSOFEvents() macros to give bus-synchronised millisecond interrupts when in USB device mode
+  *  - Added new Endpoint_SetEndpointDirection() macro for bidirectional endpoints
+  *  - Added new AVRISP project, a LUFA powered clone of the Atmel AVRISP-MKII programmer
+  *  - Added ShutDown() functions for all hardware peripheral drivers, so that peripherals can be turned off after use
+  *  - Added new CDC_Device_Flush() command to the device mode CDC Class driver to flush Device->Host data
+  *  - Added extra masks to the SPI driver, changed SPI_Init() so that the clock polarity and sample modes can be set
+  *  - Added new callback to the HID report parser, so that the user application can filter only the items it is interested
+  *    in to be stored into the HIDReportInfo structure to save RAM
+  *  - Added support for the officially recommended external peripheral layout for the BUMBLEB board (thanks to Dave Fletcher)
+  *  - Added new Pipe_IsFrozen() macro to determine if the currently selected pipe is frozen
+  *  - Added new USB_GetHIDReportSize() function to the HID report parser to retrieve the size of a given report by its ID
+  *  - Added new combined Mass Storage and Keyboard demo (thanks to Matthias Hullin)
+  *  
+  *  <b>Changed:</b>
+  *  - SetIdle requests to the HID device driver with a 0 idle period (send changes only) now only affect the requested
+  *    HID interface within the device, not all HID interfaces
+  *  - Added explicit attribute masks to the device mode demos' descriptors
+  *  - Added return values to the CDC and MIDI class driver transmit functions
+  *  - Optimized Endpoint_Read_Word_* and Pipe_Read_Word_* macros to reduce compiled size
+  *  - Added non-null function parameter pointer restrictions to USB Class drivers to improve user code reliability
+  *  - Added new "Common" section to the class drivers, to hold all mode-independant definitions for clarity
+  *  - Moved SCSI command/sense constants into the Mass Storage Class driver, instead of the user-code
+  *  - Altered the SCSI commands in the LowLevel Mass Storage Host to save on FLASH space by reducing function calls
+  *  - Changed the parameters and behaviour of the USB_GetDeviceConfigDescriptor() function so that it now performs size checks
+  *    and data validations internally, to simplify user code
+  *  - Changed HIDParser to only zero out important values in the Parsed HID Report Item Information structure to save cycles
+  *  - The HID report parser now always processed FEATURE items - HID_ENABLE_FEATURE_PROCESSING token now has no effect
+  *  - The HID report parser now always ignores constant-data items, HID_INCLUDE_CONSTANT_DATA_ITEMS token now has no effect
+  *  - The Benito Programmer project now has its own unique VID/PID pair allocated from the Atmel donated LUFA VID/PID pool
+  *  - Add in new invalid event hook check targets to project makefiles to produce compilation errors when invalid event names
+  *    are used in a project
+  *  - The HID Report Parser now gives information on the total length of each report within a HID interface
+  *  - The USE_NONSTANDARD_DESCRIPTOR_NAMES compile time token has been removed - there are now seperate USB_Descriptor_* and
+  *    USB_StdDescriptor_* structures for both the LUFA and standardized element naming conventions so both may be used
+  *
+  *  <b>Fixed:</b>
+  *  - Fixed possible lockup in the CDC device class driver, when the host sends data that is a multiple of the
+  *    endpoint's bank
+  *  - Fixed swapped parameters in the HID state memory copy call while processing a HID PUSH item in the HID report parser
+  *  - Fixed memory corruption HID report parser when too many COLLECTION or PUSH items were processed
+  *  - Fixed HID report parser not resetting the FEATURE item count when a REPORT ID item is encountered
+  *  - Fixed USBtoSerial demos not reading in UDR1 when the USART receives data but the USB interface is not enumerated,
+  *    causing continuous USART receive interrupts
+  *  - Fixed misspelt event name in the Class driver USBtoSerial demo, preventing correct operation
+  *  - Fixed invalid data being returned when a GetStatus request is issued in Device mode with an unhandled data recipient
+  *  - Added hardware USART receive interrupt and software buffering to the Benito project to ensure received data is not
+  *    missed or corrupted
+  *  - Fixed Device mode HID Class driver always sending IN packets, even when nothing to report
+  *  - Fixed Device mode HID Class driver not explicitly initializing the ReportSize parameter to zero before calling callback
+  *    routine, so that ignored callbacks don't cause incorrect data to be sent
+  *  - Fixed StillImageHost not correctly freezing and unfreezing data pipes while waiting for a response block header
+  *  - Fixed error in the PrinterHost demo preventing the full page data from being sent to the attached device (thanks to John Andrews)
+  *  - Fixed CDC based demos and projects' INF driver files under 64 bit versions of Windows (thanks to Ronny Hanson, Thomas Bleeker)
+  *  - Re-add in missing flip, flip-ee, dfu and dfu-ee targets to project makefiles (thanks to Opendous Inc.)
+  *  - Fix allowable F_CPU values comment in project makefiles to more accurately reflect the allowable values on the USB AVRs
+  *  - Fixed DFU and CDC class bootloaders on the series 2 USB AVRs, corrected invalid signatures, added support for the new
+  *    ATMEGAxx2 series 2 variant AVRs to the DFU bootloader
+  *  - Fixed Low Level USBtoSerial demo not storing received characters (thanks to Michael Cooper)
+  *  - Fixed MIDI Device Class driver not sending/receiving MIDI packets of the correct size (thanks to Thomas Bleeker)
+  *
+  *
   *  \section Sec_ChangeLog090810 Version 090810
   *
   *  <b>New:</b>
-  *  - Added new class drivers and matching demos to the library for rapid application development
+  *  - Added new device class drivers and matching demos to the library for rapid application development
   *  - Added new PrinterHost demo (thanks to John Andrews)
   *  - Added USB Missle Launcher project, submitted by Dave Fletcher
   *  - Added new Benito Arduino Programmer project
@@ -440,7 +507,7 @@
   *  - CDC demos now send empty packets after sending a full one to prevent buffering issues on the host
   *  - Updated demo descriptors to use VID/PID values donated by Atmel
   *  - Added DoxyGen documentation to the source files
-  *  - Fixed Serial_IsCharRecieved() definition, was previously reversed
+  *  - Fixed Serial_IsCharReceived() definition, was previously reversed
   *  - Removed separate USB_Descriptor_Language_t descriptor, USB_Descriptor_String_t is used instead
   *  - Removed unused Device Qualifier descriptor structure
   *  - Renamed the USB_CreateEndpoints event to the more appropriate USB_ConfigurationChanged

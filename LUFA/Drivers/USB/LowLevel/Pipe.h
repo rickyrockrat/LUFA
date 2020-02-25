@@ -32,7 +32,7 @@
  *  @defgroup Group_PipeManagement Pipe Management
  *
  *  This module contains functions, macros and enums related to pipe management when in USB Host mode. This
- *  module contains the pipe management macros, as well as pipe interrupt and data send/recieve functions
+ *  module contains the pipe management macros, as well as pipe interrupt and data send/receive functions
  *  for various data types.
  *
  *  @{
@@ -292,6 +292,12 @@
 				/** Freezes the selected pipe, preventing it from communicating with an attached device. */
 				static inline void Pipe_Freeze(void);
 
+				/** Determines if the currently selected pipe is frozen, and not able to accept data.
+				 *
+				 *  \return Boolean true if the currently selected pipe is frozen, false otherwise
+				 */
+				static inline bool Pipe_IsFrozen(void);
+				
 				/** Clears the master pipe error flag. */
 				static inline void Pipe_ClearError(void);
 				
@@ -445,6 +451,8 @@
 				#define Pipe_Unfreeze()                MACROS{ UPCONX &= ~(1 << PFREEZE); }MACROE
 
 				#define Pipe_Freeze()                  MACROS{ UPCONX |= (1 << PFREEZE); }MACROE
+				
+				#define Pipe_IsFrozen()                ((UPCONX & (1 << PFREEZE)) ? true : false)
 
 				#define Pipe_ClearError()              MACROS{ UPINTX &= ~(1 << PERRI); }MACROE
 
@@ -566,12 +574,16 @@
 			static inline uint16_t Pipe_Read_Word_LE(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
 			static inline uint16_t Pipe_Read_Word_LE(void)
 			{
-				uint16_t Data;
+				union
+				{
+					uint16_t Word;
+					uint8_t  Bytes[2];
+				} Data;
 				
-				Data  = UPDATX;
-				Data |= (((uint16_t)UPDATX) << 8);
+				Data.Bytes[0] = UPDATX;
+				Data.Bytes[1] = UPDATX;
 			
-				return Data;
+				return Data.Word;
 			}
 
 			/** Reads two bytes from the currently selected pipe's bank in big endian format, for OUT
@@ -584,12 +596,16 @@
 			static inline uint16_t Pipe_Read_Word_BE(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
 			static inline uint16_t Pipe_Read_Word_BE(void)
 			{
-				uint16_t Data;
+				union
+				{
+					uint16_t Word;
+					uint8_t  Bytes[2];
+				} Data;
 				
-				Data  = (((uint16_t)UPDATX) << 8);
-				Data |= UPDATX;
+				Data.Bytes[1] = UPDATX;
+				Data.Bytes[0] = UPDATX;
 			
-				return Data;
+				return Data.Word;
 			}
 			
 			/** Writes two bytes to the currently selected pipe's bank in little endian format, for IN
@@ -691,8 +707,10 @@
 			static inline void Pipe_Write_DWord_LE(const uint32_t DWord) ATTR_ALWAYS_INLINE;
 			static inline void Pipe_Write_DWord_LE(const uint32_t DWord)
 			{
-				Pipe_Write_Word_LE(DWord);
-				Pipe_Write_Word_LE(DWord >> 16);
+				UPDATX = (DWord &  0xFF);
+				UPDATX = (DWord >> 8);
+				UPDATX = (DWord >> 16);
+				UPDATX = (DWord >> 24);
 			}
 			
 			/** Writes four bytes to the currently selected pipe's bank in big endian format, for IN
@@ -705,8 +723,10 @@
 			static inline void Pipe_Write_DWord_BE(const uint32_t DWord) ATTR_ALWAYS_INLINE;
 			static inline void Pipe_Write_DWord_BE(const uint32_t DWord)
 			{
-				Pipe_Write_Word_BE(DWord >> 16);
-				Pipe_Write_Word_BE(DWord);
+				UPDATX = (DWord >> 24);
+				UPDATX = (DWord >> 16);
+				UPDATX = (DWord >> 8);
+				UPDATX = (DWord &  0xFF);
 			}			
 			
 			/** Discards four bytes from the currently selected pipe's bank, for OUT direction pipes.	
@@ -785,11 +805,11 @@
 			/** Determines if a pipe has been bound to the given device endpoint address. If a pipe which is bound to the given
 			 *  endpoint is found, it is automatically selected.
 			 *
-			 *  \param EndpointAddress Address of the endpoint within the attached device to check
+			 *  \param[in] EndpointAddress Address of the endpoint within the attached device to check
 			 *
 			 *  \return Boolean true if a pipe bound to the given endpoint address is found, false otherwise
 			 */
-			bool Pipe_IsEndpointBound(uint8_t EndpointAddress);
+			bool Pipe_IsEndpointBound(const uint8_t EndpointAddress);
 		
 			/** Reads and discards the given number of bytes from the pipe, discarding fully read packets from the host
 			 *  as needed. The last packet is not automatically discarded once the remaining bytes has been read; the
@@ -836,7 +856,7 @@
 			 */
 			uint8_t Pipe_Write_Stream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);				
 
-			/** EEPROM buffer source version of \ref Pipe_Write_Stream_LE.
+			/** EEPROM buffer source version of \ref Pipe_Write_Stream_LE().
 			 *
 			 *  \ingroup Group_PipeStreamRW
 			 *
@@ -848,7 +868,7 @@
 			 */
 			uint8_t Pipe_Write_EStream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 			
-			/** FLASH buffer source version of \ref Pipe_Write_Stream_LE.
+			/** FLASH buffer source version of \ref Pipe_Write_Stream_LE().
 			 *
 			 *  \note The FLASH data must be located in the first 64KB of FLASH for this function to work correctly.
 			 *
@@ -885,7 +905,7 @@
 			 */
 			uint8_t Pipe_Write_Stream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Pipe_Write_Stream_BE.
+			/** EEPROM buffer source version of \ref Pipe_Write_Stream_BE().
 			 *
 			 *  \ingroup Group_PipeStreamRW
 			 *
@@ -897,7 +917,7 @@
 			 */
 			uint8_t Pipe_Write_EStream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 			
-			/** FLASH buffer source version of \ref Pipe_Write_Stream_BE.
+			/** FLASH buffer source version of \ref Pipe_Write_Stream_BE().
 			 *
 			 *  \note The FLASH data must be located in the first 64KB of FLASH for this function to work correctly.
 			 *
@@ -926,7 +946,7 @@
 			 *
 			 *  \ingroup Group_PipeStreamRW
 			 *
-			 *  \param[out] Buffer    Pointer to the source data buffer to write to.
+			 *  \param[out] Buffer   Pointer to the source data buffer to write to.
 			 *  \param[in] Length    Number of bytes to read for the currently selected pipe to read from.
 			 *  \param[in] Callback  Name of a callback routine to call between successive USB packet transfers, NULL if no callback
 			 *
@@ -934,11 +954,11 @@
 			 */
 			uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Pipe_Read_Stream_LE.
+			/** EEPROM buffer source version of \ref Pipe_Read_Stream_LE().
 			 *
 			 *  \ingroup Group_PipeStreamRW
 			 *
-			 *  \param[out] Buffer    Pointer to the source data buffer to write to.
+			 *  \param[out] Buffer   Pointer to the source data buffer to write to.
 			 *  \param[in] Length    Number of bytes to read for the currently selected pipe to read from.
 			 *  \param[in] Callback  Name of a callback routine to call between successive USB packet transfers, NULL if no callback
 			 *
@@ -961,7 +981,7 @@
 			 *
 			 *  \ingroup Group_PipeStreamRW
 			 *
-			 *  \param[out] Buffer    Pointer to the source data buffer to write to.
+			 *  \param[out] Buffer   Pointer to the source data buffer to write to.
 			 *  \param[in] Length    Number of bytes to read for the currently selected pipe to read from.
 			 *  \param[in] Callback  Name of a callback routine to call between successive USB packet transfers, NULL if no callback
 			 *
@@ -969,11 +989,11 @@
 			 */
 			uint8_t Pipe_Read_Stream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 			
-			/** EEPROM buffer source version of \ref Pipe_Read_Stream_BE.
+			/** EEPROM buffer source version of \ref Pipe_Read_Stream_BE().
 			 *
 			 *  \ingroup Group_PipeStreamRW
 			 *
-			 *  \param[out] Buffer    Pointer to the source data buffer to write to.
+			 *  \param[out] Buffer   Pointer to the source data buffer to write to.
 			 *  \param[in] Length    Number of bytes to read for the currently selected pipe to read from.
 			 *  \param[in] Callback  Name of a callback routine to call between successive USB packet transfers, NULL if no callback
 			 *

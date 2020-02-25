@@ -36,52 +36,45 @@ uint8_t PrinterAltSetting;
 
 uint8_t ProcessConfigurationDescriptor(void)
 {
-	uint8_t* ConfigDescriptorData;
-	uint16_t ConfigDescriptorSize;
-	uint8_t  ErrorCode;
+	uint8_t  ConfigDescriptorData[512];
+	uint8_t* CurrConfigLocation = ConfigDescriptorData;
+	uint16_t CurrConfigBytesRem;
 	uint8_t  FoundEndpoints = 0;
-	
-	/* Get Configuration Descriptor size from the device */
-	if (USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful)
-	  return ControlError;
-	
-	/* Ensure that the Configuration Descriptor isn't too large */
-	if (ConfigDescriptorSize > MAX_CONFIG_DESCRIPTOR_SIZE)
-	  return DescriptorTooLarge;
-	  
-	/* Allocate enough memory for the entire config descriptor */
-	ConfigDescriptorData = alloca(ConfigDescriptorSize);
 
 	/* Retrieve the entire configuration descriptor into the allocated buffer */
-	USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData);
-	
-	/* Validate returned data - ensure first entry is a configuration header descriptor */
-	if (DESCRIPTOR_TYPE(ConfigDescriptorData) != DTYPE_Configuration)
-	  return InvalidConfigDataReturned;
+	switch (USB_GetDeviceConfigDescriptor(1, &CurrConfigBytesRem, ConfigDescriptorData, sizeof(ConfigDescriptorData)))
+	{
+		case HOST_GETCONFIG_Successful:
+			break;
+		case HOST_GETCONFIG_InvalidData:
+			return InvalidConfigDataReturned;
+		case HOST_GETCONFIG_BuffOverflow:
+			return DescriptorTooLarge;
+		default:
+			return ControlError;
+	}
 	
 	/* Get the printer interface from the configuration descriptor */
-	if ((ErrorCode = USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
-	                                           DComp_NextBidirectionalPrinterInterface)))
+	if (USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation, DComp_NextBidirectionalPrinterInterface))
 	{
 		/* Descriptor not found, error out */
 		return NoInterfaceFound;
 	}
 	
-	PrinterInterfaceNumber = DESCRIPTOR_CAST(ConfigDescriptorData, USB_Descriptor_Interface_t).InterfaceNumber;
-	PrinterAltSetting      = DESCRIPTOR_CAST(ConfigDescriptorData, USB_Descriptor_Interface_t).AlternateSetting;
+	PrinterInterfaceNumber = DESCRIPTOR_CAST(CurrConfigLocation, USB_Descriptor_Interface_t).InterfaceNumber;
+	PrinterAltSetting      = DESCRIPTOR_CAST(CurrConfigLocation, USB_Descriptor_Interface_t).AlternateSetting;
 
 	/* Get the IN and OUT data endpoints for the printer interface */
 	while (FoundEndpoints != ((1 << PRINTER_DATA_OUT_PIPE) | (1 << PRINTER_DATA_IN_PIPE)))
 	{
 		/* Fetch the next bulk endpoint from the current printer interface */
-		if ((ErrorCode = USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
-		                                           DComp_NextInterfaceBulkDataEndpoint)))
+		if (USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation, DComp_NextInterfaceBulkDataEndpoint))
 		{
 			/* Descriptor not found, error out */
 			return NoEndpointFound;
 		}
 		
-		USB_Descriptor_Endpoint_t* EndpointData = DESCRIPTOR_PCAST(ConfigDescriptorData, USB_Descriptor_Endpoint_t);
+		USB_Descriptor_Endpoint_t* EndpointData = DESCRIPTOR_PCAST(CurrConfigLocation, USB_Descriptor_Endpoint_t);
 
 		/* Check if the endpoint is a bulk IN or bulk OUT endpoint, set appropriate globals */
 		if (EndpointData->EndpointAddress & ENDPOINT_DESCRIPTOR_DIR_IN)

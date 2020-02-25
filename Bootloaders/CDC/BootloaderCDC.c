@@ -116,15 +116,6 @@ void ResetHardware(void)
 	boot_rww_enable();
 }
 
-/** Event handler for the USB_Disconnect event. This indicates that the bootloader should exit and the user
- *  application started.
- */
-void EVENT_USB_Device_Disconnect(void)
-{
-	/* Upon disconnection, run user application */
-	RunBootloader = false;
-}
-
 /** Event handler for the USB_ConfigurationChanged event. This configures the device's endpoints ready
  *  to relay data to and from the attached USB host.
  */
@@ -533,7 +524,7 @@ void CDC_Task(void)
 		else if (Command == 'D')
 		{
 			/* Read the byte from the endpoint and write it to the EEPROM */
-			eeprom_write_byte((uint8_t*)(uint16_t)(CurrAddress >> 1), FetchNextCommandByte());
+			eeprom_write_byte((uint8_t*)((uint16_t)(CurrAddress >> 1)), FetchNextCommandByte());
 			
 			/* Increment the address after use */			
 			CurrAddress += 2;
@@ -544,7 +535,7 @@ void CDC_Task(void)
 		else if (Command == 'd')
 		{
 			/* Read the EEPROM byte and write it to the endpoint */
-			WriteNextResponseByte(eeprom_read_byte((uint8_t*)(uint16_t)(CurrAddress >> 1)));
+			WriteNextResponseByte(eeprom_read_byte((uint8_t*)((uint16_t)(CurrAddress >> 1))));
 
 			/* Increment the address after use */
 			CurrAddress += 2;

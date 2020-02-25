@@ -46,15 +46,10 @@
  *  Functions, macros, variables, enums and types related to the parsing of HID class device report descriptors.
  *
  *  The processed HID report is presented back to the user application as a flat structure containing each report
- *  item's IN, OUT and FEATURE (if desired) items along with each item's attributes.
+ *  item's IN, OUT and FEATURE items along with each item's attributes.
  *
  *  This library portion also allows for easy setting and retrieval of data from a HID report, including devices
  *  with multiple reports on the one HID interface.
- *
- *  By default, FEATURE reports and IN/OUT reports with constant data are ignored in the HID report when processed
- *  to save on memory. This can be overridden by defining the HID_ENABLE_FEATURE_PROCESSING or
- *  HID_INCLUDE_CONSTANT_DATA_ITEMS tokens in the user project makefile, passing them to the compiler via the -D
- *  switch.
  *
  *  @{
  */
@@ -79,11 +74,11 @@
 		#if !defined(HID_STATETABLE_STACK_DEPTH) || defined(__DOXYGEN__)
 			/** Constant indicating the maximum stack depth of the state table. A larger state table
 			 *  allows for more PUSH/POP report items to be nested, but consumes more memory. By default
-			 *  this is set to 3 levels (allowing for two PUSHes to be nested) but this can be overridden by
+			 *  this is set to 2 levels (allowing non-nested PUSH items) but this can be overridden by
 			 *  defining HID_STATETABLE_STACK_DEPTH to another value in the user project makefile, passing the
 			 *  define to the compiler using the -D compiler switch.
 			 */
-			#define HID_STATETABLE_STACK_DEPTH    3
+			#define HID_STATETABLE_STACK_DEPTH    2
 		#endif
 		
 		#if !defined(HID_USAGE_STACK_DEPTH) || defined(__DOXYGEN__)
@@ -108,13 +103,24 @@
 		#endif
 		
 		#if !defined(HID_MAX_REPORTITEMS) || defined(__DOXYGEN__)
-			/** Constant indicating the maximum number of report items (IN, OUT or FEATURE if enabled) that can be
-			 *  processed in the report item descriptor. A large value allows for more report items to be
-			 *  processed, but consumes more memory. By default this is set to 30 items, but this can be
-			 *  overridden by defining HID_MAX_REPORTITEMS to another value in the user project makefile, passing
-			 *  the define to the compiler using the -D compiler switch.
+			/** Constant indicating the maximum number of report items (IN, OUT or FEATURE) that can be processed 
+			 *  in the report item descriptor and stored in the user HID Report Info structure. A large value allows
+			 *  for more report items to be stored, but consumes more memory. By default this is set to 20 items, 
+			 *  but this can be overridden by defining HID_MAX_REPORTITEMS to another value in the user project
+			 *  makefile, and passing the define to the compiler using the -D compiler switch.
 			 */
-			#define HID_MAX_REPORTITEMS           30
+			#define HID_MAX_REPORTITEMS           20
+		#endif
+		
+		#if !defined(HID_MAX_REPORT_IDS) || defined(__DOXYGEN__)
+			/** Constant indicating the maximum number of unique report IDs that can be processed in the report item
+			 *  descriptor for the report size information array in the user HID Report Info structure. A large value
+			 *  allows for more report ID report sizes to be stored, but consumes more memory. By default this is set
+			 *  to 5 items, but this can be overridden by defining HID_MAX_REPORT_IDS to another value in the user project
+			 *  makefile, and passing the define to the compiler using the -D compiler switch. Note that IN, OUT and FEATURE
+			 *  items sharing the same report ID consume only one size item in the array.
+			 */
+			#define HID_MAX_REPORT_IDS            10
 		#endif
 
 	/* Public Interface - May be used in end-application: */
@@ -134,9 +140,11 @@
 				HID_PARSE_HIDStackOverflow            = 1, /**< More than \ref HID_STATETABLE_STACK_DEPTH nested PUSHes in the report. */ 
 				HID_PARSE_HIDStackUnderflow           = 2, /**< A POP was found when the state table stack was empty. */
 				HID_PARSE_InsufficientReportItems     = 3, /**< More than \ref HID_MAX_REPORTITEMS report items in the report. */
-				HID_PARSE_UnexpectedEndCollection     = 4, /**< END COLLECTION found without matching COLLECTION item. */
+				HID_PARSE_UnexpectedEndCollection     = 4, /**< An END COLLECTION item found without matching COLLECTION item. */
 				HID_PARSE_InsufficientCollectionPaths = 5, /**< More than \ref HID_MAX_COLLECTIONS collections in the report. */
 				HID_PARSE_UsageStackOverflow          = 6, /**< More than \ref HID_USAGE_STACK_DEPTH usages listed in a row. */
+				HID_PARSE_InsufficientReportIDItems   = 7, /**< More than \ref HID_MAX_REPORT_IDS report IDs in the device. */
+				HID_PARSE_NoUnfilteredReportItems     = 8, /**< All report items from the device were filtered by the filtering callback routine. */
 			};
 		
 		/* Type Defines: */		
@@ -196,18 +204,34 @@
 							
 				uint32_t                     Value;          /**< Current value of the report item. */
 			} HID_ReportItem_t;
+			
+			/** Type define for a report item size information structure */
+			typedef struct
+			{
+				uint8_t                      ReportID; /** Report ID of the report within the HID interface */
+				uint8_t                      ReportSizeBits[3]; /** Total number of bits in each report type for the given Report ID,
+				                                                 *  indexed by the \ref HID_ReportItemTypes_t enum
+																 */
+			} HID_ReportSizeInfo_t;
 
 			/** Type define for a complete processed HID report, including all report item data and collections. */
 			typedef struct
 			{
 				uint8_t                      TotalReportItems; /**< Total number of report items stored in the
-				                                                *   ReportItems array. */
-
+				                                                *   ReportItems array.
+				                                                */
 				HID_ReportItem_t             ReportItems[HID_MAX_REPORTITEMS]; /**< Report items array, including
-			                                                                    *   all IN, OUT and FEATURE items. */
-
+			                                                                    *   all IN, OUT and FEATURE items.
+				                                                                */
 				HID_CollectionPath_t         CollectionPaths[HID_MAX_COLLECTIONS]; /**< All collection items, referenced
-				                                                                    *   by the report items. */
+				                                                                    *   by the report items.
+				                                                                    */
+				uint8_t                      TotalDeviceReports; /**< Number of reports within the HID interface */
+				HID_ReportSizeInfo_t         ReportIDSizes[HID_MAX_REPORT_IDS]; /**< Report sizes for each report in the interface */
+				uint16_t                     LargestReportSizeBits; /**< Largest report that the attached device will generate, in bits */
+				bool                         UsingReportIDs; /**< Indicates if the device has at least one REPORT ID
+				                                              *   element in its HID report descriptor.
+				                                              */
 			} HID_ReportInfo_t;
 			
 		/* Function Prototypes: */
@@ -239,13 +263,36 @@
 			 *  buffer. The report buffer is assumed to have the appropriate bits cleared before calling
 			 *  this function (i.e., the buffer should be explicitly cleared before report values are added).
 			 *
-			 *  If the device has multiple HID reports, the report ID is set to the report ID of the given item.
+			 *  If the device has multiple HID reports, the first byte in the report is set to the report ID of the given item.
 			 *
-			 *  \param[out] ReportData  Buffer holding the current OUT report data
+			 *  \param[out] ReportData  Buffer holding the current OUT or FEATURE report data
 			 *  \param[in] ReportItem  Pointer to the report item of interest in a \ref HID_ReportInfo_t ReportItem array
 			 */
 			void USB_SetHIDReportItemInfo(uint8_t* ReportData, const HID_ReportItem_t* ReportItem)
 			                              ATTR_NON_NULL_PTR_ARG(1, 2);
+										  
+			/** Retrieves the size of a given HID report in bytes from it's Report ID.
+			 *
+			 *  \param[in] ParserData  Pointer to a \ref HID_ReportInfo_t instance containing the parser output
+			 *  \param[in] ReportID  Report ID of the report whose size is to be retrieved
+			 *  \param[in] ReportType  Type of the report whose size is to be determined, a valued from the
+			 *                         \ref HID_ReportItemTypes_t enum
+			 *
+			 *  \return Size of the report in bytes, or 0 if the report does not exist
+			 */
+			uint16_t USB_GetHIDReportSize(HID_ReportInfo_t* const ParserData, const uint8_t ReportID,
+			                              const uint8_t ReportType) ATTR_NON_NULL_PTR_ARG(1) ATTR_CONST;
+
+			/** Callback routine for the HID Report Parser. This callback <b>must</b> be implemented by the user code when
+			 *  the parser is used, to determine what report IN, OUT and FEATURE item's information is stored into the user
+			 *  HID_ReportInfo_t structure. This can be used to filter only those items the application will be using, so that
+			 *  no RAM is wasted storing the attributes for report items which will never be referenced by the application.
+			 *
+			 *  \param[in] CurrentItemAttributes  Pointer to the current report item attributes for user checking
+			 *
+			 *  \return Boolean true if the item should be stored into the HID_ReportInfo_t structure, false if it should be ignored
+			 */
+			bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_Attributes_t* CurrentItemAttributes);
 
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)

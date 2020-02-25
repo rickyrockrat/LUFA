@@ -60,6 +60,10 @@
 			/** Class state structure. An instance of this structure should be made for each HID interface
 			 *  within the user application, and passed to each of the HID class driver functions as the
 			 *  HIDInterfaceInfo parameter. This stores each HID interface's configuration and state information.
+			 *
+			 *  \note Due to technical limitations, the HID device class driver does not utilize a seperate OUT
+			 *        endpoint for host->device communications. Instead, the host->device data (if any) is sent to
+			 *        the device via the control endpoint.
 			 */
 			typedef struct
 			{
@@ -102,36 +106,38 @@
 			 *
 			 *  \return Boolean true if the endpoints were sucessfully configured, false otherwise
 			 */
-			bool HID_Device_ConfigureEndpoints(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo);
+			bool HID_Device_ConfigureEndpoints(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			
 			/** Processes incomming control requests from the host, that are directed to the given HID class interface. This should be
 			 *  linked to the library \ref EVENT_USB_Device_UnhandledControlRequest() event.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class configuration and state.
 			 */		
-			void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo);
+			void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** General management task for a given HID class interface, required for the correct operation of the interface. This should
 			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class configuration and state.
 			 */
-			void HID_Device_USBTask(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo);
+			void HID_Device_USBTask(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			
 			/** Indicates that a millisecond of idle time has elapsed on the given HID interface, and the interface's idle count should be
-			 *  decremented. This should be called once per millisecond so that hardware key-repeats function correctly.
+			 *  decremented. This should be called once per millisecond so that hardware key-repeats function correctly. It is recommended
+			 *  that this be called by the \ref EVENT_USB_Device_StartOfFrame() event, once SOF events have been enabled via
+			 *  \ref USB_Device_EnableSOFEvents();.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class configuration and state.
 			 */
-			void HID_Device_MillisecondElapsed(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo);
+			void HID_Device_MillisecondElapsed(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			
-			/** HID class driver callback for the user creation of a HID input report. This callback may fire in response to either
+			/** HID class driver callback for the user creation of a HID IN report. This callback may fire in response to either
 			 *  HID class control requests from the host, or by the normal HID endpoint polling procedure. Inside this callback the
 			 *  user is responsible for the creation of the next HID input report to be sent to the host.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class configuration and state.
 			 *  \param[in,out] ReportID  If preset to a non-zero value, this is the report ID being requested by the host. If zero, this should
-			 *                 be set to the report ID of the generated HID input report. If multiple reports are not sent via the
+			 *                 be set to the report ID of the generated HID input report (if any). If multiple reports are not sent via the
 			 *                 given HID interface, this parameter should be ignored.
 			 *  \param[out] ReportData  Pointer to a buffer where the generated HID report should be stored.
 			 *  \param[out] ReportSize  Number of bytes in the generated input report, or zero if no report is to be sent
@@ -140,9 +146,9 @@
 			 *          the idle period (useful for devices which report relative movement), false otherwise
 			 */
 			bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, uint8_t* const ReportID,
-                                                     void* ReportData, uint16_t* ReportSize);
+                                                     void* ReportData, uint16_t* ReportSize) ATTR_NON_NULL_PTR_ARG(1, 2, 3, 4);
 			
-			/** HID class driver callback for the user processing of a received HID input report. This callback may fire in response to
+			/** HID class driver callback for the user processing of a received HID OUT report. This callback may fire in response to
 			 *  either HID class control requests from the host, or by the normal HID endpoint polling procedure. Inside this callback
 			 *  the user is responsible for the processing of the received HID output report from the host.
 			 *
@@ -153,7 +159,7 @@
 			 *  \param[in] ReportSize  Size in bytes of the received report from the host.
 			 */
 			void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, const uint8_t ReportID,
-			                                          const void* ReportData, const uint16_t ReportSize);
+			                                          const void* ReportData, const uint16_t ReportSize) ATTR_NON_NULL_PTR_ARG(1, 3);
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

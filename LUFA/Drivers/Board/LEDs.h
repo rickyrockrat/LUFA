@@ -71,7 +71,6 @@
 	/* Macros: */
 	#if !defined(__DOXYGEN__)
 		#define INCLUDE_FROM_LEDS_H
-		#define INCLUDE_FROM_BOARD_DRIVER
 	#endif
 	
 	/* Includes: */
@@ -91,6 +90,8 @@
 		#include "ATAVRUSBRF01/LEDs.h"
 	#elif (BOARD == BOARD_USER)
 		#include "Board/LEDs.h"
+	#elif (BOARD == BOARD_BUMBLEB)
+		#include "BUMBLEB/LEDs.h"
 	#endif
 	
 	#if !defined(LEDS_LED1)

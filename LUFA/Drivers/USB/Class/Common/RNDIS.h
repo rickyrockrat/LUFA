@@ -29,6 +29,12 @@
 */
 
 /** \ingroup Group_USBClassRNDIS
+ *  @defgroup Group_USBClassRNDISCommon  Common Class Definitions
+ *
+ *  \section Module Description
+ *  Constants, Types and Enum definitions that are common to both Device and Host modes for the USB
+ *  RNDIS Class.
+ *
  *  @{
  */
 
@@ -37,6 +43,7 @@
 
 	/* Includes: */
 		#include "../../USB.h"
+		#include "CDC.h"
 		
 		#include <string.h>
 	

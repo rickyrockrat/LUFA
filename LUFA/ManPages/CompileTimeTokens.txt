@@ -23,38 +23,27 @@
  *  \section Sec_SummaryUSBClassTokens USB Class Driver Related Tokens
  *  This section describes compile tokens which affect USB class-specific drivers in the LUFA library.
  *
- *  <b>HID_ENABLE_FEATURE_PROCESSING</b> - ( \ref Group_HIDParser ) \n
- *  Define this token to enable the processing of FEATURE HID report items, if any, into the processed HID structure.
- *  By default FEATURE items (which are device features settable by the host but not directly visible by the user) are
- *  skipped when processing a device HID report.
- *
- *  <b>HID_INCLUDE_CONSTANT_DATA_ITEMS</b> - ( \ref Group_HIDParser ) \n
- *  By default, constant data items (usually used as spacers to align separate report items to a byte or word boundary)
- *  in the HID report are skipped during report processing. It is highly unusual for an application to make any use of
- *  constant data items (as they do not carry any useful data and only occupy limited RAM) however if required defining
- *  this switch will put constant data items into the processed HID report structure.
- *
- *  <b>HID_STATETABLE_STACK_DEPTH</b> - ( \ref Group_HIDParser ) \n
+ *  <b>HID_STATETABLE_STACK_DEPTH</b>=<i>x</i> - ( \ref Group_HIDParser ) \n
  *  HID reports may contain PUSH and POP elements, to store and retrieve the current HID state table onto a stack. This
  *  allows for reports to save the state table before modifying it slightly for a data item, and then restore the previous
  *  state table in a compact manner. This token may be defined to a non-zero 8-bit value to give the maximum depth of the state
  *  table stack. If not defined, this defaults to the value indicated in the HID.h file documentation.
  *
- *  <b>HID_USAGE_STACK_DEPTH</b> - ( \ref Group_HIDParser ) \n
+ *  <b>HID_USAGE_STACK_DEPTH</b>=<i>x</i> - ( \ref Group_HIDParser ) \n
  *  HID reports generally contain many USAGE elements, which are assigned to INPUT, OUTPUT and FEATURE items in succession
  *  when multiple items are defined at once (via REPORT COUNT elements). This allows for several items to be defined with
  *  different usages in a compact manner. This token may be defined to a non-zero 8-bit value to set the maximum depth of the
  *  usage stack, indicating the maximum number of USAGE items which can be stored temporarily until the next INPUT, OUTPUT
  *  and FEATURE item. If not defined, this defaults to the value indicated in the HID.h file documentation.
  *
- *  <b>HID_MAX_COLLECTIONS</b> - ( \ref Group_HIDParser ) \n
+ *  <b>HID_MAX_COLLECTIONS</b>=<i>x</i> - ( \ref Group_HIDParser ) \n
  *  HID reports generally contain several COLLECTION elements, used to group related data items together. Collection information
  *  is stored separately in the processed usage structure (and referred to by the data elements in the structure) to save space.
  *  This token may be defined to a non-zero 8-bit value to set the maximum number of COLLECTION items which can be processed by the
  *  parser into the resultant processed report structure. If not defined, this defaults to the value indicated in the HID.h file
  *  documentation.
  *
- *  <b>HID_MAX_REPORTITEMS</b> - ( \ref Group_HIDParser ) \n
+ *  <b>HID_MAX_REPORTITEMS</b>=<i>x</i> - ( \ref Group_HIDParser ) \n
  *  All HID reports contain one or more INPUT, OUTPUT and/or FEATURE items describing the data which can be sent to and from the HID
  *  device. Each item has associated usages, bit offsets in the item reports and other associated data indicating the manner in which
  *  the report data should be interpreted by the host. This token may be defined to a non-zero 8-bit value to set the maximum number of
@@ -62,6 +51,13 @@
  *  If a item has a multiple count (i.e. a REPORT COUNT of more than 1), each item in the report count is placed separately in the
  *  processed HID report table. If not defined, this defaults to the value indicated in the HID.h file documentation.
  *
+ *  <b>HID_MAX_REPORT_IDS</b>=<i>x</i> - ( \ref Group_HIDParser ) \n
+ *  HID reports may contain several report IDs, to logically distinguish grouped device data from one another - for example, a combination
+ *  keyboard and mouse might use report IDs to seperate the keyboard reports from the mouse reports. In order to determine the size of each
+ *  report, and thus know how many bytes must be read or written, the size of each report (IN, OUT and FEATURE) must be calculated and
+ *  stored. This token may be defined to a non-zero 8-bit value to set the maximum number of report IDs in a device which can be processed
+ *  and their sizes calculated/stored into the resultant processed report structure. If not defined, this defaults to the value indicated in
+ *  the HID.h file documentation.
  *
  *  \section Sec_SummaryUSBTokens USB Driver Related Tokens
  *  This section describes compile tokens which affect USB driver stack as a whole in the LUFA library.
@@ -76,19 +72,13 @@
  *  <b>USE_EEPROM_DESCRIPTORS</b> - ( \ref Group_Descriptors ) \n
  *  Similar to USE_RAM_DESCRIPTORS, but all descriptors are stored in the AVR's EEPROM memory rather than RAM.
  *
- *  <b>USE_NONSTANDARD_DESCRIPTOR_NAMES</b> - ( \ref Group_Descriptors ) \n
- *  The USB 2.0 standard gives some rather obscure names for the elements in the standard descriptor types (device, configuration,
- *  string, endpoint, etc.). By default the LUFA library uses these names in its predefined descriptor structure types for
- *  compatibility. If this token is defined, the structure element names are switched to the LUFA-specific but more descriptive
- *  names documented in the StdDescriptors.h source file.
- *
  *  <b>NO_INTERNAL_SERIAL</b> - ( \ref Group_Descriptors ) \n
  *  Some AVR models contain a unique 20-digit serial number which can be used as the device serial number, while in device mode. This
  *  allows the host to uniquely identify the device regardless of if it is moved between USB ports on the same computer, allowing
  *  allocated resources (such as drivers, COM Port number allocations) to be preserved. This is not needed in many apps, and so the
  *  code that performs this task can be disabled by defining this option and passing it to the compiler via the -D switch.
  *
- *  <b>FIXED_CONTROL_ENDPOINT_SIZE</b> - ( \ref Group_EndpointManagement ) \n
+ *  <b>FIXED_CONTROL_ENDPOINT_SIZE</b>=<i>x</i> - ( \ref Group_EndpointManagement ) \n
  *  By default, the library determines the size of the control endpoint (when in device mode) by reading the device descriptor.
  *  Normally this reduces the amount of configuration required for the library, allows the value to change dynamically (if
  *  descriptors are stored in EEPROM or RAM rather than flash memory) and reduces code maintenance. However, this token can be
@@ -109,7 +99,7 @@
  *  reserved for application use. When defined, the corresponding GPIOR register should not be used within the user application except
  *  implicitly via the library APIs.
  *
- *  <b>FIXED_NUM_CONFIGURATIONS</b> - ( \ref Group_Device ) \n
+ *  <b>FIXED_NUM_CONFIGURATIONS</b>=<i>x</i> - ( \ref Group_Device ) \n
  *  By default, the library determines the number of configurations a USB device supports by reading the device descriptor. This reduces
  *  the amount of configuration required to set up the library, and allows the value to change dynamically (if descriptors are stored in
  *  EEPROM or RAM rather than flash memory) and reduces code maintenance. However, this value may be fixed via this token in the project
@@ -135,18 +125,18 @@
  *  used, bytes are sent or recevied in groups of 8 bytes at a time increasing performance at the expense of a larger flash memory consumption
  *  due to the extra code required to deal with byte alignment.
  *
- *  <b>USB_HOST_TIMEOUT_MS</b> - ( \ref Group_Host ) \n
+ *  <b>USB_HOST_TIMEOUT_MS</b>=<i>x</i> - ( \ref Group_Host ) \n
  *  When a control transfer is initiated in host mode to an attached device, a timeout is used to abort the transfer if the attached
  *  device fails to respond within the timeout period. This token may be defined to a non-zero 16-bit value to set the timeout period for
  *  control transfers, specified in milliseconds. If not defined, the default value specified in Host.h is used instead.
  *
- *  <b>HOST_DEVICE_SETTLE_DELAY_MS</b> - ( \ref Group_Host ) \n
+ *  <b>HOST_DEVICE_SETTLE_DELAY_MS</b>=<i>x</i> - ( \ref Group_Host ) \n
  *  Some devices require a delay of up to 5 seconds after they are connected to VBUS before the enumeration process can be started, or
  *  they will fail to enumerate correctly. By placing a delay before the enumeration process, it can be ensured that the bus has settled
  *  back to a known idle state before communications occur with the device. This token may be defined to a 16-bit value to set the device
  *  settle period, specified in milliseconds. If not defined, the default value specified in Host.h is used instead.
  *
- *  <b>USE_STATIC_OPTIONS</b> - ( \ref Group_USBManagement ) \n
+ *  <b>USE_STATIC_OPTIONS</b>=<i>x</i> - ( \ref Group_USBManagement ) \n
  *  By default, the USB_Init() function accepts dynamic options at runtime to alter the library behaviour, including whether the USB pad
  *  voltage regulator is enabled, and the device speed when in device mode. By defining this token to a mask comprised of the USB options
  *  mask defines usually passed as the Options parameter to USB_Init(), the resulting compiled binary can be decreased in size by removing
@@ -162,7 +152,7 @@
  *  <b>USB_HOST_ONLY</b> - ( \ref Group_USBManagement ) \n
  *  Same as USB_DEVICE_ONLY, except the library is fixed to USB host mode rather than USB device mode. Not available on some USB AVR models.
  *
- *  <b>USB_STREAM_TIMEOUT_MS</b> - ( \ref Group_USBManagement ) \n
+ *  <b>USB_STREAM_TIMEOUT_MS</b>=<i>x</i> - ( \ref Group_USBManagement ) \n
  *  When endpoint and/or pipe stream functions are used, by default there is a timeout between each transfer which the connected device or host
  *  must satisfy, or the stream function aborts the remaining data transfer. This token may be defined to a non-zero 16-bit value to set the timeout
  *  period for stream transfers, specified in milliseconds. If not defined, the default value specified in LowLevel.h is used instead.

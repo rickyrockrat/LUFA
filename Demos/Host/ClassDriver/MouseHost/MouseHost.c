@@ -47,8 +47,7 @@ USB_ClassInfo_HID_Host_t Mouse_HID_Interface =
 				.DataINPipeNumber       = 1,
 				.DataOUTPipeNumber      = 2,
 				
-				.MatchInterfaceProtocol = true,
-				.HIDInterfaceProtocol   = 0x02,
+				.HIDInterfaceProtocol   = HID_BOOT_MOUSE_PROTOCOL,
 			},
 	};
 
@@ -74,9 +73,8 @@ int main(void)
 				uint16_t ConfigDescriptorSize;
 				uint8_t  ConfigDescriptorData[512];
 
-				if ((USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful) ||
-				    (ConfigDescriptorSize > sizeof(ConfigDescriptorData)) ||
-					(USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData)))
+				if (USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
+				                                  sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
 					printf("Error Retrieving Configuration Descriptor.\r\n");
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
@@ -100,11 +98,45 @@ int main(void)
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
 				}
+
+				if (HID_Host_SetBootProtocol(&Mouse_HID_Interface) != 0)
+				{
+					printf("Could not Set Boot Protocol Mode.\r\n");
+					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
+					break;
+				}
 				
 				printf("Mouse Enumerated.\r\n");
 				USB_HostState = HOST_STATE_Configured;
 				break;
 			case HOST_STATE_Configured:
+				if (HID_Host_IsReportReceived(&Mouse_HID_Interface))
+				{
+					uint8_t LEDMask  = LEDS_NO_LEDS;
+				
+					USB_MouseReport_Data_t MouseReport;
+					HID_Host_ReceiveReport(&Mouse_HID_Interface, &MouseReport);
+					
+					printf_P(PSTR("dX:%2d dY:%2d Button:%d\r\n"), MouseReport.X,
+																  MouseReport.Y,
+																  MouseReport.Button);
+					if (MouseReport.X > 0)
+					  LEDMask |= LEDS_LED1;
+					else if (MouseReport.X < 0)
+					  LEDMask |= LEDS_LED2;
+						
+					if (MouseReport.Y > 0)
+					  LEDMask |= LEDS_LED3;
+					else if (MouseReport.Y < 0)
+					  LEDMask |= LEDS_LED4;
+
+					if (MouseReport.Button)
+					  LEDMask  = LEDS_ALL_LEDS;
+
+					LEDs_SetAllLEDs(LEDMask);
+				}
+				
 				break;
 		}
 	

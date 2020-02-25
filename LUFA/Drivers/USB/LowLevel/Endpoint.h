@@ -33,7 +33,7 @@
  *
  *  Functions, macros and enums related to endpoint management when in USB Device mode. This
  *  module contains the endpoint management macros, as well as endpoint interrupt and data
- *  send/recieve functions for various data types.
+ *  send/receive functions for various data types.
  *
  *  @{
  */
@@ -331,6 +331,12 @@
 				 *  \return The currently selected endpoint's direction, as a ENDPOINT_DIR_* mask.
 				 */
 				static inline uint8_t Endpoint_GetEndpointDirection(void);
+
+				/** Sets the direction of the currently selected endpoint.
+				 *
+				 *  \param[in] DirectionMask  New endpoint direction, as a ENDPOINT_DIR_* mask.
+				 */
+				static inline void Endpoint_SetEndpointDirection(uint8_t DirectionMask);
 			#else
 				#if defined(USB_SERIES_4_AVR) || defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR) || defined(__DOXYGEN__)
 					#define Endpoint_BytesInEndpoint()        UEBCX
@@ -399,6 +405,8 @@
 				#define Endpoint_ResetDataToggle()            MACROS{ UECONX |= (1 << RSTDT); }MACROE
 				
 				#define Endpoint_GetEndpointDirection()       (UECFG0X & ENDPOINT_DIR_IN)
+				
+				#define Endpoint_SetEndpointDirection(dir)    MACROS{ UECFG0X = ((UECFG0X & ~ENDPOINT_DIR_IN) | dir); }MACROE
 			#endif
 
 		/* Enums: */
@@ -503,12 +511,16 @@
 			static inline uint16_t Endpoint_Read_Word_LE(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
 			static inline uint16_t Endpoint_Read_Word_LE(void)
 			{
-				uint16_t Data;
+				union
+				{
+					uint16_t Word;
+					uint8_t  Bytes[2];
+				} Data;
 				
-				Data  = UEDATX;
-				Data |= (((uint16_t)UEDATX) << 8);
+				Data.Bytes[0] = UEDATX;
+				Data.Bytes[1] = UEDATX;
 			
-				return Data;
+				return Data.Word;
 			}
 
 			/** Reads two bytes from the currently selected endpoint's bank in big endian format, for OUT
@@ -521,12 +533,16 @@
 			static inline uint16_t Endpoint_Read_Word_BE(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
 			static inline uint16_t Endpoint_Read_Word_BE(void)
 			{
-				uint16_t Data;
+				union
+				{
+					uint16_t Word;
+					uint8_t  Bytes[2];
+				} Data;
 				
-				Data  = (((uint16_t)UEDATX) << 8);
-				Data |= UEDATX;
+				Data.Bytes[1] = UEDATX;
+				Data.Bytes[0] = UEDATX;
 			
-				return Data;
+				return Data.Word;
 			}
 
 			/** Writes two bytes to the currently selected endpoint's bank in little endian format, for IN
@@ -781,7 +797,7 @@
 			 */
 			uint8_t Endpoint_Write_Stream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Endpoint_Write_Stream_LE.
+			/** EEPROM buffer source version of \ref Endpoint_Write_Stream_LE().
 			 *
 			 *  \ingroup Group_EndpointStreamRW
 			 *
@@ -793,7 +809,7 @@
 			 */
 			uint8_t Endpoint_Write_EStream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** FLASH buffer source version of \ref Endpoint_Write_Stream_LE.
+			/** FLASH buffer source version of \ref Endpoint_Write_Stream_LE().
 			 *
 			 *  \note The FLASH data must be located in the first 64KB of FLASH for this function to work correctly.
 			 *
@@ -830,7 +846,7 @@
 			 */
 			uint8_t Endpoint_Write_Stream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Endpoint_Write_Stream_BE.
+			/** EEPROM buffer source version of \ref Endpoint_Write_Stream_BE().
 			 *
 			 *  \ingroup Group_EndpointStreamRW
 			 *
@@ -842,7 +858,7 @@
 			 */
 			uint8_t Endpoint_Write_EStream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** FLASH buffer source version of \ref Endpoint_Write_Stream_BE.
+			/** FLASH buffer source version of \ref Endpoint_Write_Stream_BE().
 			 *
 			 *  \note The FLASH data must be located in the first 64KB of FLASH for this function to work correctly.
 			 *
@@ -879,7 +895,7 @@
 			 */
 			uint8_t Endpoint_Read_Stream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Endpoint_Read_Stream_LE.
+			/** EEPROM buffer source version of \ref Endpoint_Read_Stream_LE().
 			 *
 			 *  \ingroup Group_EndpointStreamRW
 			 *
@@ -914,7 +930,7 @@
 			 */
 			uint8_t Endpoint_Read_Stream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Endpoint_Read_Stream_BE.
+			/** EEPROM buffer source version of \ref Endpoint_Read_Stream_BE().
 			 *
 			 *  \ingroup Group_EndpointStreamRW
 			 *
@@ -967,7 +983,7 @@
 			 */
 			uint8_t Endpoint_Write_Control_EStream_LE(void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** FLASH buffer source version of \ref Endpoint_Write_Control_Stream_LE.
+			/** FLASH buffer source version of \ref Endpoint_Write_Control_Stream_LE().
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
@@ -1010,7 +1026,7 @@
 			 */
 			uint8_t Endpoint_Write_Control_Stream_BE(void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Endpoint_Write_Control_Stream_BE.
+			/** EEPROM buffer source version of \ref Endpoint_Write_Control_Stream_BE().
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
@@ -1029,7 +1045,7 @@
 			 */
 			uint8_t Endpoint_Write_Control_EStream_BE(void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** FLASH buffer source version of \ref Endpoint_Write_Control_Stream_BE.
+			/** FLASH buffer source version of \ref Endpoint_Write_Control_Stream_BE().
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
@@ -1072,7 +1088,7 @@
 			 */
 			uint8_t Endpoint_Read_Control_Stream_LE(void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** EEPROM buffer source version of \ref Endpoint_Read_Control_Stream_LE.
+			/** EEPROM buffer source version of \ref Endpoint_Read_Control_Stream_LE().
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
@@ -1113,7 +1129,7 @@
 			 */
 			uint8_t Endpoint_Read_Control_Stream_BE(void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);		
 			
-			/** EEPROM buffer source version of \ref Endpoint_Read_Control_Stream_BE.
+			/** EEPROM buffer source version of \ref Endpoint_Read_Control_Stream_BE().
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.

@@ -80,7 +80,7 @@ void SImage_SendBlockHeader(void)
 }
 
 /** Function to receive a PIMA event container from the attached still image device. */
-uint8_t SImage_RecieveEventHeader(void)
+uint8_t SImage_ReceiveEventHeader(void)
 {
 	uint8_t ErrorCode;
 
@@ -101,7 +101,7 @@ uint8_t SImage_RecieveEventHeader(void)
 }
 
 /** Function to receive a PIMA response container from the attached still image device. */
-uint8_t SImage_RecieveBlockHeader(void)
+uint8_t SImage_ReceiveBlockHeader(void)
 {
 	uint16_t TimeoutMSRem = COMMAND_DATA_TIMEOUT_MS;
 
@@ -127,7 +127,9 @@ uint8_t SImage_RecieveBlockHeader(void)
 			}
 		}
 		
+		Pipe_Freeze();
 		Pipe_SelectPipe(SIMAGE_DATA_OUT_PIPE);
+		Pipe_Unfreeze();
 
 		/* Check if pipe stalled (command failed by device) */
 		if (Pipe_IsStalled())
@@ -139,7 +141,9 @@ uint8_t SImage_RecieveBlockHeader(void)
 			return PIPE_RWSTREAM_PipeStalled;
 		}
 
+		Pipe_Freeze();
 		Pipe_SelectPipe(SIMAGE_DATA_IN_PIPE);
+		Pipe_Unfreeze();
 
 		/* Check if pipe stalled (command failed by device) */
 		if (Pipe_IsStalled())
@@ -155,14 +159,7 @@ uint8_t SImage_RecieveBlockHeader(void)
 		if (USB_HostState == HOST_STATE_Unattached)
 		  return PIPE_RWSTREAM_DeviceDisconnected;
 	}
-	
-	/* Freeze OUT pipe after use */
-	Pipe_SelectPipe(SIMAGE_DATA_OUT_PIPE);
-	Pipe_Freeze();
-
-	/* Select the IN data pipe for data reception */
-	Pipe_SelectPipe(SIMAGE_DATA_IN_PIPE);
-	
+		
 	/* Load in the response from the attached device */
 	Pipe_Read_Stream_LE(&PIMA_ReceivedBlock, PIMA_COMMAND_SIZE(0));
 	

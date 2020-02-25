@@ -70,7 +70,7 @@ void Pipe_ClearPipes(void)
 	}
 }
 
-bool Pipe_IsEndpointBound(uint8_t EndpointAddress)
+bool Pipe_IsEndpointBound(const uint8_t EndpointAddress)
 {
 	uint8_t PrevPipeNumber = Pipe_GetCurrentPipe();
 
@@ -93,7 +93,7 @@ uint8_t Pipe_WaitUntilReady(void)
 	#else
 	uint16_t TimeoutMSRem = USB_STREAM_TIMEOUT_MS;
 	#endif
-
+	
 	for (;;)
 	{
 		if (Pipe_GetPipeToken() == PIPE_TOKEN_IN)

@@ -65,18 +65,6 @@
 
 		/** HID keyboard keycode to indicate that the enter key is currently pressed. */
 		#define KEY_ENTER          40
-		
-	/* Type Defines: */
-		/** Type define for the keyboard report structure. This structure matches the report layout
-		 *  given to the host in the HID Report descriptor, as well as matches the boot protocol report
-		 *  structure. This means that this one report structure can be used in both Report and Boot Protocol
-		 *  modes. */
-		typedef struct
-		{
-			uint8_t Modifier; /**< Modifier byte, indicating pressed modifier keys such as CTRL or ALT */
-			uint8_t Reserved; /**< Reserved for OEM use, always set to 0 */
-			uint8_t KeyCode; /**< Key code array for pressed keys - up to six can be given simultaneously */
-		} USB_KeyboardReport_Data_t;
 	
 	/* Function Prototypes: */
 		void SetupHardware(void);
@@ -84,6 +72,7 @@
 		
 		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_UnhandledControlRequest(void);
+		void EVENT_USB_Device_StartOfFrame(void);
 
 		bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, uint8_t* const ReportID,
                                                  void* ReportData, uint16_t* ReportSize);

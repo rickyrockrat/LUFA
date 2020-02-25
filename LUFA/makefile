@@ -24,21 +24,27 @@ LUFA_SRC_FILES =     ./Drivers/USB/LowLevel/DevChapter9.c        \
                      ./Drivers/USB/Class/Device/MIDI.c           \
                      ./Drivers/USB/Class/Device/MassStorage.c    \
                      ./Drivers/USB/Class/Device/RNDIS.c          \
-                     ./Drivers/USB/Class/Host/Audio.c            \
                      ./Drivers/USB/Class/Host/CDC.c              \
                      ./Drivers/USB/Class/Host/HID.c              \
                      ./Drivers/USB/Class/Host/HIDParser.c        \
-                     ./Drivers/USB/Class/Host/MIDI.c             \
                      ./Drivers/USB/Class/Host/MassStorage.c      \
                      ./Drivers/USB/Class/Host/StillImage.c       \
                      ./Drivers/Board/Temperature.c               \
                      ./Drivers/Peripheral/Serial.c               \
                      ./Drivers/Peripheral/SerialStream.c         \
 
-all:
-	
+LUFA_Events.lst:
+	@echo
+	@echo Generating LUFA event name list...
+	@$(shell) cat `find ./ -name "*.h"` | grep -E "EVENT_[^\(]*\(" | \
+	              sed -n -e 's/^.*EVENT_/EVENT_/p' | \
+	              cut -d'(' -f1 | sort | uniq > LUFA_Events.lst
+				  
+all: LUFA_Events.lst
+
 clean:
 	rm -f $(LUFA_SRC_FILES:%.c=%.o)
+	rm -f LUFA_Events.lst
 	
 clean_list:
 

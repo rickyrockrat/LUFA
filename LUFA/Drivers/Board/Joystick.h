@@ -63,7 +63,6 @@
 	/* Macros: */
 	#if !defined(__DOXYGEN__)
 		#define INCLUDE_FROM_JOYSTICK_H
-		#define INCLUDE_FROM_BOARD_DRIVER
 	#endif
 
 	/* Includes: */
@@ -79,6 +78,8 @@
 		#include "STK526/Joystick.h"
 	#elif (BOARD == BOARD_USER)
 		#include "Board/Joystick.h"		
+	#elif (BOARD == BOARD_BUMBLEB)
+		#include "BUMBLEB/Joystick.h"
 	#else
 		#error The selected board does not contain a joystick.
 	#endif
