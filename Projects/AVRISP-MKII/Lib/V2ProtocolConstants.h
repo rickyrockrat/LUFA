@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2014.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2014  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -67,11 +67,12 @@
 		#define STATUS_SET_PARAM_MISSING    0x82
 		#define STATUS_CMD_FAILED           0xC0
 		#define STATUS_CMD_UNKNOWN          0xC9
-		#define STATUS_ISP_READY            0x00
+		#define STATUS_CMD_ILLEGAL_PARAM    0xCA
+		#define STATUS_ISP_READY            0x10
 		#define STATUS_CONN_FAIL_MOSI       0x01
 		#define STATUS_CONN_FAIL_RST        0x02
 		#define STATUS_CONN_FAIL_SCK        0x04
-		#define STATUS_TGT_NOT_DETECTED     0x10
+		#define STATUS_TGT_NOT_DETECTED     0x00
 		#define STATUS_TGT_REVERSE_INSERTED 0x20
 
 		#define PARAM_BUILD_NUMBER_LOW      0x80
