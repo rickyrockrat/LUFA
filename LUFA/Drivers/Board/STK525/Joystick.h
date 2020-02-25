@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -92,7 +92,7 @@
 			static inline uint8_t Joystick_GetStatus(void) ATTR_WARN_UNUSED_RESULT;
 			static inline uint8_t Joystick_GetStatus(void)
 			{
-				return ((~PINB & JOY_BMASK) | ((~PINE & JOY_EMASK) >> 1));
+				return (((uint8_t)~PINB & JOY_BMASK) | (((uint8_t)~PINE & JOY_EMASK) >> 1));
 			}
 		#endif
 

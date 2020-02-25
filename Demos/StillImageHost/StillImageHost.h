@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -28,6 +28,11 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for StillImageHost.c.
+ */
+
 #ifndef _STILL_IMAGE_HOST_H_
 #define _STILL_IMAGE_HOST_H_
 
@@ -46,11 +51,6 @@
 		#include <LUFA/Drivers/AT90USBXXX/Serial_Stream.h>       // Serial stream driver
 		#include <LUFA/Drivers/Board/LEDs.h>                     // LED driver
 		#include <LUFA/Scheduler/Scheduler.h>                    // Simple scheduler for task management
-		
-	/* Macros: */
-		#define SIMAGE_CLASS                   0x06
-		#define SIMAGE_SUBCLASS                0x01
-		#define SIMAGE_PROTOCOL                0x01
 
 	/* Enums: */
 		/** Enum for the possible status codes for passing to the UpdateStatus() function. */

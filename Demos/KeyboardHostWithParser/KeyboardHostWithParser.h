@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -47,6 +47,10 @@
 		
 		#include "ConfigDescriptor.h"
 		#include "HIDReport.h"
+
+	/* Macros: */
+		/** Pipe number for the keyboard report data pipe */
+		#define KEYBOARD_DATAPIPE              1
 
 	/* Enums: */
 		/** Enum for the possible status codes for passing to the UpdateStatus() function. */

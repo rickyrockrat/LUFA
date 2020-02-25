@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -27,6 +27,12 @@
   arising out of or in connection with the use or performance of
   this software.
 */
+
+/** \file
+ *
+ *  General Ethernet protocol constants and type defines, for use by
+ *  all network protocol portions of the TCP/IP stack.
+ */
 
 #ifndef _ETHERNET_PROTOCOLS_H_
 #define _ETHERNET_PROTOCOLS_H_
@@ -64,31 +70,18 @@
 		#define PROTOCOL_UDP                     17
 		#define PROTOCOL_OSPF                    89
 		#define PROTOCOL_SCTP                    132
-		
-		#define ICMP_TYPE_ECHOREPLY              0
-		#define ICMP_TYPE_DESTINATIONUNREACHABLE 3
-		#define ICMP_TYPE_SOURCEQUENCH           4
-		#define ICMP_TYPE_REDIRECTMESSAGE        5
-		#define ICMP_TYPE_ECHOREQUEST            8
-		#define ICMP_TYPE_TIMEEXCEEDED           11
-		
-		#define ICMP_ECHOREPLY_ECHOREPLY         0
-		#define ICMP_ECHOREQUEST_ECHOREQUEST     0
-		#define ICMP_DESTUNREACHABLE_NETWORK     0
-		#define ICMP_DESTUNREACHABLE_HOST        1
-		
-		#define ARP_OPERATION_REQUEST            1
-		#define ARP_OPERATION_REPLY              2
 
 	/* Type Defines: */
+		/** Type define for a physical MAC address of a device on a network */
 		typedef struct
 		{
-			uint8_t       Octets[6];
+			uint8_t       Octets[6]; /**< Individual bytes of a MAC address */
 		} MAC_Address_t;
 		
+		/** Type define for a protocol IP address of a device on a network */
 		typedef struct
 		{
-			uint8_t       Octets[4];
+			uint8_t       Octets[4]; /**< Individual bytes of an IP address */
 		} IP_Address_t;
 
 #endif

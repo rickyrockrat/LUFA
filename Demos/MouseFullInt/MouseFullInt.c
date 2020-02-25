@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -185,7 +185,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Clear the report data afterwards */
 				memset(&MouseReportData, 0, sizeof(MouseReportData));
 
-				/* Finalize the transfer, acknowedge the host error or success OUT transfer */
+				/* Finalize the stream transfer to send the last packet or clear the host abort */
 				Endpoint_ClearSetupOUT();
 			}
 		
@@ -209,10 +209,10 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Read in the wValue parameter containing the new protocol mode */
 				uint16_t wValue = Endpoint_Read_Word_LE();
 				
+				Endpoint_ClearSetupReceived();
+				
 				/* Set or clear the flag depending on what the host indicates that the current Protocol should be */
 				UsingReportProtocol = (wValue != 0x0000);
-				
-				Endpoint_ClearSetupReceived();
 				
 				/* Send an empty packet to acknowedge the command */
 				Endpoint_ClearSetupIN();
@@ -294,7 +294,7 @@ bool GetNextReport(USB_MouseReport_Data_t* ReportData)
 	  ReportData->Button |= (1 << 1);
 
 	/* Check if the new report is different to the previous report */
-	InputChanged = ((PrevJoyStatus ^ JoyStatus_LCL) | (HWB_GetStatus() ^ PrevHWBStatus));
+	InputChanged = ((uint8_t)(PrevJoyStatus ^ JoyStatus_LCL) | (uint8_t)(HWB_GetStatus() ^ PrevHWBStatus));
 
 	/* Save the current joystick and HWB status for later comparison */
 	PrevJoyStatus = JoyStatus_LCL;
@@ -392,7 +392,7 @@ ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 			/* Write Mouse Report Data */
 			Endpoint_Write_Stream_LE(&MouseReportData, sizeof(MouseReportData));
 
-			/* Handshake the IN Endpoint - send the data to the host */
+			/* Finalize the stream transfer to send the last packet */
 			Endpoint_ClearCurrentBank();
 		}
 	}

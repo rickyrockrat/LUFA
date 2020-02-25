@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -28,6 +28,11 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for KeyboardHostViaInt.c.
+ */
+ 
 #ifndef _KEYBOARD_HOST_VIA_INT_H_
 #define _KEYBOARD_HOST_VIA_INT_H_
 
@@ -49,13 +54,19 @@
 		#include "ConfigDescriptor.h"
 		
 	/* Macros: */
+		/** Pipe number for the keyboard data IN pipe */
 		#define KEYBOARD_DATAPIPE              1
 
+		/** HID Class Specific request to set the report protocol mode */
+		#define REQ_SetProtocol             0x0B
+
 	/* Type Defines: */
+		/** Type define for a standard Boot Protocol Keyboard report */
 		typedef struct
 		{
-			uint8_t Modifier;
-			uint8_t KeyCode;
+			uint8_t Modifier; /**< Keyboard modifier byte, indicating pressed modifier keys (such as Shift, Control, etc.) */
+			uint8_t RESERVED; /**< Reserved for OEM use, always set to 0 */
+			uint8_t KeyCode; /**< Key code of the currently pressed key */
 		} USB_KeyboardReport_Data_t;
 
 		/** Enum for the possible status codes for passing to the UpdateStatus() function. */

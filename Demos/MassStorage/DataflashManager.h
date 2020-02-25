@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -46,10 +46,14 @@
 		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
 		#include <LUFA/Drivers/Board/Dataflash.h>    // Dataflash chip driver
 
+	/* Preprocessor Checks: */
+		#if (DATAFLASH_PAGE_SIZE % 16)
+			#error Dataflash page size must be a multiple of 16 bytes.
+		#endif
+
 	/* Defines: */
 		/** Total number of bytes of the storage medium, comprised of one or more dataflash ICs. */
-		#define VIRTUAL_MEMORY_BYTES                ((uint32_t)(DATAFLASH_PAGES * DATAFLASH_TOTALCHIPS) \
-		                                            * DATAFLASH_PAGE_SIZE)
+		#define VIRTUAL_MEMORY_BYTES                ((uint32_t)DATAFLASH_PAGES * DATAFLASH_PAGE_SIZE * DATAFLASH_TOTALCHIPS)
 
 		/** Block size of the device. This is kept at 512 to remain compatible with the OS despite the underlying
 		 *  storage media (Dataflash) using a different native block size.
@@ -57,11 +61,11 @@
 		#define VIRTUAL_MEMORY_BLOCK_SIZE           512
 		
 		/** Total number of blocks of the virtual memory for reporting to the host as the device's total capacity. */
-		#define VIRTUAL_MEMORY_BLOCKS               ((VIRTUAL_MEMORY_BYTES / VIRTUAL_MEMORY_BLOCK_SIZE) - 1)
+		#define VIRTUAL_MEMORY_BLOCKS               (VIRTUAL_MEMORY_BYTES / VIRTUAL_MEMORY_BLOCK_SIZE)
 		
 	/* Function Prototypes: */
-		void VirtualMemory_WriteBlocks(const uint32_t BlockAddress, uint16_t TotalBlocks);
-		void VirtualMemory_ReadBlocks(const uint32_t BlockAddress, uint16_t TotalBlocks);
-		void VirtualMemory_ResetDataflashProtections(void);
+		void DataflashManager_WriteBlocks(const uint32_t BlockAddress, uint16_t TotalBlocks);
+		void DataflashManager_ReadBlocks(const uint32_t BlockAddress, uint16_t TotalBlocks);
+		void DataflashManager_ResetDataflashProtections(void);
 		
 #endif

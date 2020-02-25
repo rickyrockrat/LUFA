@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -79,17 +79,14 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 		{
 			RAISE_EVENT(USB_VBUSConnect);
 			
-			if (USB_IsInitialized)
-			{
-				if (USB_IsConnected)
-				  RAISE_EVENT(USB_Disconnect);
-
-				USB_SetupInterface();
+			if (USB_IsConnected)
+			  RAISE_EVENT(USB_Disconnect);
 				
-				USB_IsConnected = true;
-					
-				RAISE_EVENT(USB_Connect);
-			}
+			USB_ResetInterface();
+				
+			USB_IsConnected = true;
+
+			RAISE_EVENT(USB_Connect);
 		}
 		else
 		{
@@ -100,11 +97,11 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 			USB_PLL_Off();
 			USB_REG_Off();
 
+			USB_IsConnected = false;
+
 			RAISE_EVENT(USB_VBUSDisconnect);
 			
 			USB_INT_Clear(USB_INT_VBUS);
-			
-			USB_IsConnected = false;
 		}
 	}
 	#endif
@@ -121,11 +118,16 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 		if (!(USB_Options & USB_OPT_MANUAL_PLL))
 		  USB_PLL_Off();
 
+		USB_IsSuspended = true;
+
 		RAISE_EVENT(USB_Suspend);
 
 		#if defined(USB_LIMITED_CONTROLLER) && !defined(NO_LIMITED_CONTROLLER_CONNECT)
-		USB_IsConnected = false;
-		RAISE_EVENT(USB_Disconnect);
+		if (USB_IsConnected)
+		{
+			USB_IsConnected = false;
+			RAISE_EVENT(USB_Disconnect);
+		}
 		#endif
 	}
 
@@ -145,9 +147,14 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 		USB_INT_Enable(USB_INT_SUSPEND);
 		
 		#if defined(USB_LIMITED_CONTROLLER) && !defined(NO_LIMITED_CONTROLLER_CONNECT)
-		USB_IsConnected = true;
-		RAISE_EVENT(USB_Connect);
+		if (!(USB_IsConnected))
+		{
+			USB_IsConnected = true;
+			RAISE_EVENT(USB_Connect);
+		}
 		#endif
+
+		USB_IsSuspended = false;
 
 		RAISE_EVENT(USB_WakeUp);
 	}
@@ -179,12 +186,10 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 		USB_INT_Clear(USB_INT_DCONNI);
 		USB_INT_Disable(USB_INT_DDISCI);
 			
-		USB_IsConnected = false;
-		
 		RAISE_EVENT(USB_DeviceUnattached);
 		RAISE_EVENT(USB_Disconnect);
 
-		USB_Host_PrepareForDeviceConnect();
+		USB_ResetInterface();
 	}
 	
 	if (USB_INT_HasOccurred(USB_INT_VBERRI) && USB_INT_IsEnabled(USB_INT_VBERRI))
@@ -192,28 +197,20 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 		USB_INT_Clear(USB_INT_VBERRI);
 
 		USB_Host_VBUS_Manual_Off();
-
-		USB_IsConnected = false;
+		USB_Host_VBUS_Auto_Off();
 
 		RAISE_EVENT(USB_HostError, HOST_ERROR_VBusVoltageDip);
 		RAISE_EVENT(USB_DeviceUnattached);
 
-		USB_HostState   = HOST_STATE_Unattached;
+		USB_HostState = HOST_STATE_Unattached;
 	}
 
 	if (USB_INT_HasOccurred(USB_INT_SRPI) && USB_INT_IsEnabled(USB_INT_SRPI))
 	{
 		USB_INT_Clear(USB_INT_SRPI);
 		USB_INT_Disable(USB_INT_SRPI);
-		USB_INT_Disable(USB_INT_BCERRI);
 	
 		RAISE_EVENT(USB_DeviceAttached);
-
-		USB_Host_VBUS_Manual_Off();
-
-		USB_OTGPAD_On();
-		USB_Host_VBUS_Auto_Enable();
-		USB_Host_VBUS_Auto_On();
 
 		USB_INT_Enable(USB_INT_DDISCI);
 		
@@ -224,8 +221,13 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 	{
 		USB_INT_Clear(USB_INT_BCERRI);
 		
-		USB_Host_VBUS_Manual_Off();
-		USB_Host_PrepareForDeviceConnect();
+		RAISE_EVENT(USB_DeviceEnumerationFailed, HOST_ENUMERROR_NoDeviceDetected, 0);
+		RAISE_EVENT(USB_DeviceUnattached);
+		
+		if (USB_IsConnected)
+		  RAISE_EVENT(USB_Disconnect);
+
+		USB_ResetInterface();
 	}
 	#endif
 
@@ -243,12 +245,8 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 		}
 
 		RAISE_EVENT(USB_UIDChange);
-
-		USB_Host_VBUS_Manual_Off();
-		USB_Host_VBUS_Auto_Enable();
-		USB_OTGPAD_On();
-
-		USB_SetupInterface();	
+		
+		USB_ResetInterface();
 	}
 	#endif
 }

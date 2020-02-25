@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -69,7 +69,7 @@
 
 		/* Enums: */
 			/** Enum for the USB_Host_SendControlRequest() return code, indicating the reason for the error
-			 *  if the transfer of the request is unsucessful.
+			 *  if the transfer of the request is unsuccessful.
 			 */
 			enum USB_Host_SendControlErrorCodes_t
 			{

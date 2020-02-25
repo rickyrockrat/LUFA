@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -64,7 +64,7 @@ int main(void)
 	SetSystemClockPrescaler(0);
 	
 	/* Hardware initialization */
-	SerialStream_Init(9600);
+	SerialStream_Init(9600, false);
 	ADC_Init(ADC_SINGLE_CONVERSION | ADC_PRESCALE_64);
 	Temperature_Init();
 	Joystick_Init();

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -45,14 +45,14 @@ uint8_t USB_Host_GetDeviceConfigDescriptor(uint16_t* const ConfigSizePtr, void* 
 	
 	if (BufferPtr == NULL)
 	{
-		BufferPtr      = alloca(sizeof(USB_Descriptor_Configuration_Header_t));
+		uint8_t ConfigHeader[sizeof(USB_Descriptor_Configuration_Header_t)];
 
-		ErrorCode      = USB_Host_SendControlRequest(BufferPtr);
+		ErrorCode      = USB_Host_SendControlRequest(ConfigHeader);
 
 		#if defined(USE_NONSTANDARD_DESCRIPTOR_NAMES)
-		*ConfigSizePtr = DESCRIPTOR_CAST(BufferPtr, USB_Descriptor_Configuration_Header_t).TotalConfigurationSize;
+		*ConfigSizePtr = DESCRIPTOR_CAST(ConfigHeader, USB_Descriptor_Configuration_Header_t).TotalConfigurationSize;
 		#else
-		*ConfigSizePtr = DESCRIPTOR_CAST(BufferPtr, USB_Descriptor_Configuration_Header_t).wTotalLength;		
+		*ConfigSizePtr = DESCRIPTOR_CAST(ConfigHeader, USB_Descriptor_Configuration_Header_t).wTotalLength;		
 		#endif
 	}
 	else
@@ -110,21 +110,25 @@ void USB_Host_GetNextDescriptorOfTypeAfter(uint16_t* const BytesRem,
 	  USB_Host_GetNextDescriptorOfType(BytesRem, CurrConfigLoc, Type);
 }
 			
-uint8_t USB_Host_GetNextDescriptorComp_P(uint16_t* const BytesRem, uint8_t** const CurrConfigLoc,
-                                         uint8_t (* const SearchRoutine)(void*))
+uint8_t USB_Host_GetNextDescriptorComp_P(uint16_t* BytesRem, uint8_t** CurrConfigLoc,
+                                         uint8_t (* const ComparatorRoutine)(void*))
 {
 	uint8_t ErrorCode;
 		
 	while (*BytesRem)
 	{
+		uint8_t**  PrevDescLoc = CurrConfigLoc;
+		uint16_t  PrevBytesRem = *BytesRem;
+
 		USB_Host_GetNextDescriptor(BytesRem, CurrConfigLoc);
 
-		ErrorCode = SearchRoutine(*CurrConfigLoc);
+		if ((ErrorCode = ComparatorRoutine(*CurrConfigLoc)) != Descriptor_Search_NotFound)
+		{
+			CurrConfigLoc = PrevDescLoc;
+			*BytesRem     = PrevBytesRem;
 		
-		if (ErrorCode == Descriptor_Search_Fail)
-		  return Descriptor_Search_Comp_Fail;
-		else if (ErrorCode == Descriptor_Search_Found)
-		  return Descriptor_Search_Comp_Found;
+			return ErrorCode;
+		}
 	}
 	
 	return Descriptor_Search_Comp_EndOfDescriptor;

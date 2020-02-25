@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -28,6 +28,11 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for ICMP.c.
+ */
+
 #ifndef _ICMP_H_
 #define _ICMP_H_
 
@@ -39,14 +44,34 @@
 		#include "Ethernet.h"
 		#include "ProtocolDecoders.h"
 	
+	/* Macros: */
+		/** ICMP message type constant, indicating an ICMP ECHO Reply message */
+		#define ICMP_TYPE_ECHOREPLY              0
+
+		/** ICMP message type constant, indicating a packet destination is unreachable */
+		#define ICMP_TYPE_DESTINATIONUNREACHABLE 3
+		
+		/** ICMP message type constant, indicating an ICMP Source Quench message */
+		#define ICMP_TYPE_SOURCEQUENCH           4
+
+		/** ICMP message type constant, indicating an ICMP Redirect message */
+		#define ICMP_TYPE_REDIRECTMESSAGE        5
+
+		/** ICMP message type constant, indicating an ICMP ECHO Request message */
+		#define ICMP_TYPE_ECHOREQUEST            8
+
+		/** ICMP message type constant, indicating an ICMP Time Exceeded message */
+		#define ICMP_TYPE_TIMEEXCEEDED           11
+	
 	/* Type Defines: */
+		/** Type define for an ICMP message header. */
 		typedef struct
 		{
-			uint8_t       Type;
-			uint8_t       Code;
-			uint16_t      Checksum;
-			uint16_t      Id;
-			uint16_t      Sequence;
+			uint8_t       Type; /**< ICMP message type, a ICMP_TYPE_* constant */
+			uint8_t       Code; /**< ICMP message code, indicating the message value */
+			uint16_t      Checksum; /**< Ethernet checksum of the ICMP message */
+			uint16_t      Id; /**< Id of the ICMP message */
+			uint16_t      Sequence; /**< Sequence number of the ICMP message, to link together message responses */
 		} ICMP_Header_t;
 		
 	/* Function Prototypes: */

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -64,11 +64,12 @@
 			/** Initializes the serial stream (and regular USART driver) so that both the stream and regular
 			 *  USART driver functions can be used. Must be called before any stream or regular USART functions.
 			 *
-			 *  \param BaudRate  Baud rate to configure the USART at
+			 *  \param BaudRate     Baud rate to configure the USART to
+			 *  \param DoubleSpeed  Enables double speed mode when set, halving the sample time to double the baud rate
 			 */
-			static inline void SerialStream_Init(const uint16_t BaudRate)
+			static inline void SerialStream_Init(const uint32_t BaudRate, const bool DoubleSpeed)
 			{
-				Serial_Init(BaudRate);
+				Serial_Init(BaudRate, DoubleSpeed);
 				
 				stdout = &USARTStream;
 			}

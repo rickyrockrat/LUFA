@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -177,7 +177,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Write the line coding data to the control endpoint */
 				Endpoint_Write_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 				
-				/* Send the line coding data to the host and clear the control endpoint */
+				/* Finalize the stream transfer to send the last packet or clear the host abort */
 				Endpoint_ClearSetupOUT();
 			}
 			
@@ -191,7 +191,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Read the line coding data in from the host into the global struct */
 				Endpoint_Read_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 
-				/* Send the line coding data to the host and clear the control endpoint */
+				/* Finalize the stream transfer to clear the last packet from the host */
 				Endpoint_ClearSetupIN();
 			}
 	
@@ -275,6 +275,7 @@ TASK(CDC_Task)
 	Endpoint_SelectEndpoint(CDC_NOTIFICATION_EPNUM);
 	Endpoint_Write_Stream_LE(&Notification, sizeof(Notification));
 	Endpoint_Write_Stream_LE(&LineStateMask, sizeof(LineStateMask));
+	Endpoint_ClearCurrentBank();
 #endif
 
 	/* Determine if a joystick action has occurred */
@@ -304,7 +305,7 @@ TASK(CDC_Task)
 		/* Write the String to the Endpoint */
 		Endpoint_Write_Stream_LE(ReportString, strlen(ReportString));
 		
-		/* Send the data */
+		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearCurrentBank();
 	}
 

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -34,7 +34,7 @@
  *  is responsible for the initial application hardware configuration.
  */
 
-#define  INCLUDE_FROM_MASSSTORAGEDUALLUN_C
+#define  INCLUDE_FROM_MASSSTORAGE_C
 #include "MassStorage.h"
 
 /* Project Tags, for reading out using the ButtLoad project */
@@ -76,7 +76,7 @@ int main(void)
 	Dataflash_Init(SPI_SPEED_FCPU_DIV_2);
 
 	/* Clear Dataflash sector protections, if enabled */
-	VirtualMemory_ResetDataflashProtections();
+	DataflashManager_ResetDataflashProtections();
 	
 	/* Indicate USB not ready */
 	UpdateStatus(Status_USBNotReady);
@@ -134,11 +134,11 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 	/* Setup Mass Storage In and Out Endpoints */
 	Endpoint_ConfigureEndpoint(MASS_STORAGE_IN_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_IN, MASS_STORAGE_IO_EPSIZE,
-	                           ENDPOINT_BANK_SINGLE);
+	                           ENDPOINT_BANK_DOUBLE);
 
 	Endpoint_ConfigureEndpoint(MASS_STORAGE_OUT_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_OUT, MASS_STORAGE_IO_EPSIZE,
-	                           ENDPOINT_BANK_SINGLE);
+	                           ENDPOINT_BANK_DOUBLE);
 
 	/* Indicate USB connected and ready */
 	UpdateStatus(Status_USBReady);
@@ -243,18 +243,26 @@ TASK(USB_MassStorage)
 				/* Load in the CBW tag into the CSW to link them together */
 				CommandStatus.Tag = CommandBlock.Tag;
 
-				/* Load in the Command Data residue into the CSW */
-				CommandStatus.SCSICommandResidue = CommandBlock.DataTransferLength;
+				/* Load in the data residue counter into the CSW */
+				CommandStatus.DataTransferResidue = CommandBlock.DataTransferLength;
 
 				/* Stall the selected data pipe if command failed (if data is still to be transferred) */
-				if ((CommandStatus.Status == Command_Fail) && (CommandStatus.SCSICommandResidue))
+				if ((CommandStatus.Status == Command_Fail) && (CommandStatus.DataTransferResidue))
 				  Endpoint_StallTransaction();
 
 				/* Return command status block to the host */
 				ReturnCommandStatus();
 				
-				/* Clear the abort transfer flag */
-				IsMassStoreReset = false;
+				/* Check if a Mass Storage Reset ocurred */
+				if (IsMassStoreReset)
+				{
+					/* Reset the data endpoint banks */
+					Endpoint_ResetFIFO(MASS_STORAGE_OUT_EPNUM);
+					Endpoint_ResetFIFO(MASS_STORAGE_IN_EPNUM);
+
+					/* Clear the abort transfer flag */
+					IsMassStoreReset = false;
+				}
 
 				/* Indicate ready */
 				UpdateStatus(Status_USBReady);
@@ -282,6 +290,10 @@ static bool ReadInCommandBlock(void)
 	Endpoint_Read_Stream_LE(&CommandBlock, (sizeof(CommandBlock) - sizeof(CommandBlock.SCSICommandData)),
 	                        AbortOnMassStoreReset);
 
+	/* Check if the current command is being aborted by the host */
+	if (IsMassStoreReset)
+	  return false;
+
 	/* Verify the command block - abort if invalid */
 	if ((CommandBlock.Signature != CBW_SIGNATURE) ||
 	    (CommandBlock.LUN >= TOTAL_LUNS) ||
@@ -300,7 +312,11 @@ static bool ReadInCommandBlock(void)
 	                        CommandBlock.SCSICommandLength,
 	                        AbortOnMassStoreReset);
 	  
-	/* Clear the endpoint */
+	/* Check if the current command is being aborted by the host */
+	if (IsMassStoreReset)
+	  return false;
+
+	/* Finalize the stream transfer to send the last packet */
 	Endpoint_ClearCurrentBank();
 	
 	return true;
@@ -332,12 +348,16 @@ static void ReturnCommandStatus(void)
 		if (IsMassStoreReset)
 		  return;
 	}
-
+	
 	/* Write the CSW to the endpoint */
 	Endpoint_Write_Stream_LE(&CommandStatus, sizeof(CommandStatus),
 	                          AbortOnMassStoreReset);
 	
-	/* Send the CSW */
+	/* Check if the current command is being aborted by the host */
+	if (IsMassStoreReset)
+	  return;
+
+	/* Finalize the stream transfer to send the last packet */
 	Endpoint_ClearCurrentBank();
 }
 

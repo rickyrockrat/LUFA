@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -33,12 +33,9 @@
 #define  INCLUDE_FROM_USBTASK_C
 #include "USBTask.h"
 
+volatile bool      USB_IsSuspended;
 volatile bool      USB_IsConnected;
 volatile bool      USB_IsInitialized;
-
-#if defined(USB_CAN_BE_BOTH)
-         TaskPtr_t USB_TaskPtr;
-#endif
 
 #if defined(USB_CAN_BE_HOST)
 volatile uint8_t   USB_HostState;
@@ -51,25 +48,12 @@ TASK(USB_USBTask)
 	#elif defined(USB_DEVICE_ONLY)
 		USB_DeviceTask();
 	#else
-		if (USB_IsInitialized)
-		  (*USB_TaskPtr)();
+		if (USB_CurrentMode == USB_MODE_DEVICE)
+		  USB_DeviceTask();
+		else if (USB_CurrentMode == USB_MODE_HOST)
+		  USB_HostTask();
 	#endif
 }
-
-#if defined(USB_CAN_BE_BOTH)
-void USB_InitTaskPointer(void)
-{
-	if (USB_CurrentMode != USB_MODE_NONE)
-	{
-		if (USB_CurrentMode == USB_MODE_DEVICE)
-		  USB_TaskPtr = (TaskPtr_t)USB_DeviceTask;
-		else
-		  USB_TaskPtr = (TaskPtr_t)USB_HostTask;
-
-		USB_IsInitialized = true;
-	}
-}
-#endif
 
 #if defined(USB_CAN_BE_DEVICE)
 static void USB_DeviceTask(void)
@@ -82,9 +66,10 @@ static void USB_DeviceTask(void)
 
 		if (Endpoint_IsSetupReceived())
 		{
-			cli();
-			USB_Device_ProcessControlPacket();
-			sei();
+			ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+			{
+				USB_Device_ProcessControlPacket();
+			}
 		}
 		
 		Endpoint_SelectEndpoint(PrevEndpoint);
@@ -95,19 +80,21 @@ static void USB_DeviceTask(void)
 #if defined(USB_CAN_BE_HOST)
 static void USB_HostTask(void)
 {
-	uint8_t ErrorCode = HOST_ENUMERROR_NoError;
+	uint8_t ErrorCode    = HOST_ENUMERROR_NoError;
+	uint8_t SubErrorCode = HOST_ENUMERROR_NoError;
 	
-	static uint8_t WaitMSRemaining;
-	static uint8_t PostWaitState;
+	static uint16_t WaitMSRemaining;
+	static uint8_t  PostWaitState;
 
 	switch (USB_HostState)
 	{
 		case HOST_STATE_WaitForDevice:
 			if (WaitMSRemaining)
 			{
-				if (USB_Host_WaitMS(1) != HOST_WAITERROR_Successful)
+				if ((SubErrorCode = USB_Host_WaitMS(1)) != HOST_WAITERROR_Successful)
 				{
-					ErrorCode = HOST_ENUMERROR_WaitStage;
+					USB_HostState = PostWaitState;
+					ErrorCode    = HOST_ENUMERROR_WaitStage;
 					break;
 				}
 				
@@ -120,10 +107,33 @@ static void USB_HostTask(void)
 		
 			break;
 		case HOST_STATE_Attached:
+			WaitMSRemaining = HOST_DEVICE_SETTLE_DELAY_MS;
+		
+			USB_HostState = HOST_STATE_Attached_WaitForDeviceSettle;
+			break;
+		case HOST_STATE_Attached_WaitForDeviceSettle:
+			_delay_ms(1);
+
+			if (!(WaitMSRemaining--))
+			{
+				USB_Host_VBUS_Manual_Off();
+
+				USB_OTGPAD_On();
+				USB_Host_VBUS_Auto_Enable();
+				USB_Host_VBUS_Auto_On();
+				
+				USB_HostState = HOST_STATE_Attached_WaitForConnect;
+			}
+			
+			break;
+		case HOST_STATE_Attached_WaitForConnect:		
 			if (USB_INT_HasOccurred(USB_INT_DCONNI))
 			{	
 				USB_INT_Clear(USB_INT_DCONNI);
 				USB_INT_Clear(USB_INT_DDISCI);
+
+				USB_INT_Clear(USB_INT_VBERRI);
+				USB_INT_Enable(USB_INT_VBERRI);
 
 				USB_IsConnected = true;
 				RAISE_EVENT(USB_Connect);
@@ -138,20 +148,7 @@ static void USB_HostTask(void)
 		case HOST_STATE_Attached_DoReset:
 			USB_Host_ResetDevice();
 
-			HOST_TASK_NONBLOCK_WAIT(200, HOST_STATE_Attached_PostReset);
-			break;
-		case HOST_STATE_Attached_PostReset:
-			if (USB_INT_HasOccurred(USB_INT_BCERRI))
-			{
-				USB_INT_Clear(USB_INT_BCERRI);
-
-				ErrorCode = HOST_ENUMERROR_NoDeviceDetected;
-			}
-			else
-			{
-				USB_HostState = HOST_STATE_Powered;
-			}
-			
+			HOST_TASK_NONBLOCK_WAIT(200, HOST_STATE_Powered);
 			break;
 		case HOST_STATE_Powered:
 			Pipe_ConfigurePipe(PIPE_CONTROLPIPE, EP_TYPE_CONTROL,
@@ -160,7 +157,8 @@ static void USB_HostTask(void)
 		
 			if (!(Pipe_IsConfigured()))
 			{
-				ErrorCode = HOST_ENUMERROR_PipeConfigError;
+				ErrorCode    = HOST_ENUMERROR_PipeConfigError;
+				SubErrorCode = 0;
 				break;
 			}
 
@@ -182,7 +180,7 @@ static void USB_HostTask(void)
 			uint8_t* DataBuffer = alloca(offsetof(USB_Descriptor_Device_t, bMaxPacketSize0) + 1);			
 			#endif
 			
-			if (USB_Host_SendControlRequest(DataBuffer) != HOST_SENDCONTROL_Successful)
+			if ((SubErrorCode = USB_Host_SendControlRequest(DataBuffer)) != HOST_SENDCONTROL_Successful)
 			{
 				ErrorCode = HOST_ENUMERROR_ControlError;
 				break;
@@ -209,12 +207,13 @@ static void USB_HostTask(void)
 
 			if (!(Pipe_IsConfigured()))
 			{
-				ErrorCode = HOST_ENUMERROR_PipeConfigError;
+				ErrorCode    = HOST_ENUMERROR_PipeConfigError;
+				SubErrorCode = 0;
 				break;
 			}
 
 			Pipe_SetInfiniteINRequests();
-
+			
 			USB_HostRequest = (USB_Host_Request_Header_t)
 				{
 					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
@@ -224,26 +223,26 @@ static void USB_HostTask(void)
 					wLength:       0,
 				};
 
-			if (USB_Host_SendControlRequest(NULL) != HOST_SENDCONTROL_Successful)
+			if ((SubErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				ErrorCode = HOST_ENUMERROR_ControlError;
 				break;
 			}
 
-			USB_Host_SetDeviceAddress(USB_HOST_DEVICEADDRESS);
-
-			HOST_TASK_NONBLOCK_WAIT(10, HOST_STATE_Default_PostAddressSet);
+			HOST_TASK_NONBLOCK_WAIT(100, HOST_STATE_Default_PostAddressSet);
 			break;
 		case HOST_STATE_Default_PostAddressSet:
+			USB_Host_SetDeviceAddress(USB_HOST_DEVICEADDRESS);
+
 			RAISE_EVENT(USB_DeviceEnumerationComplete);
 			USB_HostState = HOST_STATE_Addressed;
 
 			break;
 	}
 
-	if (ErrorCode != HOST_ENUMERROR_NoError)
+	if ((ErrorCode != HOST_ENUMERROR_NoError) && (USB_HostState != HOST_STATE_Unattached))
 	{
-		RAISE_EVENT(USB_DeviceEnumerationFailed, ErrorCode);
+		RAISE_EVENT(USB_DeviceEnumerationFailed, ErrorCode, SubErrorCode);
 
 		USB_Host_VBUS_Auto_Off();
 
@@ -252,7 +251,7 @@ static void USB_HostTask(void)
 		if (USB_IsConnected)
 		  RAISE_EVENT(USB_Disconnect);
 
-		USB_Host_PrepareForDeviceConnect();
+		USB_ResetInterface();
 	}
 }
 #endif

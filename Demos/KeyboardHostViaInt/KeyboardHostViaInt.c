@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -28,32 +28,12 @@
   this software.
 */
 
-/*
-	Keyboard host demonstration application, using pipe interrupts. This gives
-	a simple reference application for implementing a USB Keyboard host utilizing
-	the LUFA pipe interrupt system, for USB keyboards using the standard Keyboard
-	HID profile.
-	
-	Pressed alpha-numeric, enter or space key is transmitted through the serial
-	USART at serial settings 9600, 8, N, 1.
-
-	This uses a naive method where the returned report structure is assumed.
-	A better implementation uses the HID report parser for correct report data
-	processing across all compatable keyboards, as shown in the
-	KeyboardHostWithParser demo application.
-
-	Currently only single interface keyboards are supported.
-*/
-
-/*
-	USB Mode:           Host
-	USB Class:          Human Interface Device (HID)
-	USB Subclass:       Keyboard
-	Relevant Standards: USBIF HID Standard
-	                    USBIF HID Usage Tables 
-	Usable Speeds:      Low Speed Mode, Full Speed Mode
-*/
-
+/** \file
+ *
+ *  Main source file for the KeyboardHostViaInt demo. This file contains the main tasks of
+ *  the demo and is responsible for the initial application hardware configuration.
+ */
+ 
 #include "KeyboardHostViaInt.h"
 
 /* Project Tags, for reading out using the ButtLoad project */
@@ -69,6 +49,10 @@ TASK_LIST
 	{ Task: USB_Keyboard_Host    , TaskStatus: TASK_STOP },
 };
 
+
+/** Main program entry point. This routine configures the hardware required by the application, then
+ *  starts the scheduler to run the application tasks.
+ */
 int main(void)
 {
 	/* Disable watchdog if enabled by bootloader/fuses */
@@ -79,7 +63,7 @@ int main(void)
 	SetSystemClockPrescaler(0);
 
 	/* Hardware Initialization */
-	SerialStream_Init(9600);
+	SerialStream_Init(9600, false);
 	LEDs_Init();
 	
 	/* Indicate USB not ready */
@@ -99,6 +83,9 @@ int main(void)
 	Scheduler_Start();
 }
 
+/** Event handler for the USB_DeviceAttached event. This indicates that a device has been attached to the host, and
+ *  starts the library USB task to begin the enumeration and USB management process.
+ */
 EVENT_HANDLER(USB_DeviceAttached)
 {
 	puts_P(PSTR("Device Attached.\r\n"));
@@ -108,6 +95,9 @@ EVENT_HANDLER(USB_DeviceAttached)
 	Scheduler_SetTaskMode(USB_USBTask, TASK_RUN);
 }
 
+/** Event handler for the USB_DeviceUnattached event. This indicates that a device has been removed from the host, and
+ *  stops the library USB task management process.
+ */
 EVENT_HANDLER(USB_DeviceUnattached)
 {
 	/* Stop keyboard and USB management task */
@@ -118,6 +108,9 @@ EVENT_HANDLER(USB_DeviceUnattached)
 	UpdateStatus(Status_USBNotReady);
 }
 
+/** Event handler for the USB_DeviceEnumerationComplete event. This indicates that a device has been successfully
+ *  enumerated by the host and is now ready to be used by the application.
+ */
 EVENT_HANDLER(USB_DeviceEnumerationComplete)
 {
 	/* Start Keyboard Host task */
@@ -127,6 +120,7 @@ EVENT_HANDLER(USB_DeviceEnumerationComplete)
 	UpdateStatus(Status_USBReady);
 }
 
+/** Event handler for the USB_HostError event. This indicates that a hardware error occurred while in host mode. */
 EVENT_HANDLER(USB_HostError)
 {
 	USB_ShutDown();
@@ -138,15 +132,22 @@ EVENT_HANDLER(USB_HostError)
 	for(;;);
 }
 
+/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occured while
+ *  enumerating an attached USB device.
+ */
 EVENT_HANDLER(USB_DeviceEnumerationFailed)
 {
 	puts_P(PSTR(ESC_BG_RED "Dev Enum Error\r\n"));
 	printf_P(PSTR(" -- Error Code %d\r\n"), ErrorCode);
+	printf_P(PSTR(" -- Sub Error Code %d\r\n"), SubErrorCode);
 	printf_P(PSTR(" -- In State %d\r\n"), USB_HostState);
 	
 	UpdateStatus(Status_EnumerationError);
 }
 
+/** Task to set the configuration of the attached device after it has been enumerated, and to enable the pipe
+ *  interrupts so that reports can be processed as they arrive from the device.
+ */
 TASK(USB_Keyboard_Host)
 {
 	uint8_t ErrorCode;
@@ -201,6 +202,30 @@ TASK(USB_Keyboard_Host)
 				break;
 			}
 			
+			/* HID class request to set the keyboard protocol to the Boot Protocol */
+			USB_HostRequest = (USB_Host_Request_Header_t)
+				{
+					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
+					bRequest:      REQ_SetProtocol,
+					wValue:        0,
+					wIndex:        0,
+					wLength:       0,
+				};
+
+			/* Send the request, display error and wait for device detatch if request fails */
+			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
+			{
+				puts_P(PSTR("Control Error (Set Protocol).\r\n"));
+				printf_P(PSTR(" -- Error Code: %d\r\n"), ErrorCode);
+
+				/* Indicate error status */
+				UpdateStatus(Status_EnumerationError);
+				
+				/* Wait until USB device disconnected */
+				while (USB_IsConnected);
+				break;
+			}
+
 			puts_P(PSTR("Keyboard Enumerated.\r\n"));
 
 			USB_HostState = HOST_STATE_Ready;
@@ -239,6 +264,9 @@ void UpdateStatus(uint8_t CurrentStatus)
 	LEDs_SetAllLEDs(LEDMask);
 }
 
+/** Interrupt handler for the Endpoint/Pipe interrupt vector. This interrupt fires each time an enabled
+ *  pipe interrupt occurs on a pipe which has had that interrupt enabled.
+ */
 ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 {
 	USB_KeyboardReport_Data_t KeyboardReport;
@@ -258,9 +286,10 @@ ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 			USB_INT_Clear(PIPE_INT_IN);		
 
 			/* Read in keyboard report data */
-			KeyboardReport.Modifier = Pipe_Read_Byte();
-			Pipe_Discard_Byte();
-			KeyboardReport.KeyCode  = Pipe_Read_Byte();
+			Pipe_Read_Stream_LE(&KeyboardReport, sizeof(KeyboardReport));
+							
+			/* Clear the IN endpoint, ready for next data packet */
+			Pipe_ClearCurrentBank();
 						
 			LEDs_ChangeLEDs(LEDS_LED1, (KeyboardReport.Modifier) ? LEDS_LED1 : 0);
 						
@@ -285,11 +314,8 @@ ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 						 
 				/* Print the pressed key character out through the serial port if valid */
 				if (PressedKey)
-				  printf_P(PSTR("%c"), PressedKey);
+				  putchar(PressedKey);
 			}
-
-			/* Clear the IN endpoint, ready for next data packet */
-			Pipe_ClearCurrentBank();
 		}
 	}
 }

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -124,7 +124,7 @@ void SCSI_DecodeSCSICommand(void)
 			break;
 	}
 	
-	/* Check if command was sucessfully processed */
+	/* Check if command was successfully processed */
 	if (CommandSuccess)
 	{
 		/* Command succeeded - set the CSW status and update the SENSE key */
@@ -168,26 +168,17 @@ static bool SCSI_Command_Inquiry(void)
 	/* Write the INQUIRY data to the endpoint */
 	Endpoint_Write_Stream_LE(&InquiryData, BytesTransferred, AbortOnMassStoreReset);
 
-	/* Pad out remaining bytes with 0x00 */
-	while (BytesTransferred < AllocationLength)
-	{
-		/* When endpoint filled, send the data and wait until it is ready to be written to again */
-		if (Endpoint_BytesInEndpoint() == MASS_STORAGE_IO_EPSIZE)
-		{
-			Endpoint_ClearCurrentBank();
-			while (!(Endpoint_ReadWriteAllowed()));
-		}
-					
-		Endpoint_Write_Byte(0x00);
-		
-		BytesTransferred++;
-	}
+	uint8_t PadBytes[AllocationLength - BytesTransferred];
 	
-	/* Send the final endpoint data packet to the host */
+	/* Pad out remaining bytes with 0x00 */
+	Endpoint_Write_Stream_LE(&PadBytes, (AllocationLength - BytesTransferred), AbortOnMassStoreReset);
+
+	/* Finalize the stream transfer to send the last packet */
 	Endpoint_ClearCurrentBank();
 
 	/* Succeed the command and update the bytes transferred counter */
-	CommandBlock.DataTransferLength -= BytesTransferred;	
+	CommandBlock.DataTransferLength -= BytesTransferred;
+	
 	return true;
 }
 
@@ -204,22 +195,12 @@ static bool SCSI_Command_Request_Sense(void)
 	/* Send the SENSE data - this indicates to the host the status of the last command */
 	Endpoint_Write_Stream_LE(&SenseData, BytesTransferred, AbortOnMassStoreReset);
 	
+	uint8_t PadBytes[AllocationLength - BytesTransferred];
+	
 	/* Pad out remaining bytes with 0x00 */
-	while (BytesTransferred < AllocationLength)
-	{
-		/* When endpoint filled, send the data and wait until it is ready to be written to again */
-		if (Endpoint_BytesInEndpoint() == MASS_STORAGE_IO_EPSIZE)
-		{
-			Endpoint_ClearCurrentBank();
-			while (!(Endpoint_ReadWriteAllowed()));
-		}
-					
-		Endpoint_Write_Byte(0x00);
-		
-		BytesTransferred++;
-	}
+	Endpoint_Write_Stream_LE(&PadBytes, (AllocationLength - BytesTransferred), AbortOnMassStoreReset);
 
-	/* Send the final endpoint data packet to the host */
+	/* Finalize the stream transfer to send the last packet */
 	Endpoint_ClearCurrentBank();
 
 	/* Succeed the command and update the bytes transferred counter */
@@ -236,16 +217,21 @@ static bool SCSI_Command_Request_Sense(void)
 static bool SCSI_Command_Read_Capacity_10(void)
 {
 	/* Send the total number of logical blocks in the current LUN */
-	Endpoint_Write_DWord_BE(LUN_MEDIA_SIZE);
+	Endpoint_Write_DWord_BE(LUN_MEDIA_BLOCKS - 1);
 
 	/* Send the logical block size of the device (must be 512 bytes) */
 	Endpoint_Write_DWord_BE(VIRTUAL_MEMORY_BLOCK_SIZE);
+
+	/* Check if the current command is being aborted by the host */
+	if (IsMassStoreReset)
+	  return false;
 
 	/* Send the endpoint data packet to the host */
 	Endpoint_ClearCurrentBank();
 
 	/* Succeed the command and update the bytes transferred counter */
 	CommandBlock.DataTransferLength -= 8;
+	
 	return true;
 }
 
@@ -273,7 +259,7 @@ static bool SCSI_Command_Send_Diagnostic(void)
 	/* Test first Dataflash IC is present and responding to commands */
 	Dataflash_SelectChip(DATAFLASH_CHIP1);
 	Dataflash_SendByte(DF_CMD_READMANUFACTURERDEVICEINFO);
-	ReturnByte = Dataflash_SendByte(0x00);
+	ReturnByte = Dataflash_ReceiveByte();
 	Dataflash_DeselectChip();
 
 	/* If returned data is invalid, fail the command */
@@ -291,7 +277,7 @@ static bool SCSI_Command_Send_Diagnostic(void)
 	/* Test second Dataflash IC is present and responding to commands */
 	Dataflash_SelectChip(DATAFLASH_CHIP2);
 	Dataflash_SendByte(DF_CMD_READMANUFACTURERDEVICEINFO);
-	ReturnByte = Dataflash_SendByte(0x00);
+	ReturnByte = Dataflash_ReceiveByte();
 	Dataflash_DeselectChip();
 
 	/* If returned data is invalid, fail the command */
@@ -306,7 +292,9 @@ static bool SCSI_Command_Send_Diagnostic(void)
 	}
 	#endif
 	
-	/* All Dataflash ICs are working correctly, succeed the command */
+	/* Succeed the command and update the bytes transferred counter */
+	CommandBlock.DataTransferLength = 0;
+	
 	return true;
 }
 
@@ -333,11 +321,8 @@ static bool SCSI_Command_ReadWrite_10(const bool IsDataRead)
 	((uint8_t*)&TotalBlocks)[1]  = CommandBlock.SCSICommandData[7];
 	((uint8_t*)&TotalBlocks)[0]  = CommandBlock.SCSICommandData[8];
 	
-	/* Adjust the given block address to the real media address based on the selected LUN */
-	BlockAddress += (CommandBlock.LUN * LUN_MEDIA_SIZE);
-	
-	/* Check if the block address is outside the maximum allowable value */
-	if (BlockAddress > VIRTUAL_MEMORY_BLOCKS)
+	/* Check if the block address is outside the maximum allowable value for the LUN */
+	if (BlockAddress >= LUN_MEDIA_BLOCKS)
 	{
 		/* Block address is invalid, update SENSE key and return command fail */
 		SCSI_SET_SENSE(SCSI_SENSE_KEY_ILLEGAL_REQUEST,
@@ -347,13 +332,19 @@ static bool SCSI_Command_ReadWrite_10(const bool IsDataRead)
 		return false;
 	}
 
+	#if (TOTAL_LUNS > 1)
+	/* Adjust the given block address to the real media address based on the selected LUN */
+	BlockAddress += ((uint32_t)CommandBlock.LUN * LUN_MEDIA_BLOCKS);
+	#endif
+	
 	/* Determine if the packet is a READ (10) or WRITE (10) command, call appropriate function */
 	if (IsDataRead == DATA_READ)
-	  VirtualMemory_ReadBlocks(BlockAddress, TotalBlocks);
+	  DataflashManager_ReadBlocks(BlockAddress, TotalBlocks);
 	else
-	  VirtualMemory_WriteBlocks(BlockAddress, TotalBlocks);
+	  DataflashManager_WriteBlocks(BlockAddress, TotalBlocks);
 
 	/* Update the bytes transferred counter and succeed the command */
-	CommandBlock.DataTransferLength -= (VIRTUAL_MEMORY_BLOCK_SIZE * TotalBlocks);
+	CommandBlock.DataTransferLength -= ((uint32_t)TotalBlocks * VIRTUAL_MEMORY_BLOCK_SIZE);
+	
 	return true;
 }

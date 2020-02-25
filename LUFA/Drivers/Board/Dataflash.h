@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -54,17 +54,17 @@
 	#include "../../Common/Common.h"
 	
 	#if !defined(BOARD)
-		#error BOARD must be set in makefile to BOARD_USBKEY, BOARD_STK525, BOARD_STK526, BOARD_RZUSBSTICK or BOARD_USER.	
+		#error BOARD must be set in makefile to a value specified in BoardTypes.h.
 	#elif (BOARD == BOARD_USBKEY)
 		#include "USBKEY/Dataflash.h"
 	#elif (BOARD == BOARD_STK525)
 		#include "STK525/Dataflash.h"
 	#elif (BOARD == BOARD_STK526)
 		#include "STK526/Dataflash.h"
-	#elif (BOARD == BOARD_RZUSBSTICK)
-		#error The selected board does not contain a Dataflash IC.
 	#elif (BOARD == BOARD_USER)
 		#include "Board/Dataflash.h"
+	#else
+		#error The selected board does not contain a dataflash IC.
 	#endif
 	
 	/* Enable C linkage for C++ Compilers: */
@@ -108,11 +108,32 @@
 			 *
 			 *  \return Last response byte from the dataflash
 			 */
-			static inline uint8_t Dataflash_SendByte(const uint8_t Byte)
+			static inline uint8_t Dataflash_TransferByte(const uint8_t Byte) ATTR_ALWAYSINLINE;
+			static inline uint8_t Dataflash_TransferByte(const uint8_t Byte)
 			{
-				return SPI_SendByte(Byte);
+				return SPI_TransferByte(Byte);
 			}
 
+			/** Sends a byte to the currently selected dataflash IC, and ignores the next byte from the dataflash.
+			 *
+			 *  \param Byte of data to send to the dataflash
+			 */
+			static inline void Dataflash_SendByte(const uint8_t Byte) ATTR_ALWAYSINLINE;
+			static inline void Dataflash_SendByte(const uint8_t Byte)
+			{
+				SPI_SendByte(Byte);
+			}
+			
+			/** Sends a dummy byte to the currently selected dataflash IC, and returns the next byte from the dataflash.
+			 *
+			 *  \return Last response byte from the dataflash
+			 */
+			static inline uint8_t Dataflash_ReceiveByte(void) ATTR_ALWAYSINLINE ATTR_WARN_UNUSED_RESULT;
+			static inline uint8_t Dataflash_ReceiveByte(void)
+			{
+				return SPI_ReceiveByte();
+			}
+			
 			/** Toggles the select line of the currently selected dataflash IC, so that it is ready to receive
 			 *  a new command.
 			 */
@@ -136,7 +157,7 @@
 			{
 				Dataflash_ToggleSelectedChipCS();
 				Dataflash_SendByte(DF_CMD_GETSTATUS);
-				while (!(Dataflash_SendByte(0x00) & DF_STATUS_READY));
+				while (!(Dataflash_ReceiveByte() & DF_STATUS_READY));
 			}
 
 			/** Selects a dataflash IC from the given page number, which should range from 0 to
@@ -149,11 +170,10 @@
 			 */
 			static inline void Dataflash_SelectChipFromPage(const uint16_t PageAddress)
 			{
+				Dataflash_DeselectChip();
+				
 				if (PageAddress >= (DATAFLASH_PAGES * DATAFLASH_TOTALCHIPS))
-				{
-					Dataflash_DeselectChip();
-					return;
-				}
+				  return;
 
 				#if (DATAFLASH_TOTALCHIPS == 2)
 					if (PageAddress & 0x01)
@@ -161,7 +181,6 @@
 					else
 					  Dataflash_SelectChip(DATAFLASH_CHIP1);
 				#else
-					Dataflash_DeselectChip();
 					Dataflash_SelectChip(DATAFLASH_CHIP1);
 				#endif
 			}

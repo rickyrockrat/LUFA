@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -53,7 +53,7 @@ int8_t Temperature_GetTemperature(void)
 	for (uint16_t Index = 0; Index < TEMP_TABLE_SIZE; Index++)
 	{
 		if (Temp_ADC > pgm_read_word(&Temperature_Lookup[Index]))
-		  return ((Index - 1) + TEMP_TABLE_OFFSET);
+		  return (Index + TEMP_TABLE_OFFSET);
 	}
 
 	return TEMP_MAX_TEMP;

@@ -1,6 +1,7 @@
 # Hey Emacs, this is a -*- makefile -*-
 #----------------------------------------------------------------------------
 # WinAVR Makefile Template written by Eric B. Weddington, Jörg Wunsch, et al.
+#  >> Modified for use with the LUFA project. <<
 #
 # Released to the Public Domain
 #
@@ -13,6 +14,8 @@
 # Sander Pool
 # Frederik Rouleau
 # Carlos Lamas
+# Dean Camera
+# Opendous Inc.
 #
 #----------------------------------------------------------------------------
 # On command line:
@@ -27,6 +30,21 @@
 #
 # make program = Download the hex file to the device, using avrdude.
 #                Please customize the avrdude settings below first!
+#
+# make dfu = Download the hex file to the device, using dfu-programmer (must
+#            have dfu-programmer installed).
+#
+# make flip = Download the hex file to the device, using Atmel FLIP (must
+#             have Atmel FLIP installed).
+#
+# make dfu-ee = Download the eeprom file to the device, using dfu-programmer
+#               (must have dfu-programmer installed).
+#
+# make flip-ee = Download the eeprom file to the device, using Atmel FLIP
+#                (must have Atmel FLIP installed).
+#
+# make doxygen = Generate DoxyGen documentation for the project (must have
+#                DoxyGen installed)
 #
 # make debug = Start either simulavr or avarice as specified for debugging, 
 #              with avr-gdb or avr-insight as the front end for debugging.
@@ -44,7 +62,7 @@
 MCU = at90usb1287
 
 
-# Target board (USBKEY, STK525, STK526, RZUSBSTICK, USER or blank for projects not requiring
+# Target board (see library BoardTypes.h documentation, USER or blank for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called 
 # "Board" inside the application directory.
 BOARD  = USBKEY
@@ -146,7 +164,7 @@ CSTANDARD = -std=gnu99
 
 # Place -D or -U options here for C sources
 CDEFS  = -DF_CPU=$(F_CPU)UL -DBOARD=BOARD_$(BOARD) -DUSE_NONSTANDARD_DESCRIPTOR_NAMES -DNO_STREAM_CALLBACKS
-CDEFS += -DUSB_HOST_ONLY -DUSE_STATIC_OPTIONS=(USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)
+CDEFS += -DUSB_HOST_ONLY -DUSE_STATIC_OPTIONS="(USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)"
 
 
 # Place -D or -U options here for ASM sources
@@ -486,6 +504,29 @@ gccversion :
 program: $(TARGET).hex $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
+flip: $(TARGET).hex
+	batchisp -hardware usb -device $(MCU) -operation erase f
+	batchisp -hardware usb -device $(MCU) -operation loadbuffer $(TARGET).hex program
+	batchisp -hardware usb -device $(MCU) -operation start reset 0
+
+dfu: $(TARGET).hex
+	dfu-programmer $(MCU) erase
+	dfu-programmer $(MCU) flash --debug 1 $(TARGET).hex
+	dfu-programmer $(MCU) reset
+
+flip-ee: $(TARGET).hex $(TARGET).eep
+	mv $(TARGET).eep $(TARGET)eep.hex
+	batchisp -hardware usb -device $(MCU) -operation memory EEPROM erase F memory FLASH erase F
+	batchisp -hardware usb -device $(MCU) -operation memory EEPROM
+	loadbuffer $(TARGET)eep.hex memory FLASH loadbuffer $(TARGET).hex
+	program
+	batchisp -hardware usb -device $(MCU) -operation start reset 0
+
+dfu-ee: $(TARGET).hex $(TARGET).eep
+	dfu-programmer $(MCU) erase
+	dfu-programmer $(MCU) flash --debug 1 $(TARGET).hex
+	dfu-programmer $(MCU) eeprom --debug 1 $(TARGET).eep
+	dfu-programmer $(MCU) reset
 
 # Generate avr-gdb config/init file which does the following:
 #     define the reset signal, load the target file, connect to target, and set 
@@ -663,4 +704,4 @@ $(shell mkdir $(OBJDIR) 2>/dev/null)
 finish end sizebefore sizeafter gccversion  \
 build elf hex eep lss sym coff extcoff      \
 clean clean_list clean_binary program debug \
-gdb-config doxygen
+gdb-config doxygen dfu flip

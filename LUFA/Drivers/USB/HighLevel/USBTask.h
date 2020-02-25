@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -40,6 +40,7 @@
 	/* Includes: */
 		#include <avr/io.h>
 		#include <avr/interrupt.h>
+		#include <util/atomic.h>
 		#include <stdbool.h>
 		#include <stddef.h>
 		
@@ -73,12 +74,26 @@
 			extern volatile bool USB_IsConnected;
 
 			/** Indicates if the USB interface is currently initialized but not neccesarily connected to a host
-			 *  or device (i.e. if USB_Init() has been run).
+			 *  or device (i.e. if USB_Init() has been run). If this is false, all other library globals are invalid.
 			 *
 			 *  \note This variable should be treated as read-only in the user application, and never manually
 			 *        changed in value.
 			 */
 			extern volatile bool USB_IsInitialized;
+
+			#if defined(USB_CAN_BE_DEVICE) || defined(__DOXYGEN__)
+			/** Indicates if the USB interface is currently suspended by the host when in device mode. When suspended,
+			 *  the device should consume minimal power, and cannot communicate to the host. If Remote Wakeup is
+			 *  supported by the device and USB_RemoteWakeupEnabled is true, suspension can be terminated by the device
+			 *  by issuing a Remote Wakup request.
+			 *
+			 *  \note This global is only present if the user application can be a USB device.
+			 *
+			 *  \note This variable should be treated as read-only in the user application, and never manually
+			 *        changed in value.
+			 */
+			extern volatile bool USB_IsSuspended;
+			#endif
 
 			#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
 			/** Indicates the current host state machine state. When in host mode, this indicates the state
@@ -170,13 +185,9 @@
 					static void USB_DeviceTask(void);
 				#endif
 			#endif
-
-			#if defined(USB_CAN_BE_BOTH)
-				void USB_InitTaskPointer(void);
-			#endif
 			
 		/* Macros: */
-		#define HOST_TASK_NONBLOCK_WAIT(duration, nextstate) {USB_HostState = HOST_STATE_WaitForDevice; WaitMSRemaining = duration; PostWaitState = nextstate; }
+			#define HOST_TASK_NONBLOCK_WAIT(duration, nextstate) {USB_HostState = HOST_STATE_WaitForDevice; WaitMSRemaining = duration; PostWaitState = nextstate; }
 	#endif
 	
 	/* Disable C linkage for C++ Compilers: */

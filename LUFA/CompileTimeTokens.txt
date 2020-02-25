@@ -111,6 +111,12 @@
  *  EEPROM or RAM rather than flash memory) and reduces code maintenance. However, many USB device projects use only a single configuration.
  *  Defining this token enables single-configuration mode, reducing the compiled size of the binary at the expense of flexibility.
  *
+ *  <b>NO_CLEARSET_FEATURE_REQUEST</b> - DevChapter9.h \n
+ *  In some limited USB device applications, the Get Feature and Set Feature requests are not used - this is when the device does not have
+ *  device level features (such as remote wakeup) nor any data endpoints beyond the mandatory control endpoint. In such limited situations,
+ *  this token may be defined to remove the handling of the Get Feature and Set Feature Chapter 9 requests to save space. Generally, this
+ *  is usually only useful in (some) bootloaders.
+ *
  *  <b>NO_STREAM_CALLBACKS</b> - Endpoint.h, Pipe.h \n
  *  Both the endpoint and the pipe driver code contains stream functions, allowing for arrays of data to be sent to or from the
  *  host easily via a single function call (rather than complex routines worrying about sending full packets, waiting for the endpoint/
@@ -123,6 +129,12 @@
  *  When a control transfer is initiated in host mode to an attached device, a timeout is used to abort the transfer if the attached
  *  device fails to respond within the timeout period. This token may be defined to a non-zero value to set the timeout period for
  *  control transfers, specified in milliseconds. If not defined, the default value specified in Host.h is used instead.
+ *
+ *  <b>HOST_DEVICE_SETTLE_DELAY_MS</b> - Host.h \n
+ *  Some devices require a delay of up to 5 seconds after they are connected to VBUS before the enumeration process can be started, or
+ *  they will fail to enumerate correctly. By placing a delay before the enumeration process, it can be ensured that the bus has settled
+ *  back to a known idle state before communications occur with the device. This token may be defined to a non-zero value to set the
+ *  device settle period, specified in milliseconds. If not defined, the default value specified in Host.h is used instead.
  *
  *  <b>USE_STATIC_OPTIONS</b> - LowLevel.h \n
  *  By default, the USB_Init() function accepts dynamic options at runtime to alter the library behaviour, including whether the USB pad

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -36,7 +36,7 @@ int SerialStream_TxByte(char DataByte, FILE *Stream)
 {
 	Serial_TxByte(DataByte);
 
-	return 0; 
+	return 0;
 }
 
 int SerialStream_RxByte(FILE *Stream)

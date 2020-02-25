@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -205,7 +205,7 @@
 				 *  This value may be overridden in the user project makefile as the value of the 
 				 *  USB_STREAM_TIMEOUT_MS token, and passed to the compiler using the -D switch.
 				 */
-				#define USB_STREAM_TIMEOUT_MS       50
+				#define USB_STREAM_TIMEOUT_MS       100
 			#endif
 
 		/* Function Prototypes: */
@@ -266,6 +266,11 @@
 			 *  is restarted with the USB_Init() function.
 			 */
 			void USB_ShutDown(void);
+
+			/** Resets the interface, when already initialized. This will re-enumerate the device if already connected
+			 *  to a host, or re-enumerate an already attached device when in host mode.
+			 */
+			void USB_ResetInterface(void);
 
 		/* Enums: */
 			/** Enum for error codes relating to the powering on of the USB interface. These error codes are
@@ -356,9 +361,6 @@
 				return USB_MODE_DEVICE;
 				#endif
 			}
-
-		/* Function Prototypes: */
-			void USB_SetupInterface(void);
 	#endif
 	
 	/* Disable C linkage for C++ Compilers: */

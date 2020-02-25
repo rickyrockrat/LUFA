@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -339,7 +339,7 @@ static uint8_t FetchNextCommandByte(void)
 	return Endpoint_Read_Byte();
 }
 
-/** Writes the next reponse byte to the CDC data IN endpoint, and sends the endpoint back if needed to free up the
+/** Writes the next response byte to the CDC data IN endpoint, and sends the endpoint back if needed to free up the
  *  bank when full ready for the next byte in the packet to the host.
  *
  *  \param Response  Next response byte to send to the host

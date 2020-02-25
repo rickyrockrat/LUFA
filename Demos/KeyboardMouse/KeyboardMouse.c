@@ -1,14 +1,14 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
-  Copyright 2008  Denver Gingerich (denver [at] ossguy [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Denver Gingerich (denver [at] ossguy [dot] com)
 	  
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -184,7 +184,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Clear the report data afterwards */
 				memset(ReportData, 0, ReportSize);
 				
-				/* Finalize the transfer, acknowedge the host error or success OUT transfer */
+				/* Finalize the stream transfer to send the last packet or clear the host abort */
 				Endpoint_ClearSetupOUT();
 			}
 		
@@ -291,7 +291,7 @@ TASK(USB_Keyboard)
 			/* Write Keyboard Report Data */
 			Endpoint_Write_Stream_LE(&KeyboardReportData, sizeof(KeyboardReportData));
 
-			/* Handshake the IN Endpoint - send the data to the host */
+			/* Finalize the stream transfer to send the last packet */
 			Endpoint_ClearCurrentBank();
 
 			/* Clear the report data afterwards */
@@ -362,7 +362,7 @@ TASK(USB_Mouse)
 			/* Write Mouse Report Data */
 			Endpoint_Write_Stream_LE(&MouseReportData, sizeof(MouseReportData));
 
-			/* Handshake the IN Endpoint - send the data to the host */
+			/* Finalize the stream transfer to send the last packet */
 			Endpoint_ClearCurrentBank();
 
 			/* Clear the report data afterwards */

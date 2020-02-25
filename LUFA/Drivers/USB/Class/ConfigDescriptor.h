@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -110,7 +110,10 @@
 
 			/** Searches for the next descriptor in the given configuration descriptor using a premade comparator
 			 *  function. The routine updates the position and remaining configuration descriptor bytes values
-			 *  automatically.
+			 *  automatically. If a comparator routine fails a search, the descriptor pointer is retreated back
+			 *  so that the next descriptor search invocation will start from the descriptor which first caused the
+			 *  original search to fail. This behaviour allows for one comparator to be used immediately after another
+			 *  has failed, starting the second search from the descriptor which failed the first.
 			 *
 			 *  \param DSize    Pointer to an int storing the remaining bytes in the configuration descriptor
 			 *  \param DPos     Pointer to the current position in the configuration descriptor
@@ -243,8 +246,8 @@
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Function Prototypes: */
-			uint8_t USB_Host_GetNextDescriptorComp_P(uint16_t* const BytesRem, uint8_t** const CurrConfigLoc,
-                                                     uint8_t (* const SearchRoutine)(void* const));
+			uint8_t USB_Host_GetNextDescriptorComp_P(uint16_t* BytesRem, uint8_t** CurrConfigLoc,
+                                                     uint8_t (* const ComparatorRoutine)(void* const));
 	#endif
 			
 	/* Disable C linkage for C++ Compilers: */

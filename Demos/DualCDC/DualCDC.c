@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -215,7 +215,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Write the line coding data to the control endpoint */
 				Endpoint_Write_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 				
-				/* Send the line coding data to the host and clear the control endpoint */
+				/* Finalize the stream transfer to send the last packet or clear the host abort */
 				Endpoint_ClearSetupOUT();
 			}
 			
@@ -229,7 +229,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Read the line coding data in from the host into the global struct */
 				Endpoint_Read_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 
-				/* Send the line coding data to the host and clear the control endpoint */
+				/* Finalize the stream transfer to clear the last packet from the host */
 				Endpoint_ClearSetupIN();
 			}
 	
@@ -311,7 +311,7 @@ TASK(CDC1_Task)
 		/* Write the String to the Endpoint */
 		Endpoint_Write_Stream_LE(ReportString, strlen(ReportString));
 		
-		/* Send the data */
+		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearCurrentBank();
 	}
 
@@ -343,7 +343,7 @@ TASK(CDC2_Task)
 		/* Read in the incomming packet into the buffer */
 		Endpoint_Read_Stream_LE(&Buffer, DataLength);
 
-		/* Clear the data from the reception endpoint */
+		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearCurrentBank();
 
 		/* Select the Serial Tx Endpoint */
@@ -352,7 +352,7 @@ TASK(CDC2_Task)
 		/* Write the received data to the endpoint */
 		Endpoint_Write_Stream_LE(&Buffer, DataLength);
 
-		/* Send the endpoint data back to the host */
+		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearCurrentBank();
 	}
 }

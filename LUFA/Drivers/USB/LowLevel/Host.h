@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -68,6 +68,18 @@
 				 *  USB_HOST_TIMEOUT_MS token, and passed to the compiler using the -D switch.
 				 */
 				#define USB_HOST_TIMEOUT_MS                1000
+			#endif
+			
+			#if !defined(HOST_DEVICE_SETTLE_DELAY_MS) || defined(__DOXYGEN__)
+				/** Constant for the delay in milliseconds after a device is connected before the library
+				 *  will start the enumeration process. Some devices require a delay of up to 5 seconds
+				 *  after connection before the enumeration process can start or incorrect operation will
+				 *  occur.
+				 *
+				 *  This value may be overridden in the user project makefile as the value of the 
+				 *  HOST_DEVICE_SETTLE_DELAY_MS token, and passed to the compiler using the -D switch.
+				 */
+				#define HOST_DEVICE_SETTLE_DELAY_MS        1500
 			#endif
 			
 			/** Resets the USB bus, including the endpoints in any attached device and pipes on the AVR host.
@@ -139,19 +151,20 @@
 			 */
 			enum USB_Host_States_t
 			{
-				HOST_STATE_WaitForDevice          = 0,  /**< Internally implemented by the library. */
-				HOST_STATE_Unattached             = 1,  /**< Internally implemented by the library. */
-				HOST_STATE_Attached               = 2,  /**< Internally implemented by the library. */
-				HOST_STATE_Attached_DoReset       = 3,  /**< Internally implemented by the library. */
-				HOST_STATE_Attached_PostReset     = 4,  /**< Internally implemented by the library. */
-				HOST_STATE_Powered                = 5,  /**< Internally implemented by the library. */
-				HOST_STATE_Default                = 6,  /**< Internally implemented by the library. */
-				HOST_STATE_Default_PostReset      = 7,  /**< Internally implemented by the library. */
-				HOST_STATE_Default_PostAddressSet = 8,  /**< Internally implemented by the library. */
-				HOST_STATE_Addressed              = 9, /**< May be implemented by the user project. */
-				HOST_STATE_Configured             = 10, /**< May be implemented by the user project. */
-				HOST_STATE_Ready                  = 11, /**< May be implemented by the user project. */
-				HOST_STATE_Suspended              = 12, /**< May be implemented by the user project. */
+				HOST_STATE_WaitForDevice                = 0,  /**< Internally implemented by the library. */
+				HOST_STATE_Unattached                   = 1,  /**< Internally implemented by the library. */
+				HOST_STATE_Attached                     = 2,  /**< Internally implemented by the library. */
+				HOST_STATE_Attached_WaitForDeviceSettle = 3,  /**< Internally implemented by the library. */
+				HOST_STATE_Attached_WaitForConnect      = 4,  /**< Internally implemented by the library. */
+				HOST_STATE_Attached_DoReset             = 5,  /**< Internally implemented by the library. */
+				HOST_STATE_Powered                      = 6,  /**< Internally implemented by the library. */
+				HOST_STATE_Default                      = 7,  /**< Internally implemented by the library. */
+				HOST_STATE_Default_PostReset            = 8,  /**< Internally implemented by the library. */
+				HOST_STATE_Default_PostAddressSet       = 9,  /**< Internally implemented by the library. */
+				HOST_STATE_Addressed                    = 10, /**< May be implemented by the user project. */
+				HOST_STATE_Configured                   = 11, /**< May be implemented by the user project. */
+				HOST_STATE_Ready                        = 12, /**< May be implemented by the user project. */
+				HOST_STATE_Suspended                    = 13, /**< May be implemented by the user project. */
 			};
 			
 			/** Enum for the error codes for the USB_HostError event.
@@ -208,7 +221,7 @@
 			#define USB_Host_VBUS_Auto_Off()        MACROS{ OTGCON |=  (1 << VBUSRQC);        }MACROE
 			#define USB_Host_VBUS_Manual_Off()      MACROS{ PORTE  &= ~(1 << 7);              }MACROE
 
-			#define USB_Host_SetDeviceAddress(addr) MACROS{ UHADDR  =  (addr & 0b00111111);   }MACROE
+			#define USB_Host_SetDeviceAddress(addr) MACROS{ UHADDR  =  (addr & 0b01111111);   }MACROE
 
 		/* Enums: */
 			enum USB_Host_WaitMSErrorCodes_t
@@ -222,7 +235,6 @@
 		/* Function Prototypes: */
 			uint8_t USB_Host_WaitMS(uint8_t MS);
 			void    USB_Host_ResetDevice(void);
-			void    USB_Host_PrepareForDeviceConnect(void);
 	#endif
 
 	/* Disable C linkage for C++ Compilers: */

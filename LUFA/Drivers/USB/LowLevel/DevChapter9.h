@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -121,7 +121,9 @@
 				static void USB_Device_GetConfiguration(void);
 				static void USB_Device_GetDescriptor(void);
 				static void USB_Device_GetStatus(const uint8_t bmRequestType);
-				static void USB_Device_ClearSetFeature(const uint8_t bRequest);
+				#if !defined(NO_CLEARSET_FEATURE_REQUEST)
+				static void USB_Device_ClearSetFeature(const uint8_t bRequest, const uint8_t bmRequestType);
+				#endif
 			#endif
 	#endif
 

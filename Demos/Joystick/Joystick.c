@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -156,7 +156,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Write the report data to the control endpoint */
 				Endpoint_Write_Control_Stream_LE(&JoystickReportData, wLength);
 				
-				/* Finalize the transfer, acknowedge the host error or success OUT transfer */
+				/* Finalize the stream transfer to send the last packet or clear the host abort */
 				Endpoint_ClearSetupOUT();
 			}
 		
@@ -196,7 +196,7 @@ bool GetNextReport(USB_JoystickReport_Data_t* ReportData)
 	  ReportData->Button |= (1 << 0);
 	  
 	/* Check if the new report is different to the previous report */
-	InputChanged = PrevJoyStatus ^ JoyStatus_LCL;
+	InputChanged = (uint8_t)(PrevJoyStatus ^ JoyStatus_LCL);
 
 	/* Save the current joystick status for later comparison */
 	PrevJoyStatus = JoyStatus_LCL;
@@ -252,7 +252,7 @@ TASK(USB_Joystick_Report)
 			/* Write Joystick Report Data */
 			Endpoint_Write_Stream_LE(&JoystickReportData, sizeof(JoystickReportData));
 
-			/* Handshake the IN Endpoint - send the data to the host */
+			/* Finalize the stream transfer to send the last packet */
 			Endpoint_ClearCurrentBank();
 			
 			/* Clear the report data afterwards */

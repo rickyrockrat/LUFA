@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -28,8 +28,24 @@
   this software.
 */
 
+/** \file
+ *
+ *  Address Resolution Protocol (ARP) packet handling routines. This protocol handles the
+ *  conversion of physical MAC addresses to protocol IP addresses between the host and the
+ *  device.
+ */
+ 
 #include "ARP.h"
 
+/** Processes an ARP packet inside an Ethernet frame, and writes the appropriate response
+ *  to the output Ethernet frame if the host is requesting the IP or MAC address of the
+ *  virtual server device on the network.
+ *
+ *  \param InDataStart   Pointer to the start of the incomming packet's ARP header
+ *  \param OutDataStart  Pointer to the start of the outgoing packet's ARP header
+ *
+ *  \return The number of bytes written to the out Ethernet frame if any, NO_RESPONSE otherwise
+ */
 int16_t ARP_ProcessARPPacket(void* InDataStart, void* OutDataStart)
 {
 	DecodeARPHeader(InDataStart);

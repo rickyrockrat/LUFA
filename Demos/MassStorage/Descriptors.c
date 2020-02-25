@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -81,7 +81,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			ConfigurationNumber:    1,
 			ConfigurationStrIndex:  NO_DESCRIPTOR,
 				
-			ConfigAttributes:       (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_SELFPOWERED),
+			ConfigAttributes:       USB_CONFIG_ATTR_BUSPOWERED,
 			
 			MaxPowerConsumption:    USB_CONFIG_POWER_MA(100)
 		},

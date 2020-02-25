@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -65,8 +65,8 @@
 		 *  each drive - this can be set to any positive non-zero amount. */
 		#define TOTAL_LUNS                 2
 		
-		/** Size of each LUN, calculated from the total capacity divided by the total number of Logical Units in the device. */
-		#define LUN_MEDIA_SIZE             (VIRTUAL_MEMORY_BLOCKS / TOTAL_LUNS)    
+		/** Blocks in each LUN, calculated from the total capacity divided by the total number of Logical Units in the device. */
+		#define LUN_MEDIA_BLOCKS           (VIRTUAL_MEMORY_BLOCKS / TOTAL_LUNS)    
 		
 		/** Magic signature for a Command Block Wrapper used in the Mass Storage Bulk-Only transport protocol. */
 		#define CBW_SIGNATURE              0x43425355UL
@@ -98,7 +98,7 @@
 		{
 			uint32_t Signature; /**< Status block signature, must be CSW_SIGNATURE to indicate a valid Command Status */
 			uint32_t Tag; /**< Unique command ID value, to associate a command block wrapper with its command status wrapper */
-			uint32_t SCSICommandResidue; /**< Number of bytes of data not processed in the SCSI command */
+			uint32_t DataTransferResidue; /**< Number of bytes of data not processed in the SCSI command */
 			uint8_t  Status; /**< Status code of the issued command - a value from the MassStorage_CommandStatusCodes_t enum */
 		} CommandStatusWrapper_t;
 		
@@ -151,7 +151,7 @@
 	/* Function Prototypes: */
 		void UpdateStatus(uint8_t CurrentStatus);
 
-		#if defined(INCLUDE_FROM_MASSSTORAGEDUALLUN_C)
+		#if defined(INCLUDE_FROM_MASSSTORAGE_C)
 			static bool ReadInCommandBlock(void);
 			static void ReturnCommandStatus(void);
 		#endif

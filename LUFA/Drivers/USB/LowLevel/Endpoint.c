@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -71,7 +71,7 @@ void Endpoint_ClearEndpoints(void)
 {
 	UEINT = 0;
 
-	for (uint8_t EPNum = 0; EPNum < ENDPOINT_MAX_ENDPOINTS; EPNum++)
+	for (uint8_t EPNum = 0; EPNum < ENDPOINT_TOTAL_ENDPOINTS; EPNum++)
 	{
 		Endpoint_SelectEndpoint(EPNum);	
 		UEIENX = 0;
@@ -114,7 +114,10 @@ uint8_t Endpoint_Discard_Stream(uint16_t Length
 {
 	uint8_t  ErrorCode;
 	
-	while (Length)
+	if ((ErrorCode = Endpoint_WaitUntilReady()))
+	  return ErrorCode;
+
+	while (Length--)
 	{
 		if (!(Endpoint_ReadWriteAllowed()))
 		{
@@ -128,12 +131,8 @@ uint8_t Endpoint_Discard_Stream(uint16_t Length
 			if ((ErrorCode = Endpoint_WaitUntilReady()))
 			  return ErrorCode;
 		}
-		
+
 		Endpoint_Discard_Byte();
-		Length--;
-		
-		if (!(USB_IsConnected))
-		  return ENDPOINT_RWSTREAM_ERROR_DeviceDisconnected;
 	}
 	
 	return ENDPOINT_RWSTREAM_ERROR_NoError;
@@ -148,7 +147,10 @@ uint8_t Endpoint_Write_Stream_LE(const void* Buffer, uint16_t Length
 	uint8_t* DataStream   = (uint8_t*)Buffer;
 	uint8_t  ErrorCode;
 	
-	while (Length)
+	if ((ErrorCode = Endpoint_WaitUntilReady()))
+	  return ErrorCode;
+
+	while (Length--)
 	{
 		if (!(Endpoint_ReadWriteAllowed()))
 		{
@@ -164,10 +166,6 @@ uint8_t Endpoint_Write_Stream_LE(const void* Buffer, uint16_t Length
 		}
 
 		Endpoint_Write_Byte(*(DataStream++));
-		Length--;
-		
-		if (!(USB_IsConnected))
-		  return ENDPOINT_RWSTREAM_ERROR_DeviceDisconnected;
 	}
 	
 	return ENDPOINT_RWSTREAM_ERROR_NoError;
@@ -182,7 +180,10 @@ uint8_t Endpoint_Write_Stream_BE(const void* Buffer, uint16_t Length
 	uint8_t* DataStream = (uint8_t*)(Buffer + Length - 1);
 	uint8_t  ErrorCode;
 	
-	while (Length)
+	if ((ErrorCode = Endpoint_WaitUntilReady()))
+	  return ErrorCode;
+
+	while (Length--)
 	{
 		if (!(Endpoint_ReadWriteAllowed()))
 		{
@@ -196,12 +197,8 @@ uint8_t Endpoint_Write_Stream_BE(const void* Buffer, uint16_t Length
 			if ((ErrorCode = Endpoint_WaitUntilReady()))
 			  return ErrorCode;
 		}
-		
+
 		Endpoint_Write_Byte(*(DataStream--));
-		Length--;
-		
-		if (!(USB_IsConnected))
-		  return ENDPOINT_RWSTREAM_ERROR_DeviceDisconnected;
 	}
 	
 	return ENDPOINT_RWSTREAM_ERROR_NoError;
@@ -216,7 +213,10 @@ uint8_t Endpoint_Read_Stream_LE(void* Buffer, uint16_t Length
 	uint8_t* DataStream = (uint8_t*)Buffer;
 	uint8_t  ErrorCode;
 	
-	while (Length)
+	if ((ErrorCode = Endpoint_WaitUntilReady()))
+	  return ErrorCode;
+
+	while (Length--)
 	{
 		if (!(Endpoint_ReadWriteAllowed()))
 		{
@@ -232,10 +232,6 @@ uint8_t Endpoint_Read_Stream_LE(void* Buffer, uint16_t Length
 		}
 		
 		*(DataStream++) = Endpoint_Read_Byte();
-		Length--;
-		
-		if (!(USB_IsConnected))
-		  return ENDPOINT_RWSTREAM_ERROR_DeviceDisconnected;
 	}
 	
 	return ENDPOINT_RWSTREAM_ERROR_NoError;
@@ -250,7 +246,10 @@ uint8_t Endpoint_Read_Stream_BE(void* Buffer, uint16_t Length
 	uint8_t* DataStream = (uint8_t*)(Buffer + Length - 1);
 	uint8_t  ErrorCode;
 	
-	while (Length)
+	if ((ErrorCode = Endpoint_WaitUntilReady()))
+	  return ErrorCode;
+
+	while (Length--)
 	{
 		if (!(Endpoint_ReadWriteAllowed()))
 		{
@@ -266,10 +265,6 @@ uint8_t Endpoint_Read_Stream_BE(void* Buffer, uint16_t Length
 		}
 		
 		*(DataStream--) = Endpoint_Read_Byte();
-		Length--;
-		
-		if (!(USB_IsConnected))
-		  return ENDPOINT_RWSTREAM_ERROR_DeviceDisconnected;
 	}
 	
 	return ENDPOINT_RWSTREAM_ERROR_NoError;
@@ -278,7 +273,7 @@ uint8_t Endpoint_Read_Stream_BE(void* Buffer, uint16_t Length
 uint8_t Endpoint_Write_Control_Stream_LE(const void* Buffer, uint16_t Length)
 {
 	uint8_t* DataStream = (uint8_t*)Buffer;
-	bool     SendZLP    = (!(Length % USB_ControlEndpointSize) || (Length == 0));
+	bool     SendZLP    = true;
 	
 	while (Length && !(Endpoint_IsSetupOUTReceived()))
 	{
@@ -291,6 +286,7 @@ uint8_t Endpoint_Write_Control_Stream_LE(const void* Buffer, uint16_t Length)
 			Length--;
 		}
 		
+		SendZLP = (Endpoint_BytesInEndpoint() == USB_ControlEndpointSize);
 		Endpoint_ClearSetupIN();
 	}
 	
@@ -311,7 +307,7 @@ uint8_t Endpoint_Write_Control_Stream_LE(const void* Buffer, uint16_t Length)
 uint8_t Endpoint_Write_Control_Stream_BE(const void* Buffer, uint16_t Length)
 {
 	uint8_t* DataStream = (uint8_t*)(Buffer + Length - 1);
-	bool     SendZLP    = (!(Length % USB_ControlEndpointSize) || (Length == 0));
+	bool     SendZLP    = true;
 	
 	while (Length && !(Endpoint_IsSetupOUTReceived()))
 	{
@@ -324,6 +320,7 @@ uint8_t Endpoint_Write_Control_Stream_BE(const void* Buffer, uint16_t Length)
 			Length--;
 		}
 		
+		SendZLP = (Endpoint_BytesInEndpoint() == USB_ControlEndpointSize);
 		Endpoint_ClearSetupIN();
 	}
 	

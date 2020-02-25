@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2008.
+     Copyright (C) Dean Camera, 2009.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
@@ -53,7 +53,7 @@
 	#include "../../Common/Common.h"
 
 	#if !defined(BOARD)
-		#error BOARD must be set in makefile to BOARD_USBKEY, BOARD_STK525, BOARD_STK526, BOARD_RZUSBSTICK or BOARD_USER.
+		#error BOARD must be set in makefile to a value specified in BoardTypes.h.
 	#elif (BOARD == BOARD_USBKEY)
 		#include "USBKEY/LEDs.h"
 	#elif (BOARD == BOARD_STK525)
@@ -62,6 +62,8 @@
 		#include "STK526/LEDs.h"
 	#elif (BOARD == BOARD_RZUSBSTICK)
 		#include "RZUSBSTICK/LEDs.h"
+	#elif (BOARD == BOARD_ATAVRUSBRF01)
+		#include "ATAVRUSBRF01/LEDs.h"
 	#elif (BOARD == BOARD_USER)
 		#include "Board/LEDs.h"
 	#endif
