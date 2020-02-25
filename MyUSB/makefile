@@ -5,24 +5,30 @@
 #  dean [at] fourwalledcubicle [dot] com
 #      www.fourwalledcubicle.com
 #
-# Released under the LGPL Licence, Version 3
-#
 
-# Makefile to build the MyUSB library and Demos.
-# Call with "make all" to rebuild everything,
-# "make clean" to clean everything, and
-# "make clean_list" to remove all intermediatary
-# files but preserve any binaries.
+# Makefile for the MyUSB library itself.
 
-# It is suggested that for the master build, the --quiet switch
-# is passed to make, to remove all the commands from the output.
-# This gives a much easier to read report of the entire build
-# process.
+MYUSB_SRC_FILES =    ./Drivers/USB/LowLevel/LowLevel.c           \
+                     ./Drivers/USB/LowLevel/Endpoint.c           \
+                     ./Drivers/USB/LowLevel/Pipe.c               \
+                     ./Drivers/USB/LowLevel/DevChapter9.c        \
+                     ./Drivers/USB/LowLevel/HostChapter9.c       \
+                     ./Drivers/USB/LowLevel/Host.c               \
+                     ./Drivers/USB/HighLevel/USBTask.c           \
+                     ./Drivers/USB/HighLevel/USBInterrupt.c      \
+                     ./Drivers/USB/HighLevel/Events.c            \
+                     ./Drivers/USB/HighLevel/StdDescriptors.c    \
+                     ./Drivers/USB/Class/HIDParser.c             \
+                     ./Drivers/USB/Class/ConfigDescriptor.c      \
+                     ./Scheduler/Scheduler.c                     \
+                     ./MemoryAllocator/DynAlloc.c                \
+                     ./Drivers/Board/Temperature.c               \
+                     ./Drivers/AT90USBXXX/Serial.c               \
+                     ./Drivers/AT90USBXXX/Serial_Stream.c        \
 
-%:
-	@echo Executing \"make $@\" on all MyUSB library elements.
-	@echo
-	make -C MyUSB/ $@
-	make -C Demos/ $@
-	@echo
-	@echo MyUSB \"make $@\" operation complete.
+all:
+	
+clean:
+	rm -f $(MYUSB_SRC_FILES:%.c=%.o)
+	
+clean_list:
