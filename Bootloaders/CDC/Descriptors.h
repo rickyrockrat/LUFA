@@ -109,16 +109,16 @@
 		/** Endpoint number for the CDC control interface event notification endpoint. */
 		#define CDC_NOTIFICATION_EPNUM         3
 
-		/** Size of the CDC control interface notification endpoint bank, in bytes */
+		/** Size of the CDC control interface notification endpoint bank, in bytes. */
 		#define CDC_NOTIFICATION_EPSIZE        8
 
-		/** Endpoint number for the CDC data interface TX (data IN) endpoint */
+		/** Endpoint number for the CDC data interface TX (data IN) endpoint. */
 		#define CDC_TX_EPNUM                   1	
 
-		/** Endpoint number for the CDC data interface RX (data OUT) endpoint */
+		/** Endpoint number for the CDC data interface RX (data OUT) endpoint. */
 		#define CDC_RX_EPNUM                   2	
 
-		/** Size of the CDC data interface TX and RX data endpoint banks, in bytes */
+		/** Size of the CDC data interface TX and RX data endpoint banks, in bytes. */
 		#define CDC_TXRX_EPSIZE                16
 
 	/* Type Defines: */
@@ -133,14 +133,15 @@
 			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC_Functional_IntHeader;
 			CDC_FUNCTIONAL_DESCRIPTOR(1)             CDC_Functional_AbstractControlManagement;
 			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC_Functional_Union;
-			USB_Descriptor_Endpoint_t                CDC_ManagementEndpoint;
+			USB_Descriptor_Endpoint_t                CDC_NotificationEndpoint;
 			USB_Descriptor_Interface_t               CDC_DCI_Interface;
 			USB_Descriptor_Endpoint_t                CDC_DataOutEndpoint;
 			USB_Descriptor_Endpoint_t                CDC_DataInEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Function Prototypes: */
-		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
-											ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
+		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
+		                                    const uint8_t wIndex,
+		                                    void** const DescriptorAddress) ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif

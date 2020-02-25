@@ -56,7 +56,7 @@
 		#define CDC_NOTIFICATION_EPSIZE        8
 
 		/** Size in bytes of the CDC data IN and OUT endpoints. */
-		#define CDC_TXRX_EPSIZE                16	
+		#define CDC_TXRX_EPSIZE                16
 
 	/* Type Defines: */
 		/** Type define for the device configuration descriptor structure. This must be defined in the
@@ -70,14 +70,15 @@
 			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC_Functional_IntHeader;
 			CDC_FUNCTIONAL_DESCRIPTOR(1)             CDC_Functional_AbstractControlManagement;
 			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC_Functional_Union;
-			USB_Descriptor_Endpoint_t                CDC_ManagementEndpoint;
+			USB_Descriptor_Endpoint_t                CDC_NotificationEndpoint;
 			USB_Descriptor_Interface_t               CDC_DCI_Interface;
 			USB_Descriptor_Endpoint_t                CDC_DataOutEndpoint;
 			USB_Descriptor_Endpoint_t                CDC_DataInEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Function Prototypes: */
-		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
-											ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
+		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
+		                                    const uint8_t wIndex,
+		                                    void** const DescriptorAddress) ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif

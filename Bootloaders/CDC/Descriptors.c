@@ -126,7 +126,7 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor =
 			.Data                   = {0x00, 0x01}
 		},	
 
-	.CDC_ManagementEndpoint = 
+	.CDC_NotificationEndpoint = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 										 
@@ -201,7 +201,9 @@ USB_Descriptor_String_t ProductString =
  *  is called so that the descriptor details can be passed back and the appropriate descriptor sent back to the
  *  USB host.
  */
-uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
+uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
+                                    const uint8_t wIndex,
+                                    void** const DescriptorAddress)
 {
 	const uint8_t  DescriptorType   = (wValue >> 8);
 	const uint8_t  DescriptorNumber = (wValue & 0xFF);
