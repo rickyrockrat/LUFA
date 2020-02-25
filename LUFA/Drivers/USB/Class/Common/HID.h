@@ -54,6 +54,11 @@
 		#include "../../Core/StdDescriptors.h"
 		#include "HIDParser.h"
 
+	/* Enable C linkage for C++ Compilers: */
+		#if defined(__cplusplus)
+			extern "C" {
+		#endif
+
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_HID_DRIVER)
 			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
@@ -102,7 +107,7 @@
 		#define HID_KEYBOARD_LED_KATANA                           (1 << 3)
 		//@}
 
-		/** \name Keyboard Standard Report Key Scancodes */
+		/** \name Keyboard Standard Report Key Scan-codes */
 		//@{	
 		#define HID_KEYBOARD_SC_ERROR_ROLLOVER                    0x01
 		#define HID_KEYBOARD_SC_POST_FAIL                         0x02
@@ -323,43 +328,46 @@
 		#define HID_KEYBOARD_SC_RIGHT_GUI                         0xE7
 		//@}
 
-		/** \name Standard HID Device Report Descriptors */
+		/** \name Common HID Device Report Descriptors */
 		//@{
 		/** \hideinitializer
-		 *  A list of HID report item array elements that describe a typical HID USB Joystick. The resulting report descriptor
-		 *  is structured according to the following layout:
+		 *  A list of HID report item array elements that describe a typical HID USB Joystick. The resulting report
+		 *  descriptor is structured according to the following layout:
 		 *
 		 *  \code
 		 *  struct
 		 *  {
-		 *      uintA_t Buttons; // Pressed buttons bitmask
 		 *      intB_t X; // Signed X axis value
 		 *      intB_t Y; // Signed Y axis value
+		 *      int8_t Z; // Signed Z axis value
+		 *      // Additional axis elements here
+		 *      uintA_t Buttons; // Pressed buttons bitmask
 		 *  } Joystick_Report;
 		 *  \endcode
 		 *
 		 *  Where \c uintA_t is a type large enough to hold one bit per button, and \c intB_t is a type large enough to hold the
 		 *  ranges of the signed \c MinAxisVal and \c MaxAxisVal values.
 		 *
-		 *  \param[in] MinAxisVal      Minimum X/Y logical axis value.
-		 *  \param[in] MaxAxisVal      Maximum X/Y logical axis value.
-		 *  \param[in] MinPhysicalVal  Minimum X/Y physical axis value, for movement resolution calculations.
-		 *  \param[in] MaxPhysicalVal  Maximum X/Y physical axis value, for movement resolution calculations.
-		 *  \param[in] Buttons         Total number of buttons in the device.
+		 *  \param[in] NumAxis         Number of axis in the joystick (8-bit)
+		 *  \param[in] MinAxisVal      Minimum logical axis value (16-bit).
+		 *  \param[in] MaxAxisVal      Maximum logical axis value (16-bit).
+		 *  \param[in] MinPhysicalVal  Minimum physical axis value, for movement resolution calculations (16-bit).
+		 *  \param[in] MaxPhysicalVal  Maximum physical axis value, for movement resolution calculations (16-bit).
+		 *  \param[in] Buttons         Total number of buttons in the device (8-bit).
 		 */
-		#define HID_DESCRIPTOR_JOYSTICK(MinAxisVal, MaxAxisVal, MinPhysicalVal, MaxPhysicalVal, Buttons) \
+		#define HID_DESCRIPTOR_JOYSTICK(NumAxis, MinAxisVal, MaxAxisVal, MinPhysicalVal, MaxPhysicalVal, Buttons) \
 			HID_RI_USAGE_PAGE(8, 0x01),                     \
 			HID_RI_USAGE(8, 0x04),                          \
 			HID_RI_COLLECTION(8, 0x01),                     \
 				HID_RI_USAGE(8, 0x01),                      \
 				HID_RI_COLLECTION(8, 0x00),                 \
-					HID_RI_USAGE(8, 0x30),                  \
-					HID_RI_USAGE(8, 0x31),                  \
+					HID_RI_USAGE_MINIMUM(8, 0x30),          \
+					HID_RI_USAGE_MAXIMUM(8, (0x30 + (NumAxis - 1))), \
 					HID_RI_LOGICAL_MINIMUM(16, MinAxisVal), \
 					HID_RI_LOGICAL_MAXIMUM(16, MaxAxisVal), \
 					HID_RI_PHYSICAL_MINIMUM(16, MinPhysicalVal), \
 					HID_RI_PHYSICAL_MAXIMUM(16, MaxPhysicalVal), \
-					HID_RI_REPORT_COUNT(8, 0x02),           \
+					HID_RI_REPORT_COUNT(8, NumAxis),        \
 					HID_RI_REPORT_SIZE(8, ((((MinAxisVal >= -0xFF) && (MaxAxisVal <= 0xFF)) ? 8 : 16))), \
 					HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE), \
 				HID_RI_END_COLLECTION(0),                   \
@@ -390,8 +398,7 @@
 		 *  } Keyboard_Report;
 		 *  \endcode
 		 *
-		 *  \param[in] MaxKeys  Number of simultaneous keys that can be reported at the one time (a value between 1 and
-		 *                      (ENDPOINT_SIZE - 2) ).
+		 *  \param[in] MaxKeys  Number of simultaneous keys that can be reported at the one time (8-bit).
 		 */
 		#define HID_DESCRIPTOR_KEYBOARD(MaxKeys)            \
 			HID_RI_USAGE_PAGE(8, 0x01),                     \
@@ -444,11 +451,11 @@
 		 *  Where \c intA_t is a type large enough to hold one bit per button, and \c intB_t is a type large enough to hold the
 		 *  ranges of the signed \c MinAxisVal and \c MaxAxisVal values.
 		 *
-		 *  \param[in] MinAxisVal      Minimum X/Y logical axis value.
-		 *  \param[in] MaxAxisVal      Maximum X/Y logical axis value.
-		 *  \param[in] MinPhysicalVal  Minimum X/Y physical axis value, for movement resolution calculations.
-		 *  \param[in] MaxPhysicalVal  Maximum X/Y physical axis value, for movement resolution calculations.
-		 *  \param[in] Buttons         Total number of buttons in the device.
+		 *  \param[in] MinAxisVal      Minimum X/Y logical axis value (16-bit).
+		 *  \param[in] MaxAxisVal      Maximum X/Y logical axis value (16-bit).
+		 *  \param[in] MinPhysicalVal  Minimum X/Y physical axis value, for movement resolution calculations (16-bit).
+		 *  \param[in] MaxPhysicalVal  Maximum X/Y physical axis value, for movement resolution calculations (16-bit).
+		 *  \param[in] Buttons         Total number of buttons in the device (8-bit).
 		 *  \param[in] AbsoluteCoords  Boolean true to use absolute X/Y coordinates (e.g. touchscreen).
 		 */
 		#define HID_DESCRIPTOR_MOUSE(MinAxisVal, MaxAxisVal, MinPhysicalVal, MaxPhysicalVal, Buttons, AbsoluteCoords) \
@@ -483,11 +490,11 @@
 
 		/** \hideinitializer
 		 *  A list of HID report item array elements that describe a typical Vendor Defined byte array HID report descriptor,
-		 *  used for transporting abitrary data between the USB host and device via HID reports. The resulting report should be
+		 *  used for transporting arbitrary data between the USB host and device via HID reports. The resulting report should be
 		 *  a uint8_t byte array of the specified length in both Device to Host (IN) and Host to Device (OUT) directions.
 		 *
 		 *  \param[in] VendorPageNum    Vendor Defined HID Usage Page index, ranging from 0x00 to 0xFF.
-		 *  \param[in] CollectionUsage  Vendor Usage for the encompasing report IN and OUT collection, ranging from 0x00 to 0xFF.
+		 *  \param[in] CollectionUsage  Vendor Usage for the encompassing report IN and OUT collection, ranging from 0x00 to 0xFF.
 		 *  \param[in] DataINUsage      Vendor Usage for the IN report data, ranging from 0x00 to 0xFF.
 		 *  \param[in] DataOUTUsage     Vendor Usage for the OUT report data, ranging from 0x00 to 0xFF.   
 		 *  \param[in] NumBytes         Length of the data IN and OUT reports.
@@ -569,6 +576,8 @@
 		 *  specification for details on the structure elements.
 		 *
 		 *  \see \ref USB_HID_StdDescriptor_HID_t for the version of this type with standard element names.
+		 *
+		 *  \note Regardless of CPU architecture, these values should be stored as little endian.
 		 */
 		typedef struct
 		{
@@ -590,6 +599,8 @@
 		 *
 		 *  \see \ref USB_HID_Descriptor_HID_t for the version of this type with non-standard LUFA specific
 		 *       element names.
+		 *
+		 *  \note Regardless of CPU architecture, these values should be stored as little endian.
 		 */
 		typedef struct
 		{
@@ -633,6 +644,11 @@
 
 		/** Type define for the data type used to store HID report descriptor elements. */
 		typedef uint8_t USB_Descriptor_HIDReport_Datatype_t;
+
+	/* Disable C linkage for C++ Compilers: */
+		#if defined(__cplusplus)
+			}
+		#endif
 
 #endif
 

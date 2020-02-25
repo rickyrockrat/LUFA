@@ -140,7 +140,7 @@ void XPROGTarget_SendByte(const uint8_t Byte)
 	UDR1    = Byte;
 }
 
-/** Receives a byte via the software USART, blocking until data is received.
+/** Receives a byte via the hardware USART, blocking until data is received or timeout expired.
  *
  *  \return Received byte from the USART
  */
@@ -174,9 +174,14 @@ void XPROGTarget_SendIdle(void)
 
 static void XPROGTarget_SetTxMode(void)
 {
-	/* Wait for a full cycle of the clock */
-	while (PIND & (1 << 5));
-	while (!(PIND & (1 << 5)));
+    /* Need to do nothing for a full frame to send a BREAK - only one cycle should be needed, however
+	 * there are reports that sometimes the interface will get stuck in some environments. */
+    for (uint8_t i = 0; i < BITS_IN_USART_FRAME; i++)
+    {
+        /* Wait for a full cycle of the clock */
+        while (PIND & (1 << 5));
+        while (!(PIND & (1 << 5)));
+    }
 
 	PORTD  |=  (1 << 3);
 	DDRD   |=  (1 << 3);

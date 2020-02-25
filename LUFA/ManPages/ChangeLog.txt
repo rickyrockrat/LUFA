@@ -6,6 +6,96 @@
 
  /** \page Page_ChangeLog Project Changelog
   *
+  *  \section Sec_ChangeLog111009 Version 111009
+  *  <b>New:</b>
+  *  - Core:
+  *   - Added USE_LUFA_CONFIG_HEADER compile time option to include a LUFAConfig.h header in the user director for LUFA configuration
+  *     tokens as an alternative to tokens defined in the project makefile
+  *   - Added new USB_Host_SetInterfaceAltSetting() convenience function for the selection of an interface's alternative setting
+  *   - Added Audio class control request definitions
+  *   - Added new CALLBACK_Audio_Device_GetSetEndpointProperty() callback to the Audio Device Class driver to allow for endpoint control manipulations
+  *     such as data sample rates
+  *   - Added support for the Audio class GET STATUS request in the Audio Device Class driver so that it is correctly ACKed when sent by the host
+  *   - Added new EVENT_Audio_Device_StreamStartStop() event to the Audio Device Class driver to detect stream start/stop events
+  *   - Added board driver support for the Busware TUL board
+  *   - Added board hardware driver support for the EVK1100 board
+  *   - Added board hardware driver support for the EVK1104 board
+  *   - Added new Host mode Audio Class driver
+  *   - Added new SPI_GetCurrentMode() function to the SPI peripheral driver
+  *   - Added RingBuffer_GetFreeCount() function to the Ring Buffer driver
+  *   - Added new HID_Host_SetIdlePeriod() function to the HID Host Class driver
+  *   - Added new USB_Host_ConfigurationNumber global variable to indicate the selected configuration in an attached device
+  *   - Added new USB_Host_GetDeviceStatus() function to the host standard request function set
+  *   - Added AVR USB XMEGA architecture port (currently incomplete/experimental)
+  *   - Added new STRINGIFY() and STRINGIFY_EXPANDED() convenience macros
+  *   - Added new JTAG_DISABLE() macro for the AVR8 architecture
+  *   - Added Device Qualifier standard descriptor structure definitions USB_StdDescriptor_DeviceQualifier_t and USB_Descriptor_DeviceQualifier_t
+  *  - Library Applications:
+  *   - Added RNDIS device mode to the Webserver project
+  *   - Added new incomplete AndroidAccessoryHost Host LowLevel demo
+  *   - Added new HIDReportViewer project
+  *   - Added new MediaControl project
+  *   - Added new AudioInputHost Host ClassDriver demo
+  *   - Added new AudioOutputHost Host ClassDriver demo
+  *   - Added new AudioInputHost Host LowLevel demo
+  *   - Added new AudioOutputHost Host LowLevel demo
+  *   - Added new "checksource" target to all library project makefiles
+  *   - Added new VTARGET_USE_INTERNAL_REF configuration option to the AVRISP-MKII clone project (thanks to Volker Bosch)
+  *
+  *  <b>Changed:</b>
+  *  - Core:
+  *   - Altered the definition of the USB_Audio_Descriptor_Format_t descriptor so that the user is now responsible for supplying
+  *     the supported audio sampling rates, to allow for multiple audio interfaces with different numbers of supported rates and/or
+  *     continuous sample rates
+  *   - Pipe_BoundEndpointNumber() has been renamed to Pipe_GetBoundEndpointAddress(), and now returns the correct endpoint direction
+  *     as part of the endpoint address
+  *   - Renamed global state variables that are specific to a certain USB mode to clearly indicate which mode the variable relates to,
+  *     by changing the USB_* prefix to USB_Device_* or USB_Host_*
+  *   - Removed the HOST_STATE_WaitForDeviceRemoval and HOST_STATE_Suspended host state machine states, as these are no longer required
+  *   - Altered the USB_Host_SetDeviceConfiguration() function to update the global Host state machine state and the new
+  *     USB_Host_ConfigurationNumber global as required
+  *   - Added endian correcting code to the library USB class drivers for multiple architecture support
+  *   - Removed the ENDPOINT_DESCRIPTOR_DIR_* macros, replaced by ENDPOINT_DIR_* instead
+  *   - Renamed the JTAG_DEBUG_ASSERT() macro to JTAG_ASSERT()
+  *   - Added variable number of axis to HID_DESCRIPTOR_JOYSTICK() for multi-axis joysticks above just X and Y
+  *   - Renamed USB_Host_ClearPipeStall() to USB_Host_ClearEndpointStall() as the function works on an endpoint address within the attached device,
+  *     and not a Pipe within the host
+  *   - The MS_Host_ResetMSInterface() now performs a full Mass Storage reset sequence to prevent data corruption in the event of a device
+  *     lock up or timeout (thanks to David Lyons)
+  *   - Added endian-correction to the CDC driver's Line Encoding control request handlers.
+  *  - Library Applications:
+  *   - Modified the Low Level and Class Driver AudioInput and AudioOutput demos to support multiple audio sample rates
+  *   - Updated all host mode demos and projects to use the EVENT_USB_Host_DeviceEnumerationComplete() event callback for device configuration
+  *     instead of manual host state machine manipulations in the main application task
+  *   - Changed the reports in the GenericHID device demos to control the board LEDs, to reduce user confusion over the callback routines
+  *   - Added reliability patches to the AVRISP-MKII Clone project's ISP and PDI/TPI protocols (thanks to Justin Mattair)
+  *
+  *  <b>Fixed:</b>
+  *  - Core:
+  *   - Large number of documentation and code comment corrections (thanks to Andrey from Microsin.ru)
+  *   - Fixed possibility of the AVR's SPI interface being pulled out of master mode if the /SS pin is a input and pulled low (thanks
+  *     to Andrey from Microsin.ru)
+  *   - Fixed compile error when FIXED_CONTROL_ENDPOINT_SIZE compile time option was disabled, and a USE_*_DESCRIPTORS compile time
+  *     option was not enabled on the AVR8s
+  *   - Fixed lack of C++ compatibility in some internal header files causing compile errors when using LUFA in C++ projects
+  *   - Fixed error in the pipe unordered allocation algorithm for the AVR8 devices breaking compatibility with some devices
+  *   - Fixed USB_USBTask not being called internally in stream transfers between packets when Partial Stream Transfers are used
+  *   - Fixed swapped TWI_ADDRESS_READ and TWI_ADDRESS_WRITE values
+  *   - Fixed TWI_ReadPacket() not releasing the TWI bus on read completion
+  *   - Fixed optimization error in the HID Parser item value USB_SetHIDReportItemInfo() and USB_GetHIDReportItemInfo() routines if the report item was
+  *     \c NULL (which should be allowable according to the API)
+  *   - Fixed HID Parser CALLBACK_HIDParser_FilterHIDReportItem() callback function not being passed a cacheable report item pointer
+  *   - Fixed HID Parser's largest report size bit count not including the size of the last parsed report item
+  *   - Fixed HID host driver's largest HID report size count corrupt when the number of report bits exceeds 255
+  *  - Library Applications:
+  *   - Fixed incorrect signature in the CDC and DFU class bootloaders for the ATMEGA8U2
+  *   - Fixed KeyboardHost and KeyboardHostWithParser demos displaying incorrect values when numerical keys were pressed
+  *   - Fixed compile errors in the incomplete BluetoothHost demo application (thanks to Timo Lindfors)
+  *   - Fixed incorrect Dataflash buffer use in the DataflashManager_WriteBlocks_RAM() function of several demos/projects (thanks to Jeremy Willden)
+  *   - Fixed incorrect logging interval (always 500ms longer than requested) in the TempDataLogger project
+  *   - Fixed incorrect buffer size check in the USBtoSerial project (thanks to Yuri A Nikiforov)
+  *   - Fixed port state table corruption in the TCP layer of the RNDIS Ethernet device demos
+  *
   *  \section Sec_ChangeLog110528 Version 110528
   *  <b>New:</b>
   *  - Core:
@@ -26,7 +116,8 @@
   *   - Added TWI baud rate prescaler and bit length parameters to the TWI_Init() function (thanks to Thomas Herlinghaus)
   *   - Internal restructuring for eventual multiple architecture ports
   *   - Added AVR32 UC3 architecture port (currently incomplete/experimental)
-  *   - Added new architecture independant functions to enable, disable, save and restore the Global Interrupt Enable flags
+  *   - Added new architecture independent functions to enable, disable, save and restore the Global Interrupt Enable flags
+  *   - Added new RNDIS Device Class Driver packet send and receive functions
   *  - Library Applications:
   *   - Added ability to write protect Mass Storage disk write operations from the host OS
   *   - Added new MIDIToneGenerator project
@@ -67,7 +158,7 @@
   *     a symbolic size (Byte, Word, DWord) so that the function names are applicable and correct across all architectures
   *   - Renamed all low level Pipe_Read_*, Pipe_Write_* and Pipe_Discard_* functions to use the number of bits instead of
   *     a symbolic size (Byte, Word, DWord) so that the function names are applicable and correct across all architectures
-  *   - Seperated out board drivers by architecture in the library internals for better organisation
+  *   - Separated out board drivers by architecture in the library internals for better organisation
   *  - Library Applications:
   *   - Changed the XPLAINBridge software UART to use the regular timer CTC mode instead of the alternative CTC mode
   *     via the Input Capture register, to reduce user confusion
@@ -78,7 +169,7 @@
   *   - Changed TempDataLogger project's DS1307 driver to simplify the function interface and prevent a possible race condition
   *   - Changed AVRISP-MKII project to use the Watchdog interrupt for command timeouts, to reduce CPU usage and free timer 0
   *     for other uses
-  *   - Updated the software USART code in the XPLAIN Bridge application so that the incomming bits are sampled at their mid-point
+  *   - Updated the software USART code in the XPLAIN Bridge application so that the incoming bits are sampled at their mid-point
   *     instead of starting point, to give maximum reliability (thanks to Anton Staaf)
   *
   *  <b>Fixed:</b>
@@ -88,12 +179,12 @@
   *   - Fixed incorrect definition of the HID_KEYBOARD_SC_D constant in the HID class driver (thanks to Opendous Inc.)
   *   - Fixed incorrect definition of the HID_KEYBOARD_SC_RIGHT_ARROW constant in the HID class driver (thanks to Joby Taffey)
   *   - Fixed incorrect endpoint initialisation order in the several device demos (thanks to Rick Drolet)
-  *   - Fixed inverted Minimum board LEDs
+  *   - Fixed inverted Minimus board LEDs
   *   - Fixed incorrect byte ordering in the Audio_Device_WriteSample24 function (thanks to WZab)
   *   - Fixed several functions in the Host mode Still Image Class driver returning an error code from the incorrect
   *     error code enum (thanks to Daniel Seibert)
   *   - Fixed ReportID not being removed from the feature/out report data array in the HID class driver when Report IDs are used
-  *   - Fixed incorect BUTTONS_BUTTON1 definition for the Minimus board
+  *   - Fixed incorrect BUTTONS_BUTTON1 definition for the Minimus board
   *   - Fixed Still Image Host class driver exiting the descriptor search routine prematurely if the data pipes (but not event pipe)
   *     is found
   *   - Fixed missing call to Pipe_SetInfiniteINRequests() in the Pipe_ConfigurePipe() routine
@@ -138,7 +229,7 @@
   *    - Added board hardware driver support for the Minimus board (thanks to the PSGroove team)
   *    - Added new NO_CLASS_DRIVER_AUTOFLUSH compile time option to disable automatic flushing of interfaces when the USB management
   *      tasks for each driver is called
-  *    - Added standard keyboard HID report scancode defines (thanks to Laszlo Monda)
+  *    - Added standard keyboard HID report scan-code defines (thanks to Laszlo Monda)
   *    - Added new Pipe_GetBusyBanks(), Endpoint_GetBusyBanks() and Endpoint_AbortPendingIN() functions
   *  - Library Applications:
   *    - Added default test tone generation mode to the Device mode AudioInput demos
@@ -982,7 +1073,7 @@
   *  - Library license changed from LGPLv3 to MIT license
   *
   *
-  *  \section Sec_ChangeLog151 Version 1.5.1 - Released 31st July, 2008
+  *  \section Sec_ChangeLog151 Version 1.5.1 - Released 7th July, 2008
   *
   *  - Changed host demos to enable the host function task on the firing of the USB_DeviceEnumerationComplete event
   *    rather than the USB_DeviceAttached event
@@ -1061,7 +1152,7 @@
   *  - Added USE_NONSTANDARD_DESCRIPTOR_NAMES token to switch back to the non-standard descriptor element names
   *
   *
-  *  \section Sec_ChangeLog141 Version 1.4.1 - Released 5 May, 2008
+  *  \section Sec_ChangeLog141 Version 1.4.1 - Released 19 May, 2008
   *
   *  - Enhanced KeyboardWithParser demo, now prints out pressed alphanumeric characters like the standard demo
   *  - Fixed MassStorage demo, read/writes using non mode-10 commands now work correctly

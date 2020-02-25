@@ -45,7 +45,7 @@
 
 /** \ingroup Group_PipePrimitiveRW
  *  \defgroup Group_PipePrimitiveRW_AVR8 Read/Write of Primitive Data Types (AVR8)
- *  \brief Pipe primative data read/write definitions for the Atmel AVR8 architecture.
+ *  \brief Pipe primitive data read/write definitions for the Atmel AVR8 architecture.
  *
  *  Functions, macros, variables, enums and types related to data reading and writing of primitive data types
  *  from and to pipes.
@@ -321,15 +321,16 @@
 				return ((UPSTAX & (1 << CFGOK)) ? true : false);
 			}
 
-			/** Retrieves the endpoint number of the endpoint within the attached device that the currently selected
+			/** Retrieves the endpoint address of the endpoint within the attached device that the currently selected
 			 *  pipe is bound to.
 			 *
-			 *  \return Endpoint number the currently selected pipe is bound to.
+			 *  \return Endpoint address the currently selected pipe is bound to.
 			 */
-			static inline uint8_t Pipe_BoundEndpointNumber(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
-			static inline uint8_t Pipe_BoundEndpointNumber(void)
+			static inline uint8_t Pipe_GetBoundEndpointAddress(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
+			static inline uint8_t Pipe_GetBoundEndpointAddress(void)
 			{
-				return ((UPCFG0X >> PEPNUM0) & PIPE_EPNUM_MASK);
+				return (((UPCFG0X >> PEPNUM0) & PIPE_EPNUM_MASK) |
+				        ((Pipe_GetPipeToken() == PIPE_TOKEN_IN) ? PIPE_EPDIR_MASK : 0));
 			}
 
 			/** Sets the period between interrupts for an INTERRUPT type pipe to a specified number of milliseconds.
@@ -590,7 +591,7 @@
 				return UPDATX;
 			}
 
-			/** Writes one byte from the currently selected pipe's bank, for IN direction pipes.
+			/** Writes one byte to the currently selected pipe's bank, for IN direction pipes.
 			 *
 			 *  \ingroup Group_PipePrimitiveRW_AVR8
 			 *
@@ -612,6 +613,8 @@
 				uint8_t Dummy;
 
 				Dummy = UPDATX;
+
+				(void)Dummy;
 			}
 
 			/** Reads two bytes from the currently selected pipe's bank in little endian format, for OUT
@@ -697,6 +700,8 @@
 
 				Dummy = UPDATX;
 				Dummy = UPDATX;
+
+				(void)Dummy;
 			}
 
 			/** Reads four bytes from the currently selected pipe's bank in little endian format, for OUT
@@ -792,6 +797,8 @@
 				Dummy = UPDATX;
 				Dummy = UPDATX;
 				Dummy = UPDATX;
+
+				(void)Dummy;
 			}
 
 		/* External Variables: */
@@ -803,7 +810,7 @@
 			 *  \note This variable should be treated as read-only in the user application, and never manually
 			 *        changed in value.
 			 */
-			extern uint8_t USB_ControlPipeSize;
+			extern uint8_t USB_Host_ControlPipeSize;
 
 		/* Function Prototypes: */
 			/** Configures the specified pipe number with the given pipe type, token, target endpoint number in the
@@ -859,7 +866,7 @@
 			                        const uint16_t Size,
 			                        const uint8_t Banks);
 
-			/** Spin-loops until the currently selected non-control pipe is ready for the next packed of data to be read
+			/** Spin-loops until the currently selected non-control pipe is ready for the next packet of data to be read
 			 *  or written to it, aborting in the case of an error condition (such as a timeout or device disconnect).
 			 *
 			 *  \ingroup Group_PipeRW_AVR8
@@ -876,7 +883,7 @@
 			 *  \return Boolean \c true if a pipe bound to the given endpoint address of the specified direction is found,
 			 *          \c false otherwise.
 			 */
-			bool Pipe_IsEndpointBound(const uint8_t EndpointAddress);
+			bool Pipe_IsEndpointBound(const uint8_t EndpointAddress) ATTR_WARN_UNUSED_RESULT;
 
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)

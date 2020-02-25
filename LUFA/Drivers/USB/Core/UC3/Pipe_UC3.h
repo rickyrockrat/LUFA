@@ -45,7 +45,7 @@
 
 /** \ingroup Group_PipePrimitiveRW
  *  \defgroup Group_PipePrimitiveRW_UC3 Read/Write of Primitive Data Types (UC3)
- *  \brief Pipe primative data read/write definitions for the Atmel AVR32 UC3 architecture.
+ *  \brief Pipe primitive data read/write definitions for the Atmel AVR32 UC3 architecture.
  *
  *  Functions, macros, variables, enums and types related to data reading and writing of primitive data types
  *  from and to pipes.
@@ -161,6 +161,17 @@
 			 *  bank.
 			 */
 			#define PIPE_BANK_DOUBLE                AVR32_USBB_UPCFG0_PBK_DOUBLE
+
+			#if defined(USB_SERIES_UC3A3_AVR32) || defined(USB_SERIES_UC3A4_AVR32) || defined(__DOXYGEN__)
+				/** Mask for the bank mode selection for the \ref Pipe_ConfigurePipe() macro. This indicates that the
+				 *  pipe should have three banks, which requires more USB FIFO memory but results in faster transfers
+				 *  as one USB device (the AVR or the attached device) can access one bank while the other accesses the
+				 *  remaining banks.
+				 *
+				 *  \note Not available on all AVR models.
+				 */
+				#define PIPE_BANK_TRIPLE           AVR32_USBB_UPCFG0_PBK_TRIPLE
+			#endif
 			//@}
 
 			/** Default size of the default control pipe's bank, until altered by the Endpoint0Size value
@@ -168,7 +179,7 @@
 			 */
 			#define PIPE_CONTROLPIPE_DEFAULT_SIZE   64
 
-			#if defined(USB_SERIES_UC3A3_AVR) || defined(USB_SERIES_UC3A4_AVR) || defined(__DOXYGEN__)
+			#if defined(USB_SERIES_UC3A3_AVR32) || defined(USB_SERIES_UC3A4_AVR32) || defined(__DOXYGEN__)
 				/** Total number of pipes (including the default control pipe at address 0) which may be used in
 				 *  the device.
 				 */
@@ -332,15 +343,16 @@
 				return (&AVR32_USBB.UPSTA0)[USB_SelectedPipe].cfgok;
 			}
 
-			/** Retrieves the endpoint number of the endpoint within the attached device that the currently selected
+			/** Retrieves the endpoint address of the endpoint within the attached device that the currently selected
 			 *  pipe is bound to.
 			 *
-			 *  \return Endpoint number the currently selected pipe is bound to.
+			 *  \return Endpoint address the currently selected pipe is bound to.
 			 */
-			static inline uint8_t Pipe_BoundEndpointNumber(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
-			static inline uint8_t Pipe_BoundEndpointNumber(void)
+			static inline uint8_t Pipe_GetBoundEndpointAddress(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
+			static inline uint8_t Pipe_GetBoundEndpointAddress(void)
 			{
-				return (&AVR32_USBB.UPCFG0)[USB_SelectedPipe].pepnum;
+				return ((&AVR32_USBB.UPCFG0)[USB_SelectedPipe].pepnum |
+				        ((Pipe_GetPipeToken() == PIPE_TOKEN_IN) ? PIPE_EPDIR_MASK : 0));
 			}
 
 			/** Sets the period between interrupts for an INTERRUPT type pipe to a specified number of milliseconds.
@@ -614,7 +626,7 @@
 				return *(USB_PipeFIFOPos[USB_SelectedPipe]++);
 			}
 
-			/** Writes one byte from the currently selected pipe's bank, for IN direction pipes.
+			/** Writes one byte to the currently selected pipe's bank, for IN direction pipes.
 			 *
 			 *  \ingroup Group_PipePrimitiveRW_UC3
 			 *
@@ -636,6 +648,8 @@
 				uint8_t Dummy;
 
 				Dummy = *(USB_PipeFIFOPos[USB_SelectedPipe]++);
+
+				(void)Dummy;
 			}
 
 			/** Reads two bytes from the currently selected pipe's bank in little endian format, for OUT
@@ -709,6 +723,8 @@
 
 				Dummy = *(USB_PipeFIFOPos[USB_SelectedPipe]++);
 				Dummy = *(USB_PipeFIFOPos[USB_SelectedPipe]++);
+
+				(void)Dummy;
 			}
 
 			/** Reads four bytes from the currently selected pipe's bank in little endian format, for OUT
@@ -792,6 +808,8 @@
 				Dummy = *(USB_PipeFIFOPos[USB_SelectedPipe]++);
 				Dummy = *(USB_PipeFIFOPos[USB_SelectedPipe]++);
 				Dummy = *(USB_PipeFIFOPos[USB_SelectedPipe]++);
+
+				(void)Dummy;
 			}
 
 		/* External Variables: */
@@ -803,7 +821,7 @@
 			 *  \note This variable should be treated as read-only in the user application, and never manually
 			 *        changed in value.
 			 */
-			extern uint8_t USB_ControlPipeSize;
+			extern uint8_t USB_Host_ControlPipeSize;
 
 		/* Function Prototypes: */
 			/** Configures the specified pipe number with the given pipe type, token, target endpoint number in the
@@ -859,7 +877,7 @@
 			                        const uint16_t Size,
 			                        const uint8_t Banks);
 
-			/** Spin-loops until the currently selected non-control pipe is ready for the next packed of data to be read
+			/** Spin-loops until the currently selected non-control pipe is ready for the next packet of data to be read
 			 *  or written to it, aborting in the case of an error condition (such as a timeout or device disconnect).
 			 *
 			 *  \ingroup Group_PipeRW_UC3
@@ -876,7 +894,7 @@
 			 *  \return Boolean \c true if a pipe bound to the given endpoint address of the specified direction is found,
 			 *          \c false otherwise.
 			 */
-			bool Pipe_IsEndpointBound(const uint8_t EndpointAddress);
+			bool Pipe_IsEndpointBound(const uint8_t EndpointAddress) ATTR_WARN_UNUSED_RESULT;
 
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)

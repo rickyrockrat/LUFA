@@ -247,6 +247,7 @@ CFLAGS += -fno-inline-small-functions
 CFLAGS += -fpack-struct
 CFLAGS += -fshort-enums
 CFLAGS += -fno-strict-aliasing
+CFLAGS += -fno-split-wide-types
 CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 #CFLAGS += -mshort-calls
@@ -721,12 +722,21 @@ clean_list :
 	$(REMOVEDIR) .dep
 
 doxygen:
-	@echo Generating Project Documentation...
+	@echo Generating Project Documentation \($(TARGET)\)...
 	@doxygen Doxygen.conf
 	@echo Documentation Generation Complete.
 
 clean_doxygen:
 	rm -rf Documentation
+
+checksource:
+	@for f in $(SRC) $(CPPSRC) $(ASRC); do \
+		if [ -f $$f ]; then \
+			echo "Found Source File: $$f" ; \
+		else \
+			echo "Source File Not Found: $$f" ; \
+		fi; done 
+
 
 # Create object files directory
 $(shell mkdir $(OBJDIR) 2>/dev/null)
@@ -740,5 +750,4 @@ $(shell mkdir $(OBJDIR) 2>/dev/null)
 .PHONY : all begin finish end sizebefore sizeafter gccversion \
 build elf hex eep lss sym coff extcoff doxygen clean          \
 clean_list clean_doxygen program dfu flip flip-ee dfu-ee      \
-debug gdb-config
-
+debug gdb-config checksource

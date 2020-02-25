@@ -132,7 +132,7 @@
 		/** SCSI Sense Code to indicate an error whilst accessing the medium. */
 		#define SCSI_SENSE_KEY_MEDIUM_ERROR                    0x03
 
-		/** SCSI Sense Code to indicate a hardware has occurred. */
+		/** SCSI Sense Code to indicate a hardware error has occurred. */
 		#define SCSI_SENSE_KEY_HARDWARE_ERROR                  0x04
 
 		/** SCSI Sense Code to indicate that an illegal request has been issued. */
@@ -256,7 +256,10 @@
 	/* Type Defines: */
 		/** \brief Mass Storage Class Command Block Wrapper.
 		 *
-		 *  Type define for a Command Block Wrapper, used in the Mass Storage Bulk-Only Transport protocol. */
+		 *  Type define for a Command Block Wrapper, used in the Mass Storage Bulk-Only Transport protocol.
+		 *
+		 *  \note Regardless of CPU architecture, these values should be stored as little endian.
+		 */
 		typedef struct
 		{
 			uint32_t Signature; /**< Command block signature, must be \ref MS_CBW_SIGNATURE to indicate a valid Command Block. */
@@ -271,6 +274,8 @@
 		/** \brief Mass Storage Class Command Status Wrapper.
 		 *
 		 *  Type define for a Command Status Wrapper, used in the Mass Storage Bulk-Only Transport protocol.
+		 *
+		 *  \note Regardless of CPU architecture, these values should be stored as little endian.
 		 */
 		typedef struct
 		{

@@ -50,10 +50,16 @@
 
 	/* Includes: */
 		#include "../../../../Common/Common.h"
+		#include "../USBController.h"
 		#include "../StdDescriptors.h"
 		#include "../USBInterrupt.h"
 		#include "../Endpoint.h"
 		
+	/* Enable C linkage for C++ Compilers: */
+		#if defined(__cplusplus)
+			extern "C" {
+		#endif
+
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
 			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
@@ -75,10 +81,17 @@
 			 *  USB interface should be initialized in full speed (12Mb/s) mode.
 			 */
 			#define USB_DEVICE_OPT_FULLSPEED               (0 << 0)
+			
+			#if defined(USB_SERIES_UC3A3_AVR32) || defined(USB_SERIES_UC3A4_AVR32) || defined(__DOXYGEN__)
+				/** Mask for the Options parameter of the \ref USB_Init() function. This indicates that the
+				 *  USB interface should be initialized in high speed (480Mb/s) mode.
+				 */
+				#define USB_DEVICE_OPT_HIGHSPEED           (1 << 1)			
+			#endif
 			//@}
 			
 			#if (!defined(NO_INTERNAL_SERIAL) && \
-			     (defined(USB_SERIES_UC3A3_AVR) || defined(USB_SERIES_UC3A4_AVR) || \
+			     (defined(USB_SERIES_UC3A3_AVR32) || defined(USB_SERIES_UC3A4_AVR32) || \
 				  defined(__DOXYGEN__)))
 				/** String descriptor index for the device's unique serial number string descriptor within the device.
 				 *  This unique serial number is used by the host to associate resources to the device (such as drivers or COM port
@@ -117,8 +130,8 @@
 			 *  \note This macro should only be used if the device has indicated to the host that it
 			 *        supports the Remote Wakeup feature in the device descriptors, and should only be
 			 *        issued if the host is currently allowing remote wakeup events from the device (i.e.,
-			 *        the \ref USB_RemoteWakeupEnabled flag is set). When the \c NO_DEVICE_REMOTE_WAKEUP compile
-			 *        time option is used, this macro is unavailable.
+			 *        the \ref USB_Device_RemoteWakeupEnabled flag is set). When the \c NO_DEVICE_REMOTE_WAKEUP
+			 *        compile time option is used, this macro is unavailable.
 			 *        \n\n
 			 *
 			 *  \note The USB clock must be running for this function to operate. If the stack is initialized with
@@ -132,6 +145,8 @@
 		/* Inline Functions: */
 			/** Returns the current USB frame number, when in device mode. Every millisecond the USB bus is active (i.e. enumerated to a host)
 			 *  the frame number is incremented by one.
+			 *
+			 *  \return Current USB frame number from the USB controller.
 			 */
 			static inline uint16_t USB_Device_GetFrameNumber(void) ATTR_ALWAYS_INLINE ATTR_WARN_UNUSED_RESULT;
 			static inline uint16_t USB_Device_GetFrameNumber(void)
@@ -170,20 +185,32 @@
 			static inline void USB_Device_SetLowSpeed(void) ATTR_ALWAYS_INLINE;
 			static inline void USB_Device_SetLowSpeed(void)
 			{
-				AVR32_USBB.UDCON.ls = true;
+				AVR32_USBB.UDCON.ls      = true;
 			}
 
 			static inline void USB_Device_SetFullSpeed(void) ATTR_ALWAYS_INLINE;
 			static inline void USB_Device_SetFullSpeed(void)
 			{
-				AVR32_USBB.UDCON.ls = false;
+				AVR32_USBB.UDCON.ls      = false;
+				#if defined(USB_DEVICE_OPT_HIGHSPEED)
+				AVR32_USBB.UDCON.spdconf = 3;
+				#endif
 			}
+
+			#if defined(USB_DEVICE_OPT_HIGHSPEED)
+			static inline void USB_Device_SetHighSpeed(void) ATTR_ALWAYS_INLINE;
+			static inline void USB_Device_SetHighSpeed(void)
+			{
+				AVR32_USBB.UDCON.ls      = false;
+				AVR32_USBB.UDCON.spdconf = 0;
+			}
+			#endif
 
 			static inline void USB_Device_SetDeviceAddress(const uint8_t Address) ATTR_ALWAYS_INLINE;
 			static inline void USB_Device_SetDeviceAddress(const uint8_t Address)
 			{
 				AVR32_USBB.UDCON.uadd  = Address;
-				AVR32_USBB.UDCON.adden = true;
+				AVR32_USBB.UDCON.adden = (Address ? true : false);
 			}
 
 			static inline bool USB_Device_IsAddressSet(void) ATTR_ALWAYS_INLINE ATTR_WARN_UNUSED_RESULT;
@@ -193,6 +220,7 @@
 			}
 
 			#if (USE_INTERNAL_SERIAL != NO_DESCRIPTOR)
+			static inline void USB_Device_GetSerialString(uint16_t* const UnicodeString) ATTR_NON_NULL_PTR_ARG(1);
 			static inline void USB_Device_GetSerialString(uint16_t* const UnicodeString)
 			{
 				uint_reg_t CurrentGlobalInt = GetGlobalInterruptMask();
@@ -221,6 +249,11 @@
 			#endif
 
 	#endif
+
+	/* Disable C linkage for C++ Compilers: */
+		#if defined(__cplusplus)
+			}
+		#endif
 
 #endif
 

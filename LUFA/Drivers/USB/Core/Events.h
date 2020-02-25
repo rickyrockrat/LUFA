@@ -78,7 +78,7 @@
 			/** Event for USB mode pin level change. This event fires when the USB interface is set to dual role
 			 *  mode, and the UID pin level has changed to indicate a new mode (device or host). This event fires
 			 *  before the mode is switched to the newly indicated mode but after the \ref EVENT_USB_Device_Disconnect
-			 *  event has fired (if connected before the role change).
+			 *  event has fired (if disconnected before the role change).
 			 *
 			 *  \note This event only exists on microcontrollers that support dual role USB modes.
 			 *        \n\n
@@ -249,7 +249,7 @@
 			 *  This event is time-critical; exceeding OS-specific delays within this event handler (typically of around
 			 *  one second) will prevent the device from enumerating correctly.
 			 *
-			 *  This event fires after the value of \ref USB_ConfigurationNumber has been changed.
+			 *  This event fires after the value of \ref USB_Device_ConfigurationNumber has been changed.
 			 *
 			 *  \note This event does not exist if the \c USB_HOST_ONLY token is supplied to the compiler (see
 			 *        \ref Group_USBManagement documentation).

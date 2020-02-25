@@ -49,9 +49,13 @@
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t Config;
+
+			// Keyboard HID Interface
 			USB_Descriptor_Interface_t            HID1_KeyboardInterface;
 			USB_HID_Descriptor_HID_t              HID1_KeyboardHID;
 			USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;
+
+			// Mouse HID Interface
 			USB_Descriptor_Interface_t            HID2_MouseInterface;
 			USB_HID_Descriptor_HID_t              HID2_MouseHID;
 			USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
@@ -64,7 +68,7 @@
 		/** Endpoint number of the Mouse HID reporting IN endpoint. */
 		#define MOUSE_IN_EPNUM            3
 
-		/** Size in bytes of each of the HID reporting IN and OUT endpoints. */
+		/** Size in bytes of each of the HID reporting IN endpoints. */
 		#define HID_EPSIZE                8
 
 	/* Function Prototypes: */

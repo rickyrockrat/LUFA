@@ -53,7 +53,7 @@
  *  application.
  *
  *  \code
- *      // Initialise the ADC driver before first use
+ *      // Initialize the ADC driver before first use
  *      ADC_Init(ADC_FREE_RUNNING | ADC_PRESCALE_32);
  *
  *      // Must setup the ADC channel to read beforehand
@@ -65,8 +65,11 @@
  *
  *      // Start reading ADC channel 1 in free running (continuous conversion) mode
  *      ADC_StartReading(ADC_REFERENCE_AVCC | ADC_RIGHT_ADJUSTED | ADC_CHANNEL1);
- *      while (!(ADC_IsReadingComplete())) {};
- *      printf("Conversion Result: %d\r\n", ADC_GetResult());
+ *      for (;;)
+ *      {
+ *           while (!(ADC_IsReadingComplete())) {};
+ *           printf("Conversion Result: %d\r\n", ADC_GetResult());
+ *      }
  *  \endcode
  *
  *  @{
@@ -400,6 +403,8 @@
 			 *        the results read directly from the \ref ADC_GetResult() instead to reduce overhead.
 			 *
 			 *  \param[in] MUXMask  Mask comprising of an ADC channel mask, reference mask and adjustment mask.
+			 *
+			 *  \return Converted ADC result for the given ADC channel.
 			 */
 			static inline uint16_t ADC_GetChannelReading(const uint16_t MUXMask) ATTR_WARN_UNUSED_RESULT;
 			static inline uint16_t ADC_GetChannelReading(const uint16_t MUXMask)
@@ -411,7 +416,7 @@
 				return ADC_GetResult();
 			}
 
-			/** Initialises the ADC, ready for conversions. This must be called before any other ADC operations.
+			/** Initializes the ADC, ready for conversions. This must be called before any other ADC operations.
 			 *  The "mode" parameter should be a mask comprised of a conversion mode (free running or single) and
 			 *  prescaler masks.
 			 *

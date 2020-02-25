@@ -50,14 +50,14 @@ ISR(WDT_vect, ISR_BLOCK)
 	wdt_disable();
 }
 
-/** Initialises the hardware and software associated with the V2 protocol command handling. */
+/** Initializes the hardware and software associated with the V2 protocol command handling. */
 void V2Protocol_Init(void)
 {
 	#if defined(ADC)
 	/* Initialize the ADC converter for VTARGET level detection on supported AVR models */
 	ADC_Init(ADC_FREE_RUNNING | ADC_PRESCALE_128);
 	ADC_SetupChannel(VTARGET_ADC_CHANNEL);
-	ADC_StartReading(ADC_REFERENCE_AVCC | ADC_RIGHT_ADJUSTED | VTARGET_ADC_CHANNEL_MASK);
+	ADC_StartReading(VTARGET_REF_MASK | ADC_RIGHT_ADJUSTED | VTARGET_ADC_CHANNEL_MASK);
 	#endif
 
 	V2Params_LoadNonVolatileParamValues();

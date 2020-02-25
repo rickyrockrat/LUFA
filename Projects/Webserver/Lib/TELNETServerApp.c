@@ -54,7 +54,7 @@ const char PROGMEM TELNETMenu[] = "\r\n"
 /** Header to print before the current connections are printed to the client */
 const char PROGMEM CurrentConnectionsHeader[] = "\r\n* Current TCP Connections: *\r\n";
 
-/** Initialization function for the simple HTTP webserver. */
+/** Initialization function for the simple TELNET webserver. */
 void TELNETServerApp_Init(void)
 {
 	/* Listen on port 23 for TELNET connections from hosts */
@@ -146,7 +146,7 @@ static void TELNETServerApp_DisplayTCPConnections(void)
 		if (CurrConnection->tcpstateflags != UIP_CLOSED)
 		{
 			/* Add the current connection's details to the out buffer */
-			ResponseLen += sprintf_P(&AppData[ResponseLen], PSTR("%u) %02d.%02d.%02d.%02d (Local %u, Remote %u)\r\n"),
+			ResponseLen += sprintf_P(&AppData[ResponseLen], PSTR("%u) %d.%d.%d.%d (Local Port %u <=> Remote Port %u)\r\n"),
 			                         ++ActiveConnCount,
 			                         CurrConnection->ripaddr.u8[0],
 			                         CurrConnection->ripaddr.u8[1],

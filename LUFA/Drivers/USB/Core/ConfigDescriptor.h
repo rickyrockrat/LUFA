@@ -68,11 +68,6 @@
 
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
-			/** Mask for determining the type of an endpoint from an endpoint descriptor. This should then be compared
-			 *  with the \c EP_TYPE_* masks to determine the exact type of the endpoint.
-			 */
-			#define EP_TYPE_MASK                       0x03
-
 			/** Casts a pointer to a descriptor inside the configuration descriptor into a pointer to the given
 			 *  descriptor type.
 			 *
@@ -256,7 +251,7 @@
 			 */
 			uint8_t USB_GetNextDescriptorComp(uint16_t* const BytesRem,
 			                                  void** const CurrConfigLoc,
-			                                  const ConfigComparatorPtr_t const ComparatorRoutine);
+			                                  ConfigComparatorPtr_t const ComparatorRoutine);
 
 		/* Inline Functions: */
 			/** Skips over the current sub-descriptor inside the configuration descriptor, so that the pointer then

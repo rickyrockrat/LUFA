@@ -45,7 +45,7 @@
 
 /** \ingroup Group_EndpointPrimitiveRW
  *  \defgroup Group_EndpointPrimitiveRW_AVR8 Read/Write of Primitive Data Types (AVR8)
- *  \brief Endpoint primative read/write definitions for the Atmel AVR8 architecture.
+ *  \brief Endpoint primitive read/write definitions for the Atmel AVR8 architecture.
  *
  *  Functions, macros, variables, enums and types related to data reading and writing of primitive data types
  *  from and to endpoints.
@@ -144,20 +144,7 @@
 	#endif
 
 	/* Public Interface - May be used in end-application: */
-		/* Macros: */
-			/** \name Endpoint Direction Masks */
-			//@{
-			/** Endpoint data direction mask for \ref Endpoint_ConfigureEndpoint(). This indicates that the endpoint
-			 *  should be initialized in the OUT direction - i.e. data flows from host to device.
-			 */
-			#define ENDPOINT_DIR_OUT                        (0 << EPDIR)
-
-			/** Endpoint data direction mask for \ref Endpoint_ConfigureEndpoint(). This indicates that the endpoint
-			 *  should be initialized in the IN direction - i.e. data flows from device to host.
-			 */
-			#define ENDPOINT_DIR_IN                         (1 << EPDIR)
-			//@}
-			
+		/* Macros: */			
 			/** \name Endpoint Bank Mode Masks */
 			//@{
 			/** Mask for the bank mode selection for the \ref Endpoint_ConfigureEndpoint() macro. This indicates
@@ -182,7 +169,7 @@
 				#define ENDPOINT_CONTROLEP_DEFAULT_SIZE     8
 			#endif
 
-			/** Retrives the maximum bank size in bytes of a given endpoint.
+			/** Retrieves the maximum bank size in bytes of a given endpoint.
 			 *
 			 *  \note This macro will only work correctly on endpoint indexes that are compile-time constants
 			 *        defined by the preprocessor.
@@ -286,7 +273,7 @@
 			                                              const uint16_t Size,
 			                                              const uint8_t Banks)
 			{
-				return Endpoint_ConfigureEndpoint_Prv(Number, ((Type << EPTYPE0) | Direction),
+				return Endpoint_ConfigureEndpoint_Prv(Number, ((Type << EPTYPE0) | (Direction ? (1 << EPDIR) : 0)),
 				                                      ((1 << ALLOC) | Banks | Endpoint_BytesToEPSizeMask(Size)));
 			}
 
@@ -600,7 +587,7 @@
 			static inline uint8_t Endpoint_GetEndpointDirection(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
 			static inline uint8_t Endpoint_GetEndpointDirection(void)
 			{
-				return (UECFG0X & ENDPOINT_DIR_IN);
+				return (UECFG0X & (1 << EPDIR)) ? ENDPOINT_DIR_IN : ENDPOINT_DIR_OUT;
 			}
 
 			/** Sets the direction of the currently selected endpoint.
@@ -610,7 +597,7 @@
 			static inline void Endpoint_SetEndpointDirection(const uint8_t DirectionMask) ATTR_ALWAYS_INLINE;
 			static inline void Endpoint_SetEndpointDirection(const uint8_t DirectionMask)
 			{
-				UECFG0X = ((UECFG0X & ~ENDPOINT_DIR_IN) | DirectionMask);
+				UECFG0X = ((UECFG0X & ~(1 << EPDIR)) | (DirectionMask ? (1 << EPDIR) : 0));
 			}
 
 			/** Reads one byte from the currently selected endpoint's bank, for OUT direction endpoints.
@@ -625,7 +612,7 @@
 				return UEDATX;
 			}
 
-			/** Writes one byte from the currently selected endpoint's bank, for IN direction endpoints.
+			/** Writes one byte to the currently selected endpoint's bank, for IN direction endpoints.
 			 *
 			 *  \ingroup Group_EndpointPrimitiveRW_AVR8
 			 *
@@ -647,6 +634,8 @@
 				uint8_t Dummy;
 
 				Dummy = UEDATX;
+
+				(void)Dummy;
 			}
 
 			/** Reads two bytes from the currently selected endpoint's bank in little endian format, for OUT
@@ -732,6 +721,8 @@
 
 				Dummy = UEDATX;
 				Dummy = UEDATX;
+
+				(void)Dummy;
 			}
 
 			/** Reads four bytes from the currently selected endpoint's bank in little endian format, for OUT
@@ -827,6 +818,8 @@
 				Dummy = UEDATX;
 				Dummy = UEDATX;
 				Dummy = UEDATX;
+
+				(void)Dummy;
 			}
 
 		/* External Variables: */
@@ -846,9 +839,9 @@
 			 *        changed in value.
 			 */
 			#if (!defined(FIXED_CONTROL_ENDPOINT_SIZE) || defined(__DOXYGEN__))
-				extern uint8_t USB_ControlEndpointSize;
+				extern uint8_t USB_Device_ControlEndpointSize;
 			#else
-				#define USB_ControlEndpointSize FIXED_CONTROL_ENDPOINT_SIZE
+				#define USB_Device_ControlEndpointSize FIXED_CONTROL_ENDPOINT_SIZE
 			#endif
 
 		/* Function Prototypes: */

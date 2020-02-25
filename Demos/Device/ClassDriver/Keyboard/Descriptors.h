@@ -49,6 +49,8 @@
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t Config;
+
+			// Keyboard HID Interface
 			USB_Descriptor_Interface_t            HID_Interface;
 			USB_HID_Descriptor_HID_t              HID_KeyboardHID;
 	        USB_Descriptor_Endpoint_t             HID_ReportINEndpoint;
@@ -58,7 +60,7 @@
 		/** Endpoint number of the Keyboard HID reporting IN endpoint. */
 		#define KEYBOARD_EPNUM               1
 
-		/** Size in bytes of the Keyboard HID reporting IN and OUT endpoints. */
+		/** Size in bytes of the Keyboard HID reporting IN endpoint. */
 		#define KEYBOARD_EPSIZE              8
 
 	/* Function Prototypes: */

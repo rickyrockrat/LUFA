@@ -74,8 +74,8 @@
 		#define LEDMASK_USB_BUSY          LEDS_LED2
 
 	/* Function Prototypes: */
-		void MassStorage_Task(void);
 		void SetupHardware(void);
+		void MassStorageHost_Task(void);
 
 		void EVENT_USB_Host_HostError(const uint8_t ErrorCode);
 		void EVENT_USB_Host_DeviceAttached(void);
@@ -84,7 +84,7 @@
 		                                            const uint8_t SubErrorCode);
 		void EVENT_USB_Host_DeviceEnumerationComplete(void);
 
-		void ShowDiskReadError(char* CommandString,
+		void ShowDiskReadError(const char* CommandString,
 		                       const uint8_t ErrorCode);
 
 #endif

@@ -102,7 +102,7 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK)
 	uint8_t LEDMask = LEDs_GetLEDs();
 
 	/* Check to see if the logging interval has expired */
-	if (CurrentLoggingTicks++ < LoggingInterval500MS_SRAM)
+	if (++CurrentLoggingTicks < LoggingInterval500MS_SRAM)
 	  return;
 
 	/* Reset log tick counter to prepare for next logging interval */
@@ -200,7 +200,7 @@ void SetupHardware(void)
 	Temperature_Init();
 	Dataflash_Init();
 	USB_Init();
-	TWI_Init(TWI_BIT_PRESCALE_4, (F_CPU / 4 / 50000) / 2);
+	TWI_Init(TWI_BIT_PRESCALE_4, TWI_BITLENGTH_FROM_FREQ(4, 50000));
 
 	/* 500ms logging interval timer configuration */
 	OCR1A   = (((F_CPU / 1024) / 2) - 1);
@@ -294,7 +294,7 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
  *  \param[in] HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
  *  \param[in] ReportID    Report ID of the received report from the host
  *  \param[in] ReportType  The type of report that the host has sent, either HID_REPORT_ITEM_Out or HID_REPORT_ITEM_Feature
- *  \param[in] ReportData  Pointer to a buffer where the created report has been stored
+ *  \param[in] ReportData  Pointer to a buffer where the received report has been stored
  *  \param[in] ReportSize  Size in bytes of the received HID report
  */
 void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo,

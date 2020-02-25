@@ -51,8 +51,12 @@ void CDC_Device_ProcessControlRequest(USB_ClassInfo_CDC_Device_t* const CDCInter
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				Endpoint_ClearSETUP();
-				Endpoint_Write_Control_Stream_LE(&CDCInterfaceInfo->State.LineEncoding, sizeof(CDCInterfaceInfo->State.LineEncoding));
-				Endpoint_ClearOUT();
+				Endpoint_Write_32_LE(CDCInterfaceInfo->State.LineEncoding.BaudRateBPS);
+				Endpoint_Write_8(CDCInterfaceInfo->State.LineEncoding.CharFormat);
+				Endpoint_Write_8(CDCInterfaceInfo->State.LineEncoding.ParityType);
+				Endpoint_Write_8(CDCInterfaceInfo->State.LineEncoding.DataBits);
+				Endpoint_ClearIN();
+				Endpoint_ClearStatusStage();
 			}
 
 			break;
@@ -60,8 +64,12 @@ void CDC_Device_ProcessControlRequest(USB_ClassInfo_CDC_Device_t* const CDCInter
 			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				Endpoint_ClearSETUP();
-				Endpoint_Read_Control_Stream_LE(&CDCInterfaceInfo->State.LineEncoding, sizeof(CDCInterfaceInfo->State.LineEncoding));
-				Endpoint_ClearIN();
+				CDCInterfaceInfo->State.LineEncoding.BaudRateBPS = Endpoint_Read_32_LE();
+				CDCInterfaceInfo->State.LineEncoding.CharFormat  = Endpoint_Read_8();
+				CDCInterfaceInfo->State.LineEncoding.ParityType  = Endpoint_Read_8();
+				CDCInterfaceInfo->State.LineEncoding.DataBits    = Endpoint_Read_8();
+				Endpoint_ClearOUT();
+				Endpoint_ClearStatusStage();
 
 				EVENT_CDC_Device_LineEncodingChanged(CDCInterfaceInfo);
 			}
@@ -276,9 +284,9 @@ void CDC_Device_SendControlLineStateChange(USB_ClassInfo_CDC_Device_t* const CDC
 		{
 			.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
 			.bRequest      = CDC_NOTIF_SerialState,
-			.wValue        = 0,
-			.wIndex        = 0,
-			.wLength       = sizeof(CDCInterfaceInfo->State.ControlLineStates.DeviceToHost),
+			.wValue        = CPU_TO_LE16(0),
+			.wIndex        = CPU_TO_LE16(0),
+			.wLength       = CPU_TO_LE16(sizeof(CDCInterfaceInfo->State.ControlLineStates.DeviceToHost)),
 		};
 
 	Endpoint_Write_Stream_LE(&Notification, sizeof(USB_Request_Header_t), NULL);

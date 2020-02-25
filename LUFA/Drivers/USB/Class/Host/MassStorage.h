@@ -122,6 +122,7 @@
 			} SCSI_Capacity_t;
 
 		/* Enums: */
+			/** Enum for the possible error codes returned by the \ref MS_Host_ConfigurePipes() function. */
 			enum MS_Host_EnumerationFailure_ErrorCodes_t
 			{
 				MS_ENUMERROR_NoError                    = 0, /**< Configuration Descriptor was processed successfully. */
@@ -137,10 +138,6 @@
 			 *  is found within the device. This should be called once after the stack has enumerated the attached device, while
 			 *  the host state machine is in the Addressed state.
 			 *
-			 *  \note The pipe index numbers as given in the interface's configuration structure must not overlap with any other
-			 *        interface, or pipe bank corruption will occur. Gaps in the allocated pipe numbers or non-sequential indexes
-			 *        within a single interface is allowed, but no two interfaces of any type have have interleaved pipe indexes.
-			 *
 			 *  \param[in,out] MSInterfaceInfo       Pointer to a structure containing an MS Class host configuration and state.
 			 *  \param[in]     ConfigDescriptorSize  Length of the attached device's Configuration Descriptor.
 			 *  \param[in]     ConfigDescriptorData  Pointer to a buffer containing the attached device's Configuration Descriptor.
@@ -152,7 +149,8 @@
 			                               void* ConfigDescriptorData) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(3);
 
 			/** Sends a MASS STORAGE RESET control request to the attached device, resetting the Mass Storage Interface
-			 *  and readying it for the next Mass Storage command.
+			 *  and readying it for the next Mass Storage command. This should be called after a failed SCSI request to 
+			 *  ensure the attached Mass Storage device is ready to receive the next command.
 			 *
 			 *  \param[in,out] MSInterfaceInfo  Pointer to a structure containing a MS Class host configuration and state.
 			 *
@@ -301,7 +299,7 @@
 			 *
 			 *  \param[in,out] MSInterfaceInfo  Pointer to a structure containing an Mass Storage Class host configuration and state.
 			 */
-			static inline void MS_Host_USBTask(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo);
+			static inline void MS_Host_USBTask(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1) ATTR_ALWAYS_INLINE;
 			static inline void MS_Host_USBTask(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo)
 			{
 				(void)MSInterfaceInfo;
@@ -314,19 +312,21 @@
 
 		/* Function Prototypes: */
 			#if defined(__INCLUDE_FROM_MASSSTORAGE_HOST_C)
-				static uint8_t DCOMP_MS_Host_NextMSInterface(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
-				static uint8_t DCOMP_MS_Host_NextMSInterfaceEndpoint(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
-
 				static uint8_t MS_Host_SendCommand(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo,
 				                                   MS_CommandBlockWrapper_t* const SCSICommandBlock,
 				                                   const void* const BufferPtr) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 				static uint8_t MS_Host_WaitForDataReceived(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 				static uint8_t MS_Host_SendReceiveData(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo,
 				                                       MS_CommandBlockWrapper_t* const SCSICommandBlock,
-				                                       void* BufferPtr) ATTR_NON_NULL_PTR_ARG(1)  ATTR_NON_NULL_PTR_ARG(2);
+				                                       void* BufferPtr) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 				static uint8_t MS_Host_GetReturnedStatus(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo,
 				                                         MS_CommandStatusWrapper_t* const SCSICommandStatus)
 				                                         ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
+
+				static uint8_t DCOMP_MS_Host_NextMSInterface(void* const CurrentDescriptor)
+				                                             ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(1);
+				static uint8_t DCOMP_MS_Host_NextMSInterfaceEndpoint(void* const CurrentDescriptor)
+				                                                     ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(1);
 			#endif
 	#endif
 

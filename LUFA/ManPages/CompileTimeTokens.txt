@@ -10,6 +10,9 @@
  *  compiler via the -D switch, to alter the LUFA library code. These tokens may alter the library behaviour,
  *  or remove features unused by a given application in order to save flash space.
  *
+ *  \note If the \c USE_LUFA_CONFIG_HEADER token is defined, the library will include a header file named \c LUFAConfig.h located
+ *        in the user directory where the below compile time tokens may be defined. This allows for an alternative to makefile
+ *        defined tokens for configuring the library.
  *
  *  \section Sec_SummaryNonUSBTokens Non USB Related Tokens
  *  This section describes compile tokens which affect non-USB sections of the LUFA library.
@@ -78,10 +81,12 @@
  *  \section Sec_SummaryUSBTokens General USB Driver Related Tokens
  *  This section describes compile tokens which affect USB driver stack as a whole in the LUFA library.
  *
- *  <b>ORDERED_EP_CONFIG</b> - (\ref Group_EndpointManagement , \ref Group_PipeManagement)  - <i>AVR8 Only</i> \n
+ *  <b>ORDERED_EP_CONFIG</b> - (\ref Group_EndpointManagement , \ref Group_PipeManagement)  - <i>AVR8, UC3</i> \n
  *  The USB AVRs do not allow for Endpoints and Pipes to be configured out of order; they <i>must</i> be configured in an ascending order to
- *  prevent data corruption issues. However, by default LUFA employs a workaround to allow for unordered Endpoint/Pipe initialisation. This compile
- *  time token may be used to restrict the intialisation order to ascending indexes only in exchange for a smaller compiled binary size.
+ *  prevent data corruption issues. However, by default LUFA employs a workaround to allow for unordered Endpoint/Pipe initialization. This compile
+ *  time token may be used to restrict the initialization order to ascending indexes only in exchange for a smaller compiled binary size. Use
+ *  caution when applied to applications using the library USB Class drivers; the user application must ensure that all endpoints and pipes are
+ *  allocated sequentially.
  *
  *  <b>USE_STATIC_OPTIONS</b>=<i>x</i> - (\ref Group_USBManagement) - <i>All Architectures</i> \n
  *  By default, the USB_Init() function accepts dynamic options at runtime to alter the library behaviour, including whether the USB pad
@@ -162,7 +167,7 @@
  *  is through control endpoint requests. Defining this token will remove several features related to the selection and control of device
  *  endpoints internally, saving space. Generally, this is usually only useful in (some) bootloaders and is best avoided.
  *
- *  <b>INTERRUPT_CONTROL_ENDPOINT</b> - (\ref Group_USBManagement) - <i>AVR8 Only</i> \n
+ *  <b>INTERRUPT_CONTROL_ENDPOINT</b> - (\ref Group_USBManagement) - <i>All Architectures</i> \n
  *  Some applications prefer to not call the USB_USBTask() management task regularly while in device mode, as it can complicate code significantly.
  *  Instead, when device mode is used this token can be passed to the library via the -D switch to allow the library to manage the USB control
  *  endpoint entirely via USB controller interrupts asynchronously to the user application. When defined, USB_USBTask() does not need to be called
@@ -174,8 +179,8 @@
  *
  *  <b>NO_DEVICE_SELF_POWER</b> - (\ref Group_Device) - <i>All Architectures</i> \n
  *  USB devices may be bus powered, self powered, or a combination of both. When a device can be both bus powered and self powered, the host may
- *  query the device to determine the current power source, via \ref USB_CurrentlySelfPowered. For solely bus powered devices, this global and the
- *  code required to manage it may be disabled by passing this token to the library via the -D switch.
+ *  query the device to determine the current power source, via \ref USB_Device_CurrentlySelfPowered. For solely bus powered devices, this global
+ *  and the code required to manage it may be disabled by passing this token to the library via the -D switch.
  *
  *
  *  \section Sec_SummaryUSBHostTokens USB Host Mode Driver Related Tokens
