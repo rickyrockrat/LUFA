@@ -30,17 +30,11 @@
 
 #include "USBtoSerial.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA USB RS232 App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: CDC_Task             , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = CDC_Task             , .TaskStatus = TASK_STOP },
 };
 
 /* Globals: */
@@ -49,10 +43,10 @@ TASK_LIST
  *  These values are set by the host via a class-specific request, and the physical USART should be reconfigured to match the
  *  new settings each time they are changed by the host.
  */
-CDC_Line_Coding_t LineCoding = { BaudRateBPS: 9600,
-                                 CharFormat:  OneStopBit,
-                                 ParityType:  Parity_None,
-                                 DataBits:    8            };
+CDC_Line_Coding_t LineCoding = { .BaudRateBPS = 9600,
+                                 .CharFormat  = OneStopBit,
+                                 .ParityType  = Parity_None,
+                                 .DataBits    = 8            };
 
 /** Ring (circular) buffer to hold the RX data - data from the host to the attached device on the serial port. */
 RingBuff_t Rx_Buffer;
@@ -79,7 +73,7 @@ int main(void)
 	LEDs_Init();
 	ReconfigureUSART();
 	
-	/* Ringbuffer Initialization */
+	/* Ring buffer Initialization */
 	Buffer_Initialize(&Rx_Buffer);
 	Buffer_Initialize(&Tx_Buffer);
 	
@@ -159,33 +153,33 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	uint8_t* LineCodingData = (uint8_t*)&LineCoding;
 
 	/* Process CDC specific control requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_GetLineEncoding:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{	
 				/* Acknowledge the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
 				/* Write the line coding data to the control endpoint */
 				Endpoint_Write_Control_Stream_LE(LineCodingData, sizeof(LineCoding));
 				
 				/* Finalize the stream transfer to send the last packet or clear the host abort */
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 			}
 			
 			break;
 		case REQ_SetLineEncoding:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				/* Acknowledge the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
 				/* Read the line coding data in from the host into the global struct */
 				Endpoint_Read_Control_Stream_LE(LineCodingData, sizeof(LineCoding));
 
 				/* Finalize the stream transfer to clear the last packet from the host */
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 				
 				/* Reconfigure the USART with the new settings */
 				ReconfigureUSART();
@@ -193,25 +187,19 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	
 			break;
 		case REQ_SetControlLineState:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
-			{
-#if 0
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			{				
+				/* Acknowledge the SETUP packet, ready for data transfer */
+				Endpoint_ClearSETUP();
+				
 				/* NOTE: Here you can read in the line state mask from the host, to get the current state of the output handshake
-				         lines. The mask is read in from the wValue parameter, and can be masked against the CONTROL_LINE_OUT_* masks
-				         to determine the RTS and DTR line states using the following code:
+				         lines. The mask is read in from the wValue parameter in USB_ControlRequest, and can be masked against the
+						 CONTROL_LINE_OUT_* masks to determine the RTS and DTR line states using the following code:
 				*/
 
-				uint16_t wIndex = Endpoint_Read_Word_LE();
-					
-				// Do something with the given line states in wIndex
-#endif
-				
-				/* Acknowledge the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
-				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 	
 			break;
@@ -230,11 +218,11 @@ TASK(CDC_Task)
 
 		USB_Notification_Header_t Notification = (USB_Notification_Header_t)
 			{
-				NotificationType: (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
-				Notification:     NOTIF_SerialState,
-				wValue:           0,
-				wIndex:           0,
-				wLength:          sizeof(uint16_t),
+				.NotificationType = (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
+				.Notification     = NOTIF_SerialState,
+				.wValue           = 0,
+				.wIndex           = 0,
+				.wLength          = sizeof(uint16_t),
 			};
 			
 		uint16_t LineStateMask;
@@ -244,26 +232,28 @@ TASK(CDC_Task)
 		Endpoint_SelectEndpoint(CDC_NOTIFICATION_EPNUM);
 		Endpoint_Write_Stream_LE(&Notification, sizeof(Notification));
 		Endpoint_Write_Stream_LE(&LineStateMask, sizeof(LineStateMask));
-		Endpoint_ClearCurrentBank();
+		Endpoint_ClearIN();
 #endif
 
 		/* Select the Serial Rx Endpoint */
 		Endpoint_SelectEndpoint(CDC_RX_EPNUM);
 		
-		if (Endpoint_ReadWriteAllowed())
+		/* Check to see if a packet has been received from the host */
+		if (Endpoint_IsOUTReceived())
 		{
-			/* Read the received data endpoint into the transmission buffer */
-			while (Endpoint_BytesInEndpoint())
+			/* Read the bytes in from the endpoint into the buffer while space is available */
+			while (Endpoint_BytesInEndpoint() && (BUFF_STATICSIZE - Rx_Buffer.Elements))
 			{
-				/* Wait until the buffer has space for a new character */
-				while (!((BUFF_STATICSIZE - Rx_Buffer.Elements)));
-			
 				/* Store each character from the endpoint */
 				Buffer_StoreElement(&Rx_Buffer, Endpoint_Read_Byte());
 			}
 			
-			/* Clear the endpoint buffer */
-			Endpoint_ClearCurrentBank();
+			/* Check to see if all bytes in the current packet have been read */
+			if (!(Endpoint_BytesInEndpoint()))
+			{
+				/* Clear the endpoint buffer */
+				Endpoint_ClearOUT();
+			}
 		}
 		
 		/* Check if Rx buffer contains data */
@@ -284,26 +274,30 @@ TASK(CDC_Task)
 		if (Tx_Buffer.Elements)
 		{
 			/* Wait until Serial Tx Endpoint Ready for Read/Write */
-			while (!(Endpoint_ReadWriteAllowed()));
+			while (!(Endpoint_IsReadWriteAllowed()));
 			
-			/* Check before sending the data if the endpoint is completely full */
+			/* Write the bytes from the buffer to the endpoint while space is available */
+			while (Tx_Buffer.Elements && (Endpoint_BytesInEndpoint() < CDC_TXRX_EPSIZE))
+			{
+				/* Write each byte retreived from the buffer to the endpoint */
+				Endpoint_Write_Byte(Buffer_GetElement(&Tx_Buffer));
+			}
+			
+			/* Remember if the packet to send completely fills the endpoint */
 			bool IsFull = (Endpoint_BytesInEndpoint() == CDC_TXRX_EPSIZE);
 			
-			/* Write the transmission buffer contents to the received data endpoint */
-			while (Tx_Buffer.Elements && (Endpoint_BytesInEndpoint() < CDC_TXRX_EPSIZE))
-			  Endpoint_Write_Byte(Buffer_GetElement(&Tx_Buffer));
-			
 			/* Send the data */
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearIN();
 
-			/* If a full endpoint was sent, we need to send an empty packet afterwards to terminate the transfer */
-			if (IsFull)
+			/* If no more data to send and the last packet filled the endpoint, send an empty packet to release
+			 * the buffer on the receiver (otherwise all data will be cached until a non-full packet is received) */
+			if (IsFull && !(Tx_Buffer.Elements))
 			{
 				/* Wait until Serial Tx Endpoint Ready for Read/Write */
-				while (!(Endpoint_ReadWriteAllowed()));
+				while (!(Endpoint_IsReadWriteAllowed()));
 
 				/* Send an empty packet to terminate the transfer */
-				Endpoint_ClearCurrentBank();
+				Endpoint_ClearIN();
 			}
 		}
 	}

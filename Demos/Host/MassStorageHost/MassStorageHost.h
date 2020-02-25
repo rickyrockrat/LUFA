@@ -48,12 +48,11 @@
 		#include "MassStoreCommands.h"
 
 		#include <LUFA/Version.h>                                // Library Version Information
-		#include <LUFA/Common/ButtLoadTag.h>                     // PROGMEM tags readable by the ButtLoad project
 		#include <LUFA/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
 		#include <LUFA/Drivers/USB/USB.h>                        // USB Functionality
-		#include <LUFA/Drivers/AT90USBXXX/Serial_Stream.h>       // Serial stream driver
+		#include <LUFA/Drivers/Peripheral/SerialStream.h>        // Serial stream driver
 		#include <LUFA/Drivers/Board/LEDs.h>                     // LEDs driver
-		#include <LUFA/Drivers/Board/HWB.h>                      // Hardware Button driver
+		#include <LUFA/Drivers/Board/Buttons.h>                  // Board Buttons driver
 		#include <LUFA/Scheduler/Scheduler.h>                    // Simple scheduler for task management
 
 	/* Enums: */
@@ -66,7 +65,7 @@
 			Status_EnumerationError = 3, /**< Software error while enumerating the attached USB device */
 			Status_HardwareError    = 4, /**< Hardware error while enumerating the attached USB device */
 			Status_Busy             = 5, /**< Busy reading or writing to the attached Mass Storage device */
-			Status_SCSICommandError = 6, /**< Error sending or recieving a command to or from the attached SCSI device */
+			Status_SCSICommandError = 6, /**< Error sending or receiving a command to or from the attached SCSI device */
 		};
 
 	/* Task Definitions: */
@@ -80,7 +79,7 @@
 		HANDLES_EVENT(USB_DeviceEnumerationFailed);
 				
 	/* Function Prototypes: */
-		void ShowDiskReadError(char* CommandString, uint8_t ErrorCode);
+		void ShowDiskReadError(char* CommandString, bool FailedAtSCSILayer, uint8_t ErrorCode);
 		void UpdateStatus(uint8_t CurrentStatus);		
 
 #endif

@@ -36,17 +36,11 @@
  
 #include "MouseHost.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA Mouse Host App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_Mouse_Host       , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_Mouse_Host       , .TaskStatus = TASK_STOP },
 };
 
 
@@ -75,7 +69,7 @@ int main(void)
 	/* Initialize USB Subsystem */
 	USB_Init();
 
-	/* Startup message */
+	/* Start-up message */
 	puts_P(PSTR(ESC_RESET ESC_BG_WHITE ESC_INVERSE_ON ESC_ERASE_DISPLAY
 	       "Mouse Host Demo running.\r\n" ESC_INVERSE_OFF));
 		   
@@ -132,7 +126,7 @@ EVENT_HANDLER(USB_HostError)
 	for(;;);
 }
 
-/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occured while
+/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
  *  enumerating an attached USB device.
  */
 EVENT_HANDLER(USB_DeviceEnumerationFailed)
@@ -184,41 +178,62 @@ void ReadNextReport(void)
 	USB_MouseReport_Data_t MouseReport;
 	uint8_t                LEDMask = LEDS_NO_LEDS;
 
-	/* Select the mouse report data in pipe */
-	Pipe_SelectPipe(MOUSE_DATAPIPE);
+	/* Select mouse data pipe */
+	Pipe_SelectPipe(MOUSE_DATAPIPE);	
 
-	/* Ensure pipe contains data and is ready to be read before continuing */
-	if (!(Pipe_ReadWriteAllowed()))
-	  return;
+	#if !defined(INTERRUPT_DATA_PIPE)
+	/* Unfreeze keyboard data pipe */
+	Pipe_Unfreeze();
+	#endif
 
-	/* Read in mouse report data */
-	Pipe_Read_Stream_LE(&MouseReport, sizeof(MouseReport));				
+	/* Check to see if a packet has been received */
+	if (!(Pipe_IsINReceived()))
+	{
+		#if !defined(INTERRUPT_DATA_PIPE)
+		/* Refreeze HID data IN pipe */
+		Pipe_Freeze();
+		#endif
+			
+		return;
+	}
+
+	/* Ensure pipe contains data before trying to read from it */
+	if (Pipe_IsReadWriteAllowed())
+	{
+		/* Read in mouse report data */
+		Pipe_Read_Stream_LE(&MouseReport, sizeof(MouseReport));				
+
+		/* Alter status LEDs according to mouse X movement */
+		if (MouseReport.X > 0)
+		  LEDMask |= LEDS_LED1;
+		else if (MouseReport.X < 0)
+		  LEDMask |= LEDS_LED2;
+			
+		/* Alter status LEDs according to mouse Y movement */
+		if (MouseReport.Y > 0)
+		  LEDMask |= LEDS_LED3;
+		else if (MouseReport.Y < 0)
+		  LEDMask |= LEDS_LED4;
+
+		/* Alter status LEDs according to mouse button position */
+		if (MouseReport.Button)
+		  LEDMask  = LEDS_ALL_LEDS;
 		
+		LEDs_SetAllLEDs(LEDMask);
+		
+		/* Print mouse report data through the serial port */
+		printf_P(PSTR("dX:%2d dY:%2d Button:%d\r\n"), MouseReport.X,
+													  MouseReport.Y,
+													  MouseReport.Button);
+	}
+
 	/* Clear the IN endpoint, ready for next data packet */
-	Pipe_ClearCurrentBank();
-		
-	/* Alter status LEDs according to mouse X movement */
-	if (MouseReport.X > 0)
-	  LEDMask |= LEDS_LED1;
-	else if (MouseReport.X < 0)
-	  LEDMask |= LEDS_LED2;
-		
-	/* Alter status LEDs according to mouse Y movement */
-	if (MouseReport.Y > 0)
-	  LEDMask |= LEDS_LED3;
-	else if (MouseReport.Y < 0)
-	  LEDMask |= LEDS_LED4;
+	Pipe_ClearIN();
 
-	/* Alter status LEDs according to mouse button position */
-	if (MouseReport.Button)
-	  LEDMask  = LEDS_ALL_LEDS;
-	
-	LEDs_SetAllLEDs(LEDMask);
-	
-	/* Print mouse report data through the serial port */
-	printf_P(PSTR("dX:%2d dY:%2d Button:%d\r\n"), MouseReport.X,
-												  MouseReport.Y,
-												  MouseReport.Button);
+	#if !defined(INTERRUPT_DATA_PIPE)
+	/* Refreeze mouse data pipe */
+	Pipe_Freeze();
+	#endif
 }
 
 /** Task to set the configuration of the attached device after it has been enumerated, and to read and process
@@ -233,16 +248,19 @@ TASK(USB_Mouse_Host)
 	{
 		case HOST_STATE_Addressed:
 			/* Standard request to set the device configuration to configuration 1 */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_SetConfiguration,
-					wValue:        1,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_SetConfiguration,
+					.wValue        = 1,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control Error (Set Configuration).\r\n"));
@@ -280,16 +298,19 @@ TASK(USB_Mouse_Host)
 			}
 		
 			/* HID class request to set the mouse protocol to the Boot Protocol */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
-					bRequest:      REQ_SetProtocol,
-					wValue:        0,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
+					.bRequest      = REQ_SetProtocol,
+					.wValue        = 0,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control Error (Set Protocol).\r\n"));
@@ -303,22 +324,21 @@ TASK(USB_Mouse_Host)
 				break;
 			}
 
+			#if defined(INTERRUPT_DATA_PIPE)			
+			/* Select and unfreeze mouse data pipe */
+			Pipe_SelectPipe(MOUSE_DATAPIPE);	
+			Pipe_Unfreeze();
+			#endif
+
 			puts_P(PSTR("Mouse Enumerated.\r\n"));
 			
 			USB_HostState = HOST_STATE_Ready;
 			break;
 		#if !defined(INTERRUPT_DATA_PIPE)
 		case HOST_STATE_Ready:
-			/* Select and unfreeze mouse data pipe */
-			Pipe_SelectPipe(MOUSE_DATAPIPE);
-			Pipe_Unfreeze();
-
 			/* If a report has been received, read and process it */
-			if (Pipe_ReadWriteAllowed())
-			  ReadNextReport();
+			ReadNextReport();
 
-			/* Freeze mouse data pipe */
-			Pipe_Freeze();
 			break;
 		#endif
 	}
@@ -330,6 +350,9 @@ TASK(USB_Mouse_Host)
  */
 ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 {
+	/* Save previously selected pipe before selecting a new pipe */
+	uint8_t PrevSelectedPipe = Pipe_GetCurrentPipe();
+
 	/* Check to see if the mouse data pipe has caused the interrupt */
 	if (Pipe_HasPipeInterrupted(MOUSE_DATAPIPE))
 	{
@@ -347,5 +370,8 @@ ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 			ReadNextReport();
 		}
 	}
+
+	/* Restore previously selected pipe */
+	Pipe_SelectPipe(PrevSelectedPipe);
 }
 #endif

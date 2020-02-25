@@ -36,19 +36,13 @@
 
 #include "RNDISEthernet.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA RNDIS App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: Ethernet_Task        , TaskStatus: TASK_STOP },
-	{ Task: TCP_Task             , TaskStatus: TASK_STOP },
-	{ Task: RNDIS_Task           , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = Ethernet_Task        , .TaskStatus = TASK_STOP },
+	{ .Task = TCP_Task             , .TaskStatus = TASK_STOP },
+	{ .Task = RNDIS_Task           , .TaskStatus = TASK_STOP },
 };
 
 /** Main program entry point. This routine configures the hardware required by the application, then
@@ -99,7 +93,7 @@ EVENT_HANDLER(USB_Connect)
 }
 
 /** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
- *  the status LEDs and stops all the relevent tasks.
+ *  the status LEDs and stops all the relevant tasks.
  */
 EVENT_HANDLER(USB_Disconnect)
 {
@@ -114,7 +108,7 @@ EVENT_HANDLER(USB_Disconnect)
 }
 
 /** Event handler for the USB_ConfigurationChanged event. This is fired when the host sets the current configuration
- *  of the USB device after enumeration, and configures the RNDIS device endpoints and starts the relevent tasks.
+ *  of the USB device after enumeration, and configures the RNDIS device endpoints and starts the relevant tasks.
  */
 EVENT_HANDLER(USB_ConfigurationChanged)
 {
@@ -156,28 +150,31 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	uint16_t wLength = Endpoint_Read_Word_LE();
 
 	/* Process RNDIS class commands */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
-		case SEND_ENCAPSULATED_COMMAND:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+		case REQ_SendEncapsulatedCommand:
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				/* Clear the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Read in the RNDIS message into the message buffer */
 				Endpoint_Read_Control_Stream_LE(RNDISMessageBuffer, wLength);
 
 				/* Finalize the stream transfer to clear the last packet from the host */
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 
 				/* Process the RNDIS message */
 				ProcessRNDISControlMessage();
 			}
 			
 			break;
-		case GET_ENCAPSULATED_RESPONSE:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+		case REQ_GetEncapsulatedResponse:
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
+				/* Clear the SETUP packet, ready for data transfer */
+				Endpoint_ClearSETUP();
+				
 				/* Check if a response to the last message is ready */
 				if (!(MessageHeader->MessageLength))
 				{
@@ -186,18 +183,11 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 					MessageHeader->MessageLength = 1;
 				}
 
-				/* Check if less than the requested number of bytes to transfer */
-				if (MessageHeader->MessageLength < wLength)
-				  wLength = MessageHeader->MessageLength;
-
-				/* Clear the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
-				
 				/* Write the message response data to the endpoint */
-				Endpoint_Write_Control_Stream_LE(RNDISMessageBuffer, wLength);
+				Endpoint_Write_Control_Stream_LE(RNDISMessageBuffer, MessageHeader->MessageLength);
 				
 				/* Finalize the stream transfer to send the last packet or clear the host abort */
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 
 				/* Reset the message header once again after transmission */
 				MessageHeader->MessageLength = 0;
@@ -238,7 +228,7 @@ void UpdateStatus(uint8_t CurrentStatus)
 }
 
 /** Task to manage the sending and receiving of encapsulated RNDIS data and notifications. This removes the RNDIS
- *  wrapper from recieved Ethernet frames and places them in the FrameIN global buffer, or adds the RNDIS wrapper
+ *  wrapper from received Ethernet frames and places them in the FrameIN global buffer, or adds the RNDIS wrapper
  *  to a frame in the FrameOUT global before sending the buffer contents to the host.
  */
 TASK(RNDIS_Task)
@@ -247,22 +237,22 @@ TASK(RNDIS_Task)
 	Endpoint_SelectEndpoint(CDC_NOTIFICATION_EPNUM);
 
 	/* Check if a message response is ready for the host */
-	if (Endpoint_ReadWriteAllowed() && ResponseReady)
+	if (Endpoint_IsINReady() && ResponseReady)
 	{
 		USB_Notification_t Notification = (USB_Notification_t)
 			{
-				bmRequestType: (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
-				bNotification: NOTIF_RESPONSE_AVAILABLE,
-				wValue:        0,
-				wIndex:        0,
-				wLength:       0,
+				.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
+				.bNotification = NOTIF_RESPONSE_AVAILABLE,
+				.wValue        = 0,
+				.wIndex        = 0,
+				.wLength       = 0,
 			};
 		
 		/* Indicate that a message response is ready for the host */
 		Endpoint_Write_Stream_LE(&Notification, sizeof(Notification));
 
 		/* Finalize the stream transfer to send the last packet */
-		Endpoint_ClearCurrentBank();
+		Endpoint_ClearIN();
 
 		/* Indicate a response is no longer ready */
 		ResponseReady = false;
@@ -278,13 +268,13 @@ TASK(RNDIS_Task)
 		Endpoint_SelectEndpoint(CDC_RX_EPNUM);
 		
 		/* Check if the data OUT endpoint contains data, and that the IN buffer is empty */
-		if (Endpoint_ReadWriteAllowed() && !(FrameIN.FrameInBuffer))
+		if (Endpoint_IsOUTReceived() && !(FrameIN.FrameInBuffer))
 		{
 			/* Read in the packet message header */
 			Endpoint_Read_Stream_LE(&RNDISPacketHeader, sizeof(RNDIS_PACKET_MSG_t));
 
 			/* Stall the request if the data is too large */
-			if (RNDISPacketHeader.MessageLength > ETHERNET_FRAME_SIZE_MAX)
+			if (RNDISPacketHeader.DataLength > ETHERNET_FRAME_SIZE_MAX)
 			{
 				Endpoint_StallTransaction();
 				return;
@@ -294,7 +284,7 @@ TASK(RNDIS_Task)
 			Endpoint_Read_Stream_LE(FrameIN.FrameData, RNDISPacketHeader.DataLength);
 
 			/* Finalize the stream transfer to send the last packet */
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearOUT();
 			
 			/* Store the size of the Ethernet frame */
 			FrameIN.FrameLength = RNDISPacketHeader.DataLength;
@@ -307,7 +297,7 @@ TASK(RNDIS_Task)
 		Endpoint_SelectEndpoint(CDC_TX_EPNUM);
 		
 		/* Check if the data IN endpoint is ready for more data, and that the IN buffer is full */
-		if (Endpoint_ReadWriteAllowed() && FrameOUT.FrameInBuffer)
+		if (Endpoint_IsINReady() && FrameOUT.FrameInBuffer)
 		{
 			/* Clear the packet header with all 0s so that the relevant fields can be filled */
 			memset(&RNDISPacketHeader, 0, sizeof(RNDIS_PACKET_MSG_t));
@@ -325,7 +315,7 @@ TASK(RNDIS_Task)
 			Endpoint_Write_Stream_LE(FrameOUT.FrameData, RNDISPacketHeader.DataLength);
 			
 			/* Finalize the stream transfer to send the last packet */
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearIN();
 			
 			/* Indicate Ethernet OUT buffer no longer full */
 			FrameOUT.FrameInBuffer = false;

@@ -33,6 +33,19 @@
  *  Hardware SPI subsystem driver for the supported USB AVRs models.
  */
 
+/** \ingroup Group_PeripheralDrivers
+ *  @defgroup Group_SPI SPI Driver - LUFA/Drivers/Peripheral/SPI.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - None
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the setup of a the SPI port.
+ *
+ *  @{
+ */
+
 #ifndef __SPI_H__
 #define __SPI_H__
 
@@ -89,7 +102,9 @@
 				          (PrescalerMask & ~SPI_USE_DOUBLESPEED));
 				
 				if (PrescalerMask & SPI_USE_DOUBLESPEED)
-				  SPSR = (1 << SPI2X);
+				  SPSR |= (1 << SPI2X);
+				else
+				  SPSR &= ~(1 << SPI2X);
 			}
 			
 			/** Sends and receives a byte through the SPI interface, blocking until the transfer is complete.
@@ -137,3 +152,5 @@
 		#endif
 		
 #endif
+
+/** @} */

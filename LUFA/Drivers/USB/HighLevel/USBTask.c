@@ -28,14 +28,15 @@
   this software.
 */
 
-#include "../LowLevel/USBMode.h"
+#include "USBMode.h"
 
 #define  INCLUDE_FROM_USBTASK_C
 #include "USBTask.h"
 
-volatile bool      USB_IsSuspended;
-volatile bool      USB_IsConnected;
-volatile bool      USB_IsInitialized;
+volatile bool        USB_IsSuspended;
+volatile bool        USB_IsConnected;
+volatile bool        USB_IsInitialized;
+USB_Request_Header_t USB_ControlRequest;
 
 #if defined(USB_CAN_BE_HOST)
 volatile uint8_t   USB_HostState;
@@ -64,7 +65,7 @@ static void USB_DeviceTask(void)
 	
 		Endpoint_SelectEndpoint(ENDPOINT_CONTROLEP);
 
-		if (Endpoint_IsSetupReceived())
+		if (Endpoint_IsSETUPReceived())
 		{
 			ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 			{
@@ -82,9 +83,12 @@ static void USB_HostTask(void)
 {
 	uint8_t ErrorCode    = HOST_ENUMERROR_NoError;
 	uint8_t SubErrorCode = HOST_ENUMERROR_NoError;
+	uint8_t PrevPipe     = Pipe_GetCurrentPipe();
 	
 	static uint16_t WaitMSRemaining;
 	static uint8_t  PostWaitState;
+
+	Pipe_SelectPipe(PIPE_CONTROLPIPE);
 
 	switch (USB_HostState)
 	{
@@ -152,7 +156,7 @@ static void USB_HostTask(void)
 			break;
 		case HOST_STATE_Powered:
 			Pipe_ConfigurePipe(PIPE_CONTROLPIPE, EP_TYPE_CONTROL,
-							   PIPE_TOKEN_SETUP, PIPE_CONTROLPIPE,
+							   PIPE_TOKEN_SETUP, ENDPOINT_CONTROLEP,
 							   PIPE_CONTROLPIPE_DEFAULT_SIZE, PIPE_BANK_SINGLE);		
 		
 			if (!(Pipe_IsConfigured()))
@@ -165,16 +169,16 @@ static void USB_HostTask(void)
 			USB_HostState = HOST_STATE_Default;
 			break;
 		case HOST_STATE_Default:
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_GetDescriptor,
-					wValue:        (DTYPE_Device << 8),
-					wIndex:        0,
-					wLength:       PIPE_CONTROLPIPE_DEFAULT_SIZE,
+					.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_GetDescriptor,
+					.wValue        = (DTYPE_Device << 8),
+					.wIndex        = 0,
+					.wLength       = 8,
 				};
 
-			uint8_t DataBuffer[PIPE_CONTROLPIPE_DEFAULT_SIZE];
+			uint8_t DataBuffer[8];
 
 			if ((SubErrorCode = USB_Host_SendControlRequest(DataBuffer)) != HOST_SENDCONTROL_Successful)
 			{
@@ -198,7 +202,7 @@ static void USB_HostTask(void)
 			Pipe_ResetPipe(PIPE_CONTROLPIPE);
 			
 			Pipe_ConfigurePipe(PIPE_CONTROLPIPE, EP_TYPE_CONTROL,
-			                   PIPE_TOKEN_SETUP, PIPE_CONTROLPIPE,
+			                   PIPE_TOKEN_SETUP, ENDPOINT_CONTROLEP,
 			                   USB_ControlPipeSize, PIPE_BANK_SINGLE);
 
 			if (!(Pipe_IsConfigured()))
@@ -210,13 +214,13 @@ static void USB_HostTask(void)
 
 			Pipe_SetInfiniteINRequests();
 			
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_SetAddress,
-					wValue:        USB_HOST_DEVICEADDRESS,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_SetAddress,
+					.wValue        = USB_HOST_DEVICEADDRESS,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
 			if ((SubErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
@@ -249,5 +253,7 @@ static void USB_HostTask(void)
 
 		USB_ResetInterface();
 	}
+	
+	Pipe_SelectPipe(PrevPipe);
 }
 #endif

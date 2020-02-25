@@ -37,21 +37,15 @@
  
 #include "Keyboard.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA Keyboard App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
 	#if !defined(INTERRUPT_CONTROL_ENDPOINT)
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
 	#endif
 	
 	#if !defined(INTERRUPT_DATA_ENDPOINT)
-	{ Task: USB_Keyboard_Report  , TaskStatus: TASK_STOP },
+	{ .Task = USB_Keyboard_Report  , .TaskStatus = TASK_STOP },
 	#endif
 };
 
@@ -67,7 +61,7 @@ bool UsingReportProtocol = true;
 uint8_t IdleCount = 0;
 
 /** Current Idle period remaining. When the IdleCount value is set, this tracks the remaining number of idle
- *  milliseconds. This is seperate to the IdleCount timer and is incremented and compared as the host may request 
+ *  milliseconds. This is separate to the IdleCount timer and is incremented and compared as the host may request 
  *  the current idle period via a Get Idle HID class request, thus its value must be preserved.
  */
 uint16_t IdleMSRemaining = 0;
@@ -199,127 +193,108 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Handle HID Class specific requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_GetReport:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				USB_KeyboardReport_Data_t KeyboardReportData;
 
+				Endpoint_ClearSETUP();
+	
 				/* Create the next keyboard report for transmission to the host */
 				CreateKeyboardReport(&KeyboardReportData);
 
-				/* Ignore report type and ID number value */
-				Endpoint_Discard_Word();
-				
-				/* Ignore unused Interface number value */
-				Endpoint_Discard_Word();
-
-				/* Read in the number of bytes in the report to send to the host */
-				uint16_t wLength = Endpoint_Read_Word_LE();
-				
-				/* If trying to send more bytes than exist to the host, clamp the value at the report size */
-				if (wLength > sizeof(KeyboardReportData))
-				  wLength = sizeof(KeyboardReportData);
-
-				Endpoint_ClearSetupReceived();
-	
 				/* Write the report data to the control endpoint */
-				Endpoint_Write_Control_Stream_LE(&KeyboardReportData, wLength);
+				Endpoint_Write_Control_Stream_LE(&KeyboardReportData, sizeof(KeyboardReportData));
 				
 				/* Finalize the stream transfer to send the last packet or clear the host abort */
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 			}
 		
 			break;
 		case REQ_SetReport:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Wait until the LED report has been sent by the host */
-				while (!(Endpoint_IsSetupOUTReceived()));
+				while (!(Endpoint_IsOUTReceived()));
 
 				/* Read in the LED report from the host */
 				uint8_t LEDStatus = Endpoint_Read_Byte();
 
-				/* Process the incomming LED report */
+				/* Process the incoming LED report */
 				ProcessLEDReport(LEDStatus);
 			
 				/* Clear the endpoint data */
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 			
 			break;
 		case REQ_GetProtocol:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Write the current protocol flag to the host */
 				Endpoint_Write_Byte(UsingReportProtocol);
 				
 				/* Send the flag to the host */
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupOUTReceived()));
-				Endpoint_ClearSetupOUT();
+				while (!(Endpoint_IsOUTReceived()));
+				Endpoint_ClearOUT();
 			}
 			
 			break;
 		case REQ_SetProtocol:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				/* Read in the wValue parameter containing the new protocol mode */
-				uint16_t wValue = Endpoint_Read_Word_LE();
-								
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
 				/* Set or clear the flag depending on what the host indicates that the current Protocol should be */
-				UsingReportProtocol = (wValue != 0x0000);
+				UsingReportProtocol = (USB_ControlRequest.wValue != 0x0000);
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 			
 			break;
 		case REQ_SetIdle:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				/* Read in the wValue parameter containing the idle period */
-				uint16_t wValue = Endpoint_Read_Word_LE();
-				
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Get idle period in MSB */
-				IdleCount = (wValue >> 8);
+				IdleCount = (USB_ControlRequest.wValue >> 8);
 				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 			
 			break;
 		case REQ_GetIdle:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{		
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Write the current idle duration to the host */
 				Endpoint_Write_Byte(IdleCount);
 				
 				/* Send the flag to the host */
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupOUTReceived()));
-				Endpoint_ClearSetupOUT();
+				while (!(Endpoint_IsOUTReceived()));
+				Endpoint_ClearOUT();
 			}
 
 			break;
@@ -415,13 +390,13 @@ static inline void SendNextReport(void)
 	Endpoint_SelectEndpoint(KEYBOARD_EPNUM);
 
 	/* Check if Keyboard Endpoint Ready for Read/Write, and if we should send a report */
-	if (Endpoint_ReadWriteAllowed() && SendReport)
+	if (Endpoint_IsReadWriteAllowed() && SendReport)
 	{
 		/* Write Keyboard Report Data */
 		Endpoint_Write_Stream_LE(&KeyboardReportData, sizeof(KeyboardReportData));
 
 		/* Finalize the stream transfer to send the last packet */
-		Endpoint_ClearCurrentBank();
+		Endpoint_ClearIN();
 	}
 }
 
@@ -431,18 +406,22 @@ static inline void ReceiveNextReport(void)
 	/* Select the Keyboard LED Report Endpoint */
 	Endpoint_SelectEndpoint(KEYBOARD_LEDS_EPNUM);
 
-	/* Check if Keyboard LED Endpoint Ready for Read/Write */
-	if (!(Endpoint_ReadWriteAllowed()))
-	  return;
+	/* Check if Keyboard LED Endpoint contains a packet */
+	if (Endpoint_IsOUTReceived())
+	{
+		/* Check to see if the packet contains data */
+		if (Endpoint_IsReadWriteAllowed())
+		{
+			/* Read in the LED report from the host */
+			uint8_t LEDReport = Endpoint_Read_Byte();
 
-	/* Read in the LED report from the host */
-	uint8_t LEDReport = Endpoint_Read_Byte();
+			/* Process the read LED report from the host */
+			ProcessLEDReport(LEDReport);
+		}
 
-	/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
-	Endpoint_ClearCurrentBank();
-
-	/* Process the read LED report from the host */
-	ProcessLEDReport(LEDReport);
+		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
+		Endpoint_ClearOUT();
+	}
 }
 
 /** Function to manage status updates to the user. This is done via LEDs on the given board, if available, but may be changed to
@@ -545,4 +524,3 @@ ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 	}
 	#endif
 }
-

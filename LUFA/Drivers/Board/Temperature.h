@@ -33,6 +33,19 @@
  *  Temperature sensor board driver for the USB boards which contain a temperature sensor.
  */
 
+/** \ingroup Group_BoardDrivers
+ *  @defgroup Group_Temperature Temperature Driver - LUFA/Drivers/Board/Temperature.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - LUFA/Drivers/Board/Temperature.c
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the control of board temperature sensors.
+ *
+ *  @{
+ */
+
 #ifndef __TEMPERATURE_H__
 #define __TEMPERATURE_H__
 
@@ -44,11 +57,11 @@
 	/* Includes: */
 		#include <avr/pgmspace.h>
 
-		#include "../AT90USBXXX/ADC.h"
 		#include "../../Common/Common.h"
+		#include "../Peripheral/ADC.h"
 	
 		#if !defined(BOARD)
-			#error #error BOARD must be set in makefile to a value specified in BoardTypes.h.	
+			#error BOARD must be set in makefile to a value specified in BoardTypes.h.	
 		#elif (BOARD != BOARD_USBKEY) && (BOARD != BOARD_STK525) && (BOARD != BOARD_STK526)
 			#error The selected board does not contain a temperature sensor.
 		#endif
@@ -63,25 +76,30 @@
 			/** ADC channel number for the temperature sensor. */
 			#define TEMP_ADC_CHANNEL   0
 			
-			/** Minimum returnable temperature from the Temperature_GetTemperature() function. */
+			/** Minimum returnable temperature from the \ref Temperature_GetTemperature() function. */
 			#define TEMP_MIN_TEMP      TEMP_TABLE_OFFSET
 
-			/** Maximum returnable temperature from the Temperature_GetTemperature() function. */
+			/** Maximum returnable temperature from the \ref Temperature_GetTemperature() function. */
 			#define TEMP_MAX_TEMP      ((TEMP_TABLE_SIZE - 1) + TEMP_TABLE_OFFSET)
-			
-			/** Initializes the temperature sensor driver, including setting up the appropriate ADC channel.
-			 *  This must be called before any other temperature sensor routines.
-			 *
-			 *  The ADC itself (not the ADC channel) must be configured seperately before calling the temperature
-			 *  sensor functions.
-			 */
-			#define Temperature_Init() ADC_SetupChannel(TEMP_ADC_CHANNEL);
+		
+		/* Pseudo-Function Macros: */
+			#if defined(__DOXYGEN__)
+				/** Initializes the temperature sensor driver, including setting up the appropriate ADC channel.
+				 *  This must be called before any other temperature sensor routines.
+				 *
+				 *  The ADC itself (not the ADC channel) must be configured separately before calling the temperature
+				 *  sensor functions.
+				 */
+				static inline void Temperature_Init(void);
+			#else
+				#define Temperature_Init() ADC_SetupChannel(TEMP_ADC_CHANNEL);
+			#endif
 
 		/* Function Prototypes: */
 			/** Performs a complete ADC on the temperature sensor channel, and converts the result into a
-			 *  valid temperature between TEMP_MIN_TEMP and TEMP_MAX_TEMP in degrees Celcius.
+			 *  valid temperature between \ref TEMP_MIN_TEMP and \ref TEMP_MAX_TEMP in degrees Celsius.
 			 *
-			 *  \return Signed temperature in degrees Celcius
+			 *  \return Signed temperature in degrees Celsius
 			 */
 			int8_t Temperature_GetTemperature(void) ATTR_WARN_UNUSED_RESULT;
 
@@ -98,3 +116,5 @@
 		#endif
 		
 #endif
+
+/** @} */

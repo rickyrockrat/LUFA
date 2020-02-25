@@ -27,7 +27,9 @@
   arising out of or in connection with the use or performance of
   this software.
 */
-#include "USBMode.h"
+
+#include "../HighLevel/USBMode.h"
+
 #if defined(USB_CAN_BE_HOST)
 
 #define  INCLUDE_FROM_PIPE_C
@@ -35,7 +37,7 @@
 
 uint8_t USB_ControlPipeSize = PIPE_CONTROLPIPE_DEFAULT_SIZE;
 
-bool Pipe_ConfigurePipe(const uint8_t  Number, const uint8_t Type, const uint8_t Token, const uint8_t EndpointNumber,
+bool Pipe_ConfigurePipe(const uint8_t Number, const uint8_t Type, const uint8_t Token, const uint8_t EndpointNumber,
 						const uint16_t Size, const uint8_t Banks)
 {
 	Pipe_SelectPipe(Number);
@@ -72,8 +74,19 @@ uint8_t Pipe_WaitUntilReady(void)
 
 	USB_INT_Clear(USB_INT_HSOFI);
 
-	while (!(Pipe_ReadWriteAllowed()))
+	for (;;)
 	{
+		if (Pipe_GetPipeToken() == PIPE_TOKEN_IN)
+		{
+			if (Pipe_IsINReceived())
+			  return PIPE_READYWAIT_NoError;
+		}
+		else
+		{
+			if (Pipe_IsOUTReady())
+			  return PIPE_READYWAIT_NoError;		
+		}
+
 		if (Pipe_IsStalled())
 		  return PIPE_READYWAIT_PipeStalled;
 		else if (!(USB_IsConnected))
@@ -87,8 +100,6 @@ uint8_t Pipe_WaitUntilReady(void)
 			  return PIPE_READYWAIT_Timeout;
 		}
 	}
-	
-	return PIPE_READYWAIT_NoError;
 }
 
 uint8_t Pipe_Write_Stream_LE(const void* Data, uint16_t Length
@@ -103,25 +114,28 @@ uint8_t Pipe_Write_Stream_LE(const void* Data, uint16_t Length
 	if ((ErrorCode = Pipe_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Pipe_ReadWriteAllowed()))
+		if (!(Pipe_IsReadWriteAllowed()))
 		{
-			Pipe_ClearCurrentBank();
+			Pipe_ClearOUT();
 				
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return PIPE_RWSTREAM_ERROR_CallbackAborted;
+			  return PIPE_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Pipe_WaitUntilReady()))
 			  return ErrorCode;
 		}
-
-		Pipe_Write_Byte(*(DataStream++));
+		else
+		{
+			Pipe_Write_Byte(*(DataStream++));
+			Length--;
+		}
 	}
 
-	return PIPE_RWSTREAM_ERROR_NoError;
+	return PIPE_RWSTREAM_NoError;
 }
 
 uint8_t Pipe_Write_Stream_BE(const void* Data, uint16_t Length
@@ -136,25 +150,28 @@ uint8_t Pipe_Write_Stream_BE(const void* Data, uint16_t Length
 	if ((ErrorCode = Pipe_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Pipe_ReadWriteAllowed()))
+		if (!(Pipe_IsReadWriteAllowed()))
 		{
-			Pipe_ClearCurrentBank();
+			Pipe_ClearOUT();
 				
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return PIPE_RWSTREAM_ERROR_CallbackAborted;
+			  return PIPE_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Pipe_WaitUntilReady()))
 			  return ErrorCode;
 		}
-
-		Pipe_Write_Byte(*(DataStream--));
+		else
+		{
+			Pipe_Write_Byte(*(DataStream--));
+			Length--;
+		}
 	}
 
-	return PIPE_RWSTREAM_ERROR_NoError;
+	return PIPE_RWSTREAM_NoError;
 }
 
 uint8_t Pipe_Discard_Stream(uint16_t Length
@@ -168,25 +185,28 @@ uint8_t Pipe_Discard_Stream(uint16_t Length
 	if ((ErrorCode = Pipe_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Pipe_ReadWriteAllowed()))
+		if (!(Pipe_IsReadWriteAllowed()))
 		{
-			Pipe_ClearCurrentBank();
+			Pipe_ClearIN();
 				
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return PIPE_RWSTREAM_ERROR_CallbackAborted;
+			  return PIPE_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Pipe_WaitUntilReady()))
 			  return ErrorCode;
 		}
-
-		Pipe_Discard_Byte();
+		else
+		{
+			Pipe_Discard_Byte();
+			Length--;
+		}
 	}
 
-	return PIPE_RWSTREAM_ERROR_NoError;
+	return PIPE_RWSTREAM_NoError;
 }
 
 uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length
@@ -201,25 +221,28 @@ uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length
 	if ((ErrorCode = Pipe_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Pipe_ReadWriteAllowed()))
+		if (!(Pipe_IsReadWriteAllowed()))
 		{
-			Pipe_ClearCurrentBank();
+			Pipe_ClearIN();
 				
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return PIPE_RWSTREAM_ERROR_CallbackAborted;
+			  return PIPE_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Pipe_WaitUntilReady()))
 			  return ErrorCode;
 		}
-		
-		*(DataStream++) = Pipe_Read_Byte();
+		else
+		{
+			*(DataStream++) = Pipe_Read_Byte();
+			Length--;
+		}
 	}
 
-	return PIPE_RWSTREAM_ERROR_NoError;
+	return PIPE_RWSTREAM_NoError;
 }
 
 uint8_t Pipe_Read_Stream_BE(void* Buffer, uint16_t Length
@@ -234,25 +257,28 @@ uint8_t Pipe_Read_Stream_BE(void* Buffer, uint16_t Length
 	if ((ErrorCode = Pipe_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Pipe_ReadWriteAllowed()))
+		if (!(Pipe_IsReadWriteAllowed()))
 		{
-			Pipe_ClearCurrentBank();
+			Pipe_ClearIN();
 				
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return PIPE_RWSTREAM_ERROR_CallbackAborted;
+			  return PIPE_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Pipe_WaitUntilReady()))
 			  return ErrorCode;
 		}
-
-		*(DataStream--) = Pipe_Read_Byte();
+		else
+		{
+			*(DataStream--) = Pipe_Read_Byte();
+			Length--;
+		}
 	}
 	
-	return PIPE_RWSTREAM_ERROR_NoError;
+	return PIPE_RWSTREAM_NoError;
 }
 
 #endif

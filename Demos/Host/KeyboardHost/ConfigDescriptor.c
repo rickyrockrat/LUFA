@@ -51,7 +51,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 	uint16_t ConfigDescriptorSize;
 	
 	/* Get Configuration Descriptor size from the device */
-	if (USB_Host_GetDeviceConfigDescriptor(&ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful)
+	if (USB_GetDeviceConfigDescriptor(&ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful)
 	  return ControlError;
 	
 	/* Ensure that the Configuration Descriptor isn't too large */
@@ -62,21 +62,21 @@ uint8_t ProcessConfigurationDescriptor(void)
 	ConfigDescriptorData = alloca(ConfigDescriptorSize);
 
 	/* Retrieve the entire configuration descriptor into the allocated buffer */
-	USB_Host_GetDeviceConfigDescriptor(&ConfigDescriptorSize, ConfigDescriptorData);
+	USB_GetDeviceConfigDescriptor(&ConfigDescriptorSize, ConfigDescriptorData);
 	
 	/* Validate returned data - ensure first entry is a configuration header descriptor */
 	if (DESCRIPTOR_TYPE(ConfigDescriptorData) != DTYPE_Configuration)
 	  return InvalidConfigDataReturned;
 	
 	/* Get the keyboard interface from the configuration descriptor */
-	if (USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextKeyboardInterface))
+	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextKeyboardInterface))
 	{
 		/* Descriptor not found, error out */
 		return NoHIDInterfaceFound;
 	}
 
 	/* Get the keyboard interface's data endpoint descriptor */
-	if (USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
 	                                   NextInterfaceKeyboardDataEndpoint))
 	{
 		/* Descriptor not found, error out */
@@ -98,8 +98,6 @@ uint8_t ProcessConfigurationDescriptor(void)
 	/* Enable the pipe IN interrupt for the data pipe */
 	USB_INT_Enable(PIPE_INT_IN);	
 	#endif
-
-	Pipe_Unfreeze();
 			
 	/* Valid data found, return success */
 	return SuccessfulConfigRead;
@@ -121,11 +119,11 @@ DESCRIPTOR_COMPARATOR(NextKeyboardInterface)
 		if ((DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).Class    == KEYBOARD_CLASS) &&
 		    (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).Protocol == KEYBOARD_PROTOCOL))
 		{
-			return Descriptor_Search_Found;
+			return DESCRIPTOR_SEARCH_Found;
 		}
 	}
 	
-	return Descriptor_Search_NotFound;
+	return DESCRIPTOR_SEARCH_NotFound;
 }
 
 /** Descriptor comparator function. This comparator function is can be called while processing an attached USB device's
@@ -142,12 +140,12 @@ DESCRIPTOR_COMPARATOR(NextInterfaceKeyboardDataEndpoint)
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Endpoint)
 	{
 		if (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Endpoint_t).EndpointAddress & ENDPOINT_DESCRIPTOR_DIR_IN)
-		  return Descriptor_Search_Found;
+		  return DESCRIPTOR_SEARCH_Found;
 	}
 	else if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
-		return Descriptor_Search_Fail;
+		return DESCRIPTOR_SEARCH_Fail;
 	}
 
-	return Descriptor_Search_NotFound;
+	return DESCRIPTOR_SEARCH_NotFound;
 }

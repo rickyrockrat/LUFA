@@ -39,10 +39,9 @@
 		#include <stdio.h>
 
 		#include <LUFA/Version.h>                                // Library Version Information
-		#include <LUFA/Common/ButtLoadTag.h>                     // PROGMEM tags readable by the ButtLoad project
 		#include <LUFA/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
 		#include <LUFA/Drivers/USB/USB.h>                        // USB Functionality
-		#include <LUFA/Drivers/AT90USBXXX/Serial_Stream.h>       // Serial stream driver
+		#include <LUFA/Drivers/Peripheral/SerialStream.h>        // Serial stream driver
 		#include <LUFA/Drivers/Board/LEDs.h>                     // LEDs driver
 		#include <LUFA/Scheduler/Scheduler.h>                    // Simple scheduler for task management
 		
@@ -77,5 +76,6 @@
 
 	/* Function Prototypes: */
 		void UpdateStatus(uint8_t CurrentStatus);
-		
+		void ProcessMouseReport(uint8_t* MouseReport);
+
 #endif

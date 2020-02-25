@@ -33,6 +33,18 @@
  *  ANSI terminal compatible escape sequences. These escape sequences are designed to be concatenated with existing
  *  strings to modify their display on a compatible terminal application.
  *
+ */
+ 
+/** \ingroup Group_MiscDrivers
+ *  @defgroup Group_Terminal ANSI Terminal Escape Codes - LUFA/Drivers/Misc/TerminalCodes.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - None
+ *
+ *  \section Module Description
+ *  Escape code macros for ANSI compliant text terminals.
+ *
  *  \note If desired, the macro DISABLE_TERMINAL_CODES can be defined in the project makefile and passed to the GCC
  *        compiler via the -D switch to disable the terminal codes without modifying the source, for use with non
  *        compatible terminals (any terminal code then equate to empty strings).
@@ -41,6 +53,8 @@
  *  \code
  *      printf("Some String, " ESC_BOLD_ON " Some bold string");
  *  \endcode
+ *
+ *  @{
  */
  
 #ifndef __TERMINALCODES_H__
@@ -161,10 +175,10 @@
 			/** Moves the cursor to the left the given number of columns. */
 			#define ESC_CURSOR_BACKWARD(C)   ANSI_ESCAPE_SEQUENCE(#C "D")
 
-			/** Saves the current cursor position so that it may be restored with ESC_CURSOR_POS_RESTORE. */
+			/** Saves the current cursor position so that it may be restored with \ref ESC_CURSOR_POS_RESTORE. */
 			#define ESC_CURSOR_POS_SAVE      ANSI_ESCAPE_SEQUENCE("s")
 
-			/** Restores the cursor position to the last position saved with ESC_CURSOR_POS_SAVE. */
+			/** Restores the cursor position to the last position saved with \ref ESC_CURSOR_POS_SAVE. */
 			#define ESC_CURSOR_POS_RESTORE   ANSI_ESCAPE_SEQUENCE("u")
 			
 			/** Erases the entire display, returning the cursor to the top left. */
@@ -174,3 +188,5 @@
 			#define ESC_ERASE_LINE           ANSI_ESCAPE_SEQUENCE("K")
 
 #endif
+
+/** @} */

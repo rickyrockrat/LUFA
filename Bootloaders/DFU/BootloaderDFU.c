@@ -151,19 +151,13 @@ EVENT_HANDLER(USB_Disconnect)
  */
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
-	/* Discard unused wIndex value */
-	Endpoint_Discard_Word();
-	
-	/* Discard unused wValue value */
-	Endpoint_Discard_Word();
-
 	/* Get the size of the command and data from the wLength value */
-	SentCommand.DataSize = Endpoint_Read_Word_LE();
+	SentCommand.DataSize = USB_ControlRequest.wLength;
 
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case DFU_DNLOAD:
-			Endpoint_ClearSetupReceived();
+			Endpoint_ClearSETUP();
 			
 			/* Check if bootloader is waiting to terminate */
 			if (WaitForExit)
@@ -178,7 +172,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 			/* If the request has a data stage, load it into the command struct */
 			if (SentCommand.DataSize)
 			{
-				while (!(Endpoint_IsSetupOUTReceived()));
+				while (!(Endpoint_IsOUTReceived()));
 
 				/* First byte of the data stage is the DNLOAD request's command */
 				SentCommand.Command = Endpoint_Read_Byte();
@@ -225,7 +219,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 						{
 							uint16_t Words[2];
 							uint32_t Long;
-						} CurrFlashAddress                 = {Words: {StartAddr, Flash64KBPage}};
+						} CurrFlashAddress                 = {.Words = {StartAddr, Flash64KBPage}};
 						
 						uint32_t CurrFlashPageStartAddress = CurrFlashAddress.Long;
 						uint8_t  WordsInFlashPage          = 0;
@@ -235,8 +229,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 							/* Check if endpoint is empty - if so clear it and wait until ready for next packet */
 							if (!(Endpoint_BytesInEndpoint()))
 							{
-								Endpoint_ClearSetupOUT();
-								while (!(Endpoint_IsSetupOUTReceived()));
+								Endpoint_ClearOUT();
+								while (!(Endpoint_IsOUTReceived()));
 							}
 
 							/* Write the next word into the current flash page */
@@ -279,8 +273,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 							/* Check if endpoint is empty - if so clear it and wait until ready for next packet */
 							if (!(Endpoint_BytesInEndpoint()))
 							{
-								Endpoint_ClearSetupOUT();
-								while (!(Endpoint_IsSetupOUTReceived()));
+								Endpoint_ClearOUT();
+								while (!(Endpoint_IsOUTReceived()));
 							}
 
 							/* Read the byte from the USB interface and write to to the EEPROM */
@@ -296,17 +290,17 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				}
 			}
 
-			Endpoint_ClearSetupOUT();
+			Endpoint_ClearOUT();
 
 			/* Acknowledge status stage */
-			while (!(Endpoint_IsSetupINReady()));
-			Endpoint_ClearSetupIN();
+			while (!(Endpoint_IsINReady()));
+			Endpoint_ClearIN();
 				
 			break;
 		case DFU_UPLOAD:
-			Endpoint_ClearSetupReceived();
+			Endpoint_ClearSETUP();
 
-			while (!(Endpoint_IsSetupINReady()));
+			while (!(Endpoint_IsINReady()));
 
 			if (DFU_State != dfuUPLOAD_IDLE)
 			{
@@ -336,15 +330,15 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 					{
 						uint16_t Words[2];
 						uint32_t Long;
-					} CurrFlashAddress = {Words: {StartAddr, Flash64KBPage}};
+					} CurrFlashAddress = {.Words = {StartAddr, Flash64KBPage}};
 
 					while (WordsRemaining--)
 					{
 						/* Check if endpoint is full - if so clear it and wait until ready for next packet */
 						if (Endpoint_BytesInEndpoint() == FIXED_CONTROL_ENDPOINT_SIZE)
 						{
-							Endpoint_ClearSetupIN();
-							while (!(Endpoint_IsSetupINReady()));
+							Endpoint_ClearIN();
+							while (!(Endpoint_IsINReady()));
 						}
 
 						/* Read the flash word and send it via USB to the host */
@@ -368,8 +362,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 						/* Check if endpoint is full - if so clear it and wait until ready for next packet */
 						if (Endpoint_BytesInEndpoint() == FIXED_CONTROL_ENDPOINT_SIZE)
 						{
-							Endpoint_ClearSetupIN();
-							while (!(Endpoint_IsSetupINReady()));
+							Endpoint_ClearIN();
+							while (!(Endpoint_IsINReady()));
 						}
 
 						/* Read the EEPROM byte and send it via USB to the host */
@@ -384,15 +378,15 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				DFU_State = dfuIDLE;
 			}
 
-			Endpoint_ClearSetupIN();
+			Endpoint_ClearIN();
 
 			/* Acknowledge status stage */
-			while (!(Endpoint_IsSetupOUTReceived()));
-			Endpoint_ClearSetupOUT();
+			while (!(Endpoint_IsOUTReceived()));
+			Endpoint_ClearOUT();
 
 			break;
 		case DFU_GETSTATUS:
-			Endpoint_ClearSetupReceived();
+			Endpoint_ClearSETUP();
 			
 			/* Write 8-bit status value */
 			Endpoint_Write_Byte(DFU_Status);
@@ -407,46 +401,46 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 			/* Write 8-bit state string ID number */
 			Endpoint_Write_Byte(0);
 
-			Endpoint_ClearSetupIN();
+			Endpoint_ClearIN();
 			
 			/* Acknowledge status stage */
-			while (!(Endpoint_IsSetupOUTReceived()));
-			Endpoint_ClearSetupOUT();
+			while (!(Endpoint_IsOUTReceived()));
+			Endpoint_ClearOUT();
 	
 			break;		
 		case DFU_CLRSTATUS:
-			Endpoint_ClearSetupReceived();
+			Endpoint_ClearSETUP();
 			
 			/* Reset the status value variable to the default OK status */
 			DFU_Status = OK;
 
 			/* Acknowledge status stage */
-			while (!(Endpoint_IsSetupINReady()));
-			Endpoint_ClearSetupIN();
+			while (!(Endpoint_IsINReady()));
+			Endpoint_ClearIN();
 			
 			break;
 		case DFU_GETSTATE:
-			Endpoint_ClearSetupReceived();
+			Endpoint_ClearSETUP();
 			
 			/* Write the current device state to the endpoint */
 			Endpoint_Write_Byte(DFU_State);
 		
-			Endpoint_ClearSetupIN();
+			Endpoint_ClearIN();
 			
 			/* Acknowledge status stage */
-			while (!(Endpoint_IsSetupOUTReceived()));
-			Endpoint_ClearSetupOUT();
+			while (!(Endpoint_IsOUTReceived()));
+			Endpoint_ClearOUT();
 
 			break;
 		case DFU_ABORT:
-			Endpoint_ClearSetupReceived();
+			Endpoint_ClearSETUP();
 			
 			/* Reset the current state variable to the default idle state */
 			DFU_State = dfuIDLE;
 			
 			/* Acknowledge status stage */
-			while (!(Endpoint_IsSetupINReady()));
-			Endpoint_ClearSetupIN();
+			while (!(Endpoint_IsINReady()));
+			Endpoint_ClearIN();
 
 			break;
 	}
@@ -463,10 +457,10 @@ static void DiscardFillerBytes(uint8_t NumberOfBytes)
 	{
 		if (!(Endpoint_BytesInEndpoint()))
 		{
-			Endpoint_ClearSetupOUT();
+			Endpoint_ClearOUT();
 
 			/* Wait until next data packet received */
-			while (!(Endpoint_IsSetupOUTReceived()));
+			while (!(Endpoint_IsOUTReceived()));
 		}
 
 		Endpoint_Discard_Byte();						
@@ -531,15 +525,15 @@ static void LoadStartEndAddresses(void)
 	{
 		uint8_t  Bytes[2];
 		uint16_t Word;
-	} Address[2] = {{Bytes: {SentCommand.Data[2], SentCommand.Data[1]}},
-	                {Bytes: {SentCommand.Data[4], SentCommand.Data[3]}}};
+	} Address[2] = {{.Bytes = {SentCommand.Data[2], SentCommand.Data[1]}},
+	                {.Bytes = {SentCommand.Data[4], SentCommand.Data[3]}}};
 		
 	/* Load in the start and ending read addresses from the sent data packet */
 	StartAddr = Address[0].Word;
 	EndAddr   = Address[1].Word;
 }
 
-/** Handler for a Memory Program command issued by the host. This routine handles the preperations needed
+/** Handler for a Memory Program command issued by the host. This routine handles the preparations needed
  *  to write subsequent data from the host into the specified memory.
  */
 static void ProcessMemProgCommand(void)
@@ -557,7 +551,7 @@ static void ProcessMemProgCommand(void)
 			{
 				uint16_t Words[2];
 				uint32_t Long;
-			} CurrFlashAddress = {Words: {StartAddr, Flash64KBPage}};
+			} CurrFlashAddress = {.Words = {StartAddr, Flash64KBPage}};
 			
 			/* Erase the current page's temp buffer */
 			boot_page_erase(CurrFlashAddress.Long);
@@ -569,7 +563,7 @@ static void ProcessMemProgCommand(void)
 	}
 }
 
-/** Handler for a Memory Read command issued by the host. This routine handles the preperations needed
+/** Handler for a Memory Read command issued by the host. This routine handles the preparations needed
  *  to read subsequent data from the specified memory out to the host, as well as implementing the memory
  *  blank check command.
  */
@@ -639,7 +633,7 @@ static void ProcessWriteCommand(void)
 				{
 					uint8_t  Bytes[2];
 					AppPtr_t FuncPtr;
-				} Address = {Bytes: {SentCommand.Data[4], SentCommand.Data[3]}};
+				} Address = {.Bytes = {SentCommand.Data[4], SentCommand.Data[3]}};
 
 				AppStartPtr = Address.FuncPtr;
 				

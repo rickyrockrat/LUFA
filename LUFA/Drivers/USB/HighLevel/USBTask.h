@@ -27,12 +27,6 @@
   arising out of or in connection with the use or performance of
   this software.
 */
-
-/** \file
- *
- *  Main library USB management task for both Host and Device mode operations. This contains the master
- *  USB_USBTask task which should be periodically run to service both host and device USB projects.
- */
  
 #ifndef __USBTASK_H__
 #define __USBTASK_H__
@@ -46,7 +40,8 @@
 		
 		#include "../../../Scheduler/Scheduler.h"
 		#include "../LowLevel/LowLevel.h"
-		#include "../LowLevel/USBMode.h"
+		#include "StdRequestType.h"
+		#include "USBMode.h"
 		#include "Events.h"
 		#include "StdDescriptors.h"
 
@@ -72,87 +67,103 @@
 			 *        which is not always accurate (host may suspend the bus while still connected). If the actual connection state
 			 *        needs to be determined, VBUS should be routed to an external pin, and the auto-detect behaviour turned off by
 			 *        passing the NO_LIMITED_CONTROLLER_CONNECT token to the compiler via the -D switch at compile time. The connection
-			 *        and disconnection events may be manually fired by RAISE_EVENT(), and the USB_IsConnected global changed manually.
+			 *        and disconnection events may be manually fired by \ref RAISE_EVENT(), and the \ref USB_IsConnected global changed manually.
+			 *
+			 *  \ingroup Group_USBManagement
 			 */
 			extern volatile bool USB_IsConnected;
 
-			/** Indicates if the USB interface is currently initialized but not neccesarily connected to a host
-			 *  or device (i.e. if USB_Init() has been run). If this is false, all other library globals are invalid.
+			/** Indicates if the USB interface is currently initialized but not necessarily connected to a host
+			 *  or device (i.e. if \ref USB_Init() has been run). If this is false, all other library globals are invalid.
 			 *
 			 *  \note This variable should be treated as read-only in the user application, and never manually
 			 *        changed in value.
+			 *
+			 *  \ingroup Group_USBManagement
 			 */
 			extern volatile bool USB_IsInitialized;
 
+			/** Structure containing the last received Control request when in Device mode (for use in user-applications
+			 *  inside of the \ref USB_UnhandledControlPacket() event, or for filling up with a control request to issue when
+			 *  in Host mode before calling \ref USB_Host_SendControlRequest().
+			 *
+			 *  \ingroup Group_USBManagement
+			 */
+			 extern USB_Request_Header_t USB_ControlRequest;
+			
 			#if defined(USB_CAN_BE_DEVICE) || defined(__DOXYGEN__)
 			/** Indicates if the USB interface is currently suspended by the host when in device mode. When suspended,
 			 *  the device should consume minimal power, and cannot communicate to the host. If Remote Wakeup is
-			 *  supported by the device and USB_RemoteWakeupEnabled is true, suspension can be terminated by the device
-			 *  by issuing a Remote Wakup request.
+			 *  supported by the device and \ref USB_RemoteWakeupEnabled is true, suspension can be terminated by the device
+			 *  by issuing a Remote Wakeup request.
 			 *
 			 *  \note This global is only present if the user application can be a USB device.
 			 *
 			 *  \note This variable should be treated as read-only in the user application, and never manually
 			 *        changed in value.
+			 *
+			 *  \ingroup Group_Device
 			 */
 			extern volatile bool USB_IsSuspended;
 			#endif
 
 			#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
 			/** Indicates the current host state machine state. When in host mode, this indicates the state
-			 *  via one of the values of the USB_Host_States_t enum values in Host.h.
+			 *  via one of the values of the \ref USB_Host_States_t enum values in Host.h.
 			 *
-			 *  This value may be altered by the user application to implement the HOST_STATE_Addressed,
-			 *  HOST_STATE_Configured, HOST_STATE_Ready and HOST_STATE_Suspended states which are not implemented
-			 *  by the library.
+			 *  This value may be altered by the user application to implement the \ref HOST_STATE_Addressed,
+			 *  \ref HOST_STATE_Configured, \ref HOST_STATE_Ready and \ref HOST_STATE_Suspended states which
+			 *  are not implemented by the library.
 			 *
 			 *  \note This global is only present if the user application can be a USB host.
+			 *
+			 *  \ingroup Group_Host
 			 */
 			extern volatile uint8_t USB_HostState;
 			#endif
 
 		/* Throwable Events: */
 			#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
-				/** This module raises the USB Connect event when a USB device has been connected whilst in host
+				/** This module raises the \ref USB_Connect event when a USB device has been connected whilst in host
 				 *  mode, but not yet enumerated.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_Connect);
 
-				/** This module raises the USB Device Attached event when in host mode, and a device is attached
+				/** This module raises the \ref USB_DeviceAttached event when in host mode, and a device is attached
 				 *  to the AVR's USB interface.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_DeviceAttached);
 
-				/** This module raises the USB Device Unattached event when in host mode, and a device is removed
+				/** This module raises the \ref USB_DeviceUnattached event when in host mode, and a device is removed
 				 *  from the AVR's USB interface.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_DeviceUnattached);
 				
-				/** This module raises the USB Device Enumeration Failed event when in host mode, and an
+				/** This module raises the \ref USB_DeviceEnumerationFailed event when in host mode, and an
 				 *  attached USB device has failed to successfully enumerated.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_DeviceEnumerationFailed);
 
-				/** This module raises the USB Device Enumeration Complete event when in host mode, and an
+				/** This module raises the \ref USB_DeviceEnumerationComplete event when in host mode, and an
 				 *  attached USB device has been successfully enumerated and ready to be used by the user
 				 *  application.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_DeviceEnumerationComplete);
 
-				/** This module raises the USB Disconnect event when an attached USB device is removed from the USB
+				/** This module raises the \ref USB_Disconnect event when an attached USB device is removed from the USB
 				 *  bus.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_Disconnect);
 			#endif
@@ -166,13 +177,15 @@
 			 *  The USB task must be serviced within 50mS in all modes, when needed. The task may be serviced 
 			 *  at all times, or (for minimum CPU consumption):
 			 *
-			 *    - In device mode, it may be disabled at startup, enabled on the firing of the USB_Connect event
-			 *    and disabled again on the firing of the USB_Disconnect event.
+			 *    - In device mode, it may be disabled at start-up, enabled on the firing of the \ref USB_Connect event
+			 *    and disabled again on the firing of the \ref USB_Disconnect event.
 			 *
-			 *    - In host mode, it may be disabled at startup, enabled on the firing of the USB_DeviceAttached
-			 *    event and disabled again on the firing of the USB_DeviceUnattached event.
+			 *    - In host mode, it may be disabled at start-up, enabled on the firing of the \ref USB_DeviceAttached
+			 *    event and disabled again on the firing of the \ref USB_DeviceUnattached event.
 			 *
-			 *  \see Events.h for more information on the USB events.
+			 *  \see \ref Group_Events for more information on the USB events.
+			 *
+			 *  \ingroup Group_USBManagement
 			 */
 			TASK(USB_USBTask);
 

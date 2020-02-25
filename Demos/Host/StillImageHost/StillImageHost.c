@@ -36,16 +36,11 @@
 
 #include "StillImageHost.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA SIMG Host App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_SImage_Host      , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_SImage_Host      , .TaskStatus = TASK_STOP },
 };
 
 
@@ -75,7 +70,7 @@ int main(void)
 	/* Initialize USB Subsystem */
 	USB_Init();
 
-	/* Startup message */
+	/* Start-up message */
 	puts_P(PSTR(ESC_RESET ESC_BG_WHITE ESC_INVERSE_ON ESC_ERASE_DISPLAY
 	       "Still Image Host Demo running.\r\n" ESC_INVERSE_OFF));
 		   
@@ -132,7 +127,7 @@ EVENT_HANDLER(USB_HostError)
 	for(;;);
 }
 
-/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occured while
+/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
  *  enumerating an attached USB device.
  */
 EVENT_HANDLER(USB_DeviceEnumerationFailed)
@@ -156,16 +151,19 @@ TASK(USB_SImage_Host)
 	{
 		case HOST_STATE_Addressed:
 			/* Standard request to set the device configuration to configuration 1 */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_SetConfiguration,
-					wValue:        1,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_SetConfiguration,
+					.wValue        = 1,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if (USB_Host_SendControlRequest(NULL) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control error.\r\n"));
@@ -213,18 +211,18 @@ TASK(USB_SImage_Host)
 			
 			PIMA_SendBlock = (PIMA_Container_t)
 				{
-					DataLength:    PIMA_COMMAND_SIZE(0),
-					Type:          CType_CommandBlock,
-					Code:          PIMA_OPERATION_GETDEVICEINFO,
-					TransactionID: 0x00000000,
-					Params:        {},
+					.DataLength    = PIMA_COMMAND_SIZE(0),
+					.Type          = CType_CommandBlock,
+					.Code          = PIMA_OPERATION_GETDEVICEINFO,
+					.TransactionID = 0x00000000,
+					.Params        = {},
 				};
 			
 			/* Send the GETDEVICEINFO block */
 			SImage_SendBlockHeader();
 			
-			/* Recieve the response data block */
-			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_ERROR_NoError)
+			/* Receive the response data block */
+			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_NoError)
 			{
 				ShowCommandError(ErrorCode, false);
 				break;
@@ -240,7 +238,7 @@ TASK(USB_SImage_Host)
 			SImage_ReadData(DeviceInfo, DeviceInfoSize);
 			
 			/* Once all the data has been read, the pipe must be cleared before the response can be sent */
-			Pipe_ClearCurrentBank();
+			Pipe_ClearIN();
 			
 			/* Create a pointer for walking through the info dataset */
 			uint8_t* DeviceInfoPos = DeviceInfo;
@@ -274,8 +272,8 @@ TASK(USB_SImage_Host)
 			UnicodeToASCII(DeviceInfoPos, DeviceVersion);
 			printf_P(PSTR("   Device Version: %s\r\n"), DeviceVersion);
 
-			/* Recieve the final response block from the device */
-			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_ERROR_NoError)
+			/* Receive the final response block from the device */
+			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_NoError)
 			{
 				ShowCommandError(ErrorCode, false);
 				break;
@@ -292,18 +290,18 @@ TASK(USB_SImage_Host)
 			
 			PIMA_SendBlock = (PIMA_Container_t)
 				{
-					DataLength:    PIMA_COMMAND_SIZE(1),
-					Type:          CType_CommandBlock,
-					Code:          PIMA_OPERATION_OPENSESSION,
-					TransactionID: 0x00000000,
-					Params:        {0x00000001},
+					.DataLength    = PIMA_COMMAND_SIZE(1),
+					.Type          = CType_CommandBlock,
+					.Code          = PIMA_OPERATION_OPENSESSION,
+					.TransactionID = 0x00000000,
+					.Params        = {0x00000001},
 				};
 			
 			/* Send the OPENSESSION block, open a session with an ID of 0x0001 */
 			SImage_SendBlockHeader();
 			
-			/* Recieve the response block from the device */
-			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_ERROR_NoError)
+			/* Receive the response block from the device */
+			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_NoError)
 			{
 				ShowCommandError(ErrorCode, false);
 				break;
@@ -320,18 +318,18 @@ TASK(USB_SImage_Host)
 
 			PIMA_SendBlock = (PIMA_Container_t)
 				{
-					DataLength:    PIMA_COMMAND_SIZE(1),
-					Type:          CType_CommandBlock,
-					Code:          PIMA_OPERATION_CLOSESESSION,
-					TransactionID: 0x00000001,
-					Params:        {0x00000001},
+					.DataLength    = PIMA_COMMAND_SIZE(1),
+					.Type          = CType_CommandBlock,
+					.Code          = PIMA_OPERATION_CLOSESESSION,
+					.TransactionID = 0x00000001,
+					.Params        = {0x00000001},
 				};
 			
 			/* Send the CLOSESESSION block, close the session with an ID of 0x0001 */
 			SImage_SendBlockHeader();
 			
-			/* Recieve the response block from the device */
-			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_ERROR_NoError)
+			/* Receive the response block from the device */
+			if ((ErrorCode = SImage_RecieveBlockHeader()) != PIPE_RWSTREAM_NoError)
 			{
 				ShowCommandError(ErrorCode, false);
 				break;
@@ -419,7 +417,7 @@ void UpdateStatus(uint8_t CurrentStatus)
 /** Displays a PIMA command error via the device's serial port.
  *
  *  \param ErrorCode          Error code of the function which failed to complete successfully
- *  \param ResponseErrorCode  Indicates if the error is due to a command failed indication from the device, or a communication failure
+ *  \param ResponseCodeError  Indicates if the error is due to a command failed indication from the device, or a communication failure
  */
 void ShowCommandError(uint8_t ErrorCode, bool ResponseCodeError)
 {

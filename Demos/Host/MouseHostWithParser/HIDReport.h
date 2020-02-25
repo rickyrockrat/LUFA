@@ -37,7 +37,7 @@
 #define _HID_REPORT_H_
 
 	/* Includes: */
-		#include <LUFA/Drivers/USB/Class/HIDParser.h>            // HID Class Report Parser
+		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
 		
 		#include "MouseHostWithParser.h"
 
@@ -60,7 +60,7 @@
 		{
 			ParseSuccessful         = 0, /**< HID report descriptor parsed successfully */
 			ParseError              = 1, /**< Failed to fully process the HID report descriptor */
-			ParseControlError       = 2, /**< Control error occured while trying to read the device HID descriptor */
+			ParseControlError       = 2, /**< Control error occurred while trying to read the device HID descriptor */
 		};
 		
 	/* Type Defines: */
@@ -72,7 +72,7 @@
 			uint16_t                 HIDSpec; /**< Implemented HID class specification, in BCD encoded format */
 			uint8_t                  CountryCode; /**< Country code value for localized hardware */
 		
-			uint8_t                  TotalHIDReports; /**< Total number of HID report descriptors in the current interface */
+			uint8_t                  TotalHIDDescriptors; /**< Total number of HID report descriptors in the current interface */
 
 			uint8_t                  HIDReportType; /**< HID report type of the first HID report descriptor */
 			uint16_t                 HIDReportLength; /**< Total size in bytes of the first HID report descriptor */

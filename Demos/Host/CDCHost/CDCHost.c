@@ -36,17 +36,11 @@
  
 #include "CDCHost.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA CDC Host App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_CDC_Host         , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_CDC_Host         , .TaskStatus = TASK_STOP },
 };
 
 
@@ -75,7 +69,7 @@ int main(void)
 	/* Initialize USB Subsystem */
 	USB_Init();
 
-	/* Startup message */
+	/* Start-up message */
 	puts_P(PSTR(ESC_RESET ESC_BG_WHITE ESC_INVERSE_ON ESC_ERASE_DISPLAY
 	       "CDC Host Demo running.\r\n" ESC_INVERSE_OFF));
 		   
@@ -132,7 +126,7 @@ EVENT_HANDLER(USB_HostError)
 	for(;;);
 }
 
-/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occured while
+/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
  *  enumerating an attached USB device.
  */
 EVENT_HANDLER(USB_DeviceEnumerationFailed)
@@ -187,16 +181,19 @@ TASK(USB_CDC_Host)
 	{
 		case HOST_STATE_Addressed:
 			/* Standard request to set the device configuration to configuration 1 */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_SetConfiguration,
-					wValue:        1,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_SetConfiguration,
+					.wValue        = 1,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control Error (Set Configuration).\r\n"));
@@ -241,33 +238,37 @@ TASK(USB_CDC_Host)
 			/* Select and the data IN pipe */
 			Pipe_SelectPipe(CDC_DATAPIPE_IN);
 
-			/* Check if data is in the pipe */
-			if (Pipe_ReadWriteAllowed())
+			/* Check to see if a packet has been received */
+			if (Pipe_IsINReceived())
 			{
-				/* Get the length of the pipe data, and create a new buffer to hold it */
-				uint16_t BufferLength = Pipe_BytesInPipe();
-				uint8_t Buffer[BufferLength];
-				
-				/* Read in the pipe data to the tempoary buffer */
-				Pipe_Read_Stream_LE(Buffer, BufferLength);
-				
+				/* Check if data is in the pipe */
+				if (Pipe_IsReadWriteAllowed())
+				{
+					/* Get the length of the pipe data, and create a new buffer to hold it */
+					uint16_t BufferLength = Pipe_BytesInPipe();
+					uint8_t Buffer[BufferLength];
+					
+					/* Read in the pipe data to the temporary buffer */
+					Pipe_Read_Stream_LE(Buffer, BufferLength);
+									
+					/* Print out the buffer contents to the USART */
+					for (uint16_t BufferByte = 0; BufferByte < BufferLength; BufferByte++)
+					  putchar(Buffer[BufferByte]);
+				}
+
 				/* Clear the pipe after it is read, ready for the next packet */
-				Pipe_ClearCurrentBank();
-				
-				/* Print out the buffer contents to the USART */
-				for (uint16_t BufferByte = 0; BufferByte < BufferLength; BufferByte++)
-				  putchar(Buffer[BufferByte]);
+				Pipe_ClearIN();
 			}
 
 			/* Select and unfreeze the notification pipe */
 			Pipe_SelectPipe(CDC_NOTIFICATIONPIPE);
 			Pipe_Unfreeze();
 			
-			/* Check if data is in the pipe */
-			if (Pipe_ReadWriteAllowed())
+			/* Check if a packet has been received */
+			if (Pipe_IsINReceived())
 			{
 				/* Discard the event notification */
-				Pipe_ClearCurrentBank();
+				Pipe_ClearIN();
 			}
 			
 			/* Freeze notification IN pipe after use */

@@ -36,17 +36,11 @@
 
 #include "Joystick.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA Joystick App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_Joystick_Report  , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_Joystick_Report  , .TaskStatus = TASK_STOP },
 };
 
 /** Main program entry point. This routine configures the hardware required by the application, then
@@ -64,7 +58,7 @@ int main(void)
 	/* Hardware Initialization */
 	Joystick_Init();
 	LEDs_Init();
-	HWB_Init();
+	Buttons_Init();
 	
 	/* Indicate USB not ready */
 	UpdateStatus(Status_USBNotReady);
@@ -128,36 +122,23 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Handle HID Class specific requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_GetReport:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				USB_JoystickReport_Data_t JoystickReportData;
 				
+				Endpoint_ClearSETUP();
+
 				/* Create the next HID report to send to the host */				
 				GetNextReport(&JoystickReportData);
-
-				/* Ignore report type and ID number value */
-				Endpoint_Discard_Word();
-				
-				/* Ignore unused Interface number value */
-				Endpoint_Discard_Word();
-
-				/* Read in the number of bytes in the report to send to the host */
-				uint16_t wLength = Endpoint_Read_Word_LE();
-				
-				/* If trying to send more bytes than exist to the host, clamp the value at the report size */
-				if (wLength > sizeof(JoystickReportData))
-				  wLength = sizeof(JoystickReportData);
-
-				Endpoint_ClearSetupReceived();
-	
+					
 				/* Write the report data to the control endpoint */
-				Endpoint_Write_Control_Stream_LE(&JoystickReportData, wLength);
+				Endpoint_Write_Control_Stream_LE(&JoystickReportData, sizeof(JoystickReportData));
 				
 				/* Finalize the stream transfer to send the last packet or clear the host abort */
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 			}
 		
 			break;
@@ -172,9 +153,11 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
  */
 bool GetNextReport(USB_JoystickReport_Data_t* ReportData)
 {
-	static uint8_t PrevJoyStatus = 0;
-	uint8_t        JoyStatus_LCL        = Joystick_GetStatus();
-	bool           InputChanged         = false;
+	static uint8_t PrevJoyStatus    = 0;
+	static uint8_t PrevButtonStatus = 0;
+	uint8_t        JoyStatus_LCL    = Joystick_GetStatus();
+	uint8_t        ButtonStatus_LCL = Buttons_GetStatus();
+	bool           InputChanged     = false;
 
 	/* Clear the report contents */
 	memset(ReportData, 0, sizeof(USB_JoystickReport_Data_t));
@@ -192,14 +175,15 @@ bool GetNextReport(USB_JoystickReport_Data_t* ReportData)
 	if (JoyStatus_LCL & JOY_PRESS)
 	  ReportData->Button  = (1 << 1);
 	  
-	if (HWB_GetStatus())
+	if (ButtonStatus_LCL & BUTTONS_BUTTON1)
 	  ReportData->Button |= (1 << 0);
 	  
 	/* Check if the new report is different to the previous report */
-	InputChanged = (uint8_t)(PrevJoyStatus ^ JoyStatus_LCL);
+	InputChanged = (uint8_t)(PrevJoyStatus ^ JoyStatus_LCL) | (uint8_t)(PrevButtonStatus ^ ButtonStatus_LCL);
 
 	/* Save the current joystick status for later comparison */
-	PrevJoyStatus = JoyStatus_LCL;
+	PrevJoyStatus    = JoyStatus_LCL;
+	PrevButtonStatus = ButtonStatus_LCL;
 
 	/* Return whether the new report is different to the previous report or not */
 	return InputChanged;
@@ -241,8 +225,8 @@ TASK(USB_Joystick_Report)
 		/* Select the Joystick Report Endpoint */
 		Endpoint_SelectEndpoint(JOYSTICK_EPNUM);
 
-		/* Check if Joystick Endpoint Ready for Read/Write */
-		if (Endpoint_ReadWriteAllowed())
+		/* Check to see if the host is ready for another packet */
+		if (Endpoint_IsINReady())
 		{
 			USB_JoystickReport_Data_t JoystickReportData;
 			
@@ -253,12 +237,10 @@ TASK(USB_Joystick_Report)
 			Endpoint_Write_Stream_LE(&JoystickReportData, sizeof(JoystickReportData));
 
 			/* Finalize the stream transfer to send the last packet */
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearIN();
 			
 			/* Clear the report data afterwards */
-			JoystickReportData.X      = 0;
-			JoystickReportData.Y      = 0;
-			JoystickReportData.Button = 0;
+			memset(&JoystickReportData, 0, sizeof(JoystickReportData));
 		}
 	}
 }

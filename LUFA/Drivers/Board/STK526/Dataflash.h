@@ -30,10 +30,16 @@
 
 /** \file
  *
- *  Board specific HWB driver header for the STK525.
+ *  Board specific Dataflash driver header for the STK525.
  *
  *  \note This file should not be included directly. It is automatically included as needed by the dataflash driver
  *        dispatch header located in LUFA/Drivers/Board/Dataflash.h.
+ */
+
+/** \ingroup Group_Dataflash
+ *  @defgroup Group_Dataflash_STK526 STK526
+ *
+ *  @{
  */
 
 #ifndef __DATAFLASH_STK526_H__
@@ -106,3 +112,5 @@
 			}
 			
 #endif
+
+/** @} */

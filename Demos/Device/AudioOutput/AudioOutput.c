@@ -36,17 +36,11 @@
  
 #include "AudioOutput.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA AudioOut App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_Audio_Task       , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_Audio_Task       , .TaskStatus = TASK_STOP },
 };
 
 
@@ -90,7 +84,7 @@ EVENT_HANDLER(USB_Connect)
 	UpdateStatus(Status_USBEnumerating);
 	
 	/* Sample reload timer initialization */
-	OCR0A   = (F_CPU / AUDIO_SAMPLE_FREQUENCY);
+	OCR0A   = (F_CPU / AUDIO_SAMPLE_FREQUENCY) - 1;
 	TCCR0A  = (1 << WGM01);  // CTC mode
 	TCCR0B  = (1 << CS00);   // Fcpu speed
 			
@@ -164,18 +158,16 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Process General and Audio specific control requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_SetInterface:
 			/* Set Interface is not handled by the library, as its function is application-specific */
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_INTERFACE))
 			{
-				uint16_t wValue = Endpoint_Read_Word_LE();
-				
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Check if the host is enabling the audio interface (setting AlternateSetting to 1) */
-				if (wValue)
+				if (USB_ControlRequest.wValue)
 				{
 					/* Start audio task */
 					Scheduler_SetTaskMode(USB_Audio_Task, TASK_RUN);
@@ -187,8 +179,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				}
 				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 
 			break;
@@ -231,20 +223,20 @@ TASK(USB_Audio_Task)
 	Endpoint_SelectEndpoint(AUDIO_STREAM_EPNUM);
 	
 	/* Check if the current endpoint can be read from (contains a packet) and that the next sample should be read */
-	if (Endpoint_ReadWriteAllowed() && (TIFR0 & (1 << OCF0A)))
+	if (Endpoint_IsOUTReceived() && (TIFR0 & (1 << OCF0A)))
 	{
 		/* Clear the sample reload timer */
 		TIFR0 |= (1 << OCF0A);
 
-		/* Retreive the signed 16-bit left and right audio samples */
+		/* Retrieve the signed 16-bit left and right audio samples */
 		int16_t LeftSample_16Bit  = (int16_t)Endpoint_Read_Word_LE();
 		int16_t RightSample_16Bit = (int16_t)Endpoint_Read_Word_LE();
 
 		/* Check to see if the bank is now empty */
-		if (!(Endpoint_ReadWriteAllowed()))
+		if (!(Endpoint_IsReadWriteAllowed()))
 		{
 			/* Acknowledge the packet, clear the bank ready for the next packet */
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearOUT();
 		}
 
 		/* Massage signed 16-bit left and right audio samples into signed 8-bit */

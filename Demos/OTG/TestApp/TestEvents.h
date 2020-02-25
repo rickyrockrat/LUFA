@@ -42,7 +42,7 @@
 		#include <LUFA/Common/Common.h>                          // Commonly used macros
 		#include <LUFA/Drivers/USB/USB.h>                        // USB Functionality
 		#include <LUFA/Drivers/Board/LEDs.h>                     // LED driver
-		#include <LUFA/Drivers/AT90USBXXX/Serial_Stream.h>       // USART Stream driver
+		#include <LUFA/Drivers/Peripheral/SerialStream.h>        // USART Stream driver
 		#include <LUFA/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
 		#include <LUFA/Scheduler/Scheduler.h>                    // Simple scheduler for task management
 
@@ -74,8 +74,8 @@
 		/** Indicates that this module will catch the USB_UIDChange event when thrown by the library. */
 		HANDLES_EVENT(USB_UIDChange);
 
-		/** Indicates that this module will catch the USB_PowerOnFail event when thrown by the library. */
-		HANDLES_EVENT(USB_PowerOnFail);
+		/** Indicates that this module will catch the USB_InitFailure event when thrown by the library. */
+		HANDLES_EVENT(USB_InitFailure);
 
 		/** Indicates that this module will catch the USB_HostError event when thrown by the library. */
 		HANDLES_EVENT(USB_HostError);

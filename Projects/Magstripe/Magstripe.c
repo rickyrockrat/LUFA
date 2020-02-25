@@ -37,18 +37,12 @@
  
 #include "Magstripe.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "Magstripe Reader");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_Keyboard_Report  , TaskStatus: TASK_STOP },
-	{ Task: Magstripe_Read       , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_Keyboard_Report  , .TaskStatus = TASK_STOP },
+	{ .Task = Magstripe_Read       , .TaskStatus = TASK_STOP },
 };
 
 /* Global Variables */
@@ -78,7 +72,7 @@ BitBuffer_t Track2Data;
 /** Circular buffer to hold the read bits from track 3 of the inserted magnetic card. */
 BitBuffer_t Track3Data;
 
-/** Delay counter between sucessive key strokes. This is to prevent the OS from ignoring multiple keys in a short
+/** Delay counter between successive key strokes. This is to prevent the OS from ignoring multiple keys in a short
  *  period of time due to key repeats. Two milliseconds works for most OSes.
  */
 uint8_t KeyDelayRemaining;
@@ -161,104 +155,85 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Handle HID Class specific requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_GetReport:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				USB_KeyboardReport_Data_t KeyboardReportData;
 
 				/* Create the next keyboard report for transmission to the host */
 				GetNextReport(&KeyboardReportData);
 
-				/* Ignore report type and ID number value */
-				Endpoint_Discard_Word();
-				
-				/* Ignore unused Interface number value */
-				Endpoint_Discard_Word();
-
-				/* Read in the number of bytes in the report to send to the host */
-				uint16_t wLength = Endpoint_Read_Word_LE();
-				
-				/* If trying to send more bytes than exist to the host, clamp the value at the report size */
-				if (wLength > sizeof(KeyboardReportData))
-				  wLength = sizeof(KeyboardReportData);
-
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 	
 				/* Write the report data to the control endpoint */
-				Endpoint_Write_Control_Stream_LE(&KeyboardReportData, wLength);
+				Endpoint_Write_Control_Stream_LE(&KeyboardReportData, sizeof(KeyboardReportData));
 				
 				/* Finalize the stream transfer to send the last packet or clear the host abort */
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 			}
 		
 			break;
 		case REQ_GetProtocol:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Write the current protocol flag to the host */
 				Endpoint_Write_Byte(UsingReportProtocol);
 				
 				/* Send the flag to the host */
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupOUTReceived()));
-				Endpoint_ClearSetupOUT();
+				while (!(Endpoint_IsOUTReceived()));
+				Endpoint_ClearOUT();
 			}
 			
 			break;
 		case REQ_SetProtocol:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				/* Read in the wValue parameter containing the new protocol mode */
-				uint16_t wValue = Endpoint_Read_Word_LE();
-				
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
 				/* Set or clear the flag depending on what the host indicates that the current Protocol should be */
-				UsingReportProtocol = (wValue != 0x0000);
+				UsingReportProtocol = (USB_ControlRequest.wValue != 0x0000);
 				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 			
 			break;
 		case REQ_SetIdle:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				/* Read in the wValue parameter containing the idle period */
-				uint16_t wValue = Endpoint_Read_Word_LE();
-				
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Get idle period in MSB */
-				IdleCount = (wValue >> 8);
+				IdleCount = (USB_ControlRequest.wValue >> 8);
 				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 			
 			break;
 		case REQ_GetIdle:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{		
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Write the current idle duration to the host */
 				Endpoint_Write_Byte(IdleCount);
 				
 				/* Send the flag to the host */
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupOUTReceived()));
-				Endpoint_ClearSetupOUT();
+				while (!(Endpoint_IsOUTReceived()));
+				Endpoint_ClearOUT();
 			}
 
 			break;
@@ -312,7 +287,7 @@ bool GetNextReport(USB_KeyboardReport_Data_t* ReportData)
 		/* Set the flag indicating that a null report must eventually be sent to release all pressed keys */
 		MustRelease = true;
 
-		/* Only send the next key on odd reports, so that they are interpersed with null reports to release keys */
+		/* Only send the next key on odd reports, so that they are interspersed with null reports to release keys */
 		if (OddReport)
 		{
 			/* Set the report key code to the key code for the next data bit */
@@ -337,12 +312,12 @@ bool GetNextReport(USB_KeyboardReport_Data_t* ReportData)
 	return false;
 }
 
-/** Task to read out data from inserted magnetic cards and place the seperate track data into their respective
+/** Task to read out data from inserted magnetic cards and place the separate track data into their respective
  *  data buffers for later sending to the host as keyboard key presses.
  */
 TASK(Magstripe_Read)
 {
-	/* Arrays to hold the buffer pointers, clock and data bit masks for the seperate card tracks */
+	/* Arrays to hold the buffer pointers, clock and data bit masks for the separate card tracks */
 	const struct
 	{
 		BitBuffer_t* Buffer;
@@ -396,7 +371,7 @@ TASK(Magstripe_Read)
 }
 
 /** Task for the magnetic card reading and keyboard report generation. This task waits until a card is inserted,
- *  then reads off the card data and sends it to the host as a series of keyboard keypresses via keyboard reports.
+ *  then reads off the card data and sends it to the host as a series of keyboard key presses via keyboard reports.
  */
 TASK(USB_Keyboard_Report)
 {
@@ -410,7 +385,7 @@ TASK(USB_Keyboard_Report)
 		Endpoint_SelectEndpoint(KEYBOARD_EPNUM);
 
 		/* Check if Keyboard Endpoint Ready for Read/Write */
-		if (Endpoint_ReadWriteAllowed())
+		if (Endpoint_IsReadWriteAllowed())
 		{
 			/* Only fetch the next key to send once the period between key presses has elapsed */
 			if (!(KeyDelayRemaining))
@@ -436,7 +411,7 @@ TASK(USB_Keyboard_Report)
 				Endpoint_Write_Stream_LE(&KeyboardReportData, sizeof(USB_KeyboardReport_Data_t));
 
 				/* Finalize the stream transfer to send the last packet */
-				Endpoint_ClearCurrentBank();
+				Endpoint_ClearIN();
 
 				/* Reset the key delay period counter */
 				KeyDelayRemaining = 2;

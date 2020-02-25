@@ -35,6 +35,17 @@
  *  User code should include this file, which will in turn include the correct ADC driver header file for the
  *  currently selected AVR model.
  */
+
+/** \ingroup Group_PeripheralDrivers
+ *  @defgroup Group_ADC ADC Driver - LUFA/Drivers/Peripheral/ADC.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - None
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the setup of a the ADC subsystem.
+ */
  
 #ifndef __ADC_H__
 #define __ADC_H__
@@ -54,5 +65,5 @@
 		#else
 			#error "ADC is not available for the currently selected AVR model."
 		#endif
-
+			
 #endif

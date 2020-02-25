@@ -36,6 +36,12 @@
  *        dispatch header located in LUFA/Drivers/Board/LEDs.h.
  */
  
+/** \ingroup Group_LEDs
+ *  @defgroup Group_LEDs_ATAVRUSBRF01 ATAVRUSBRF01
+ *
+ *  @{
+ */
+ 
 #ifndef __LEDS_ATAVRUSBRF01_H__
 #define __LEDS_ATAVRUSBRF01_H__
 
@@ -102,7 +108,7 @@
 			
 			static inline void LEDs_ChangeLEDs(const uint8_t LEDMask, const uint8_t ActiveMask)
 			{
-				PORTD = (PORTD & ~(LEDMask & LEDS_ALL_LEDS)) | (ActiveMask & LEDS_ALL_LEDS))
+				PORTD = ((PORTD & ~(LEDMask & LEDS_ALL_LEDS)) | (ActiveMask & LEDS_ALL_LEDS));
 			}
 			
 			static inline uint8_t LEDs_GetLEDs(void) ATTR_WARN_UNUSED_RESULT;
@@ -118,3 +124,5 @@
 		#endif
 	
 #endif
+
+/** @} */

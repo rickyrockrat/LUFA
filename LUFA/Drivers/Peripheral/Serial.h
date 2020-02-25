@@ -33,6 +33,19 @@
  *  Driver for the USART subsystem on supported USB AVRs.
  */
  
+/** \ingroup Group_PeripheralDrivers
+ *  @defgroup Group_Serial Serial USART Driver - LUFA/Drivers/Peripheral/Serial.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - LUFA/Drivers/Peripheral/Serial.c
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the setup of the USART for serial communications.
+ *
+ *  @{
+ */
+ 
 #ifndef __SERIAL_H__
 #define __SERIAL_H__
 
@@ -50,12 +63,7 @@
 		#endif
 
 	/* Public Interface - May be used in end-application: */
-		/* Macros: */	
-			/** Indicates whether a character has been received through the USART - boolean false if no character
-			 *  has been received, or non-zero if a character is waiting to be read from the reception buffer.
-			 */
-			#define Serial_IsCharReceived() ((UCSR1A & (1 << RXC1)) ? true : false)
-
+		/* Macros: */
 			/** Macro for calculating the baud value from a given baud rate when the U2X (double speed) bit is
 			 *  not set.
 			 */
@@ -66,14 +74,18 @@
 			 */
 			#define SERIAL_2X_UBBRVAL(baud) (((F_CPU / 8) / baud) - 1)
 
-		/* Function Prototypes: */
-			/** Initializes the USART, ready for serial data transmission and reception.
-			 *
-			 *  \param BaudRate     Baud rate to configure the USART to
-			 *  \param DoubleSpeed  Enables double speed mode when set, halving the sample time to double the baud rate
-			 */
-			void Serial_Init(const uint32_t BaudRate, const bool DoubleSpeed);
+		/* Pseudo-Function Macros: */
+			#if defined(__DOXYGEN__)
+				/** Indicates whether a character has been received through the USART.
+				 *
+				 *  \return Boolean true if a character has been received, false otherwise
+				 */
+				static inline bool Serial_IsCharReceived(void);
+			#else
+				#define Serial_IsCharReceived() ((UCSR1A & (1 << RXC1)) ? true : false)
+			#endif
 
+		/* Function Prototypes: */
 			/** Transmits a given string located in program space (FLASH) through the USART.
 			 *
 			 *  \param FlashStringPtr  Pointer to a string located in program space
@@ -87,6 +99,24 @@
 			void Serial_TxString(const char *StringPtr) ATTR_NON_NULL_PTR_ARG(1);
 
 		/* Inline Functions: */
+			/** Initializes the USART, ready for serial data transmission and reception. This initialises the interface to
+			 *  standard 8-bit, no parity, 1 stop bit settings suitable for most applications.
+			 *
+			 *  \param BaudRate     Serial baud rate, in bits per second
+			 *  \param DoubleSpeed  Enables double speed mode when set, halving the sample time to double the baud rate
+			 */
+			static inline void Serial_Init(const uint32_t BaudRate, const bool DoubleSpeed)
+			{
+				UCSR1A = (DoubleSpeed ? (1 << U2X1) : 0);
+				UCSR1B = ((1 << TXEN1)  | (1 << RXEN1));
+				UCSR1C = ((1 << UCSZ11) | (1 << UCSZ10));
+				
+				DDRD  |= (1 << 3);	
+				PORTD |= (1 << 2);
+				
+				UBRR1  = (DoubleSpeed ? SERIAL_2X_UBBRVAL(BaudRate) : SERIAL_UBBRVAL(BaudRate));
+			}
+
 			/** Transmits a given byte through the USART.
 			 *
 			 *  \param DataByte  Byte to transmit through the USART
@@ -113,3 +143,5 @@
 		#endif
 		
 #endif
+
+/** @} */

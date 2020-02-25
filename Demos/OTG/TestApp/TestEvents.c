@@ -31,7 +31,7 @@
 /** \file
  *
  *  This file contains dummy handlers for all the possible USB events passed to the
- *  application by the library (see Events.h documentation for more details on USB events).
+ *  application by the library (see \ref Group_Events documentation for more details on USB events).
  *
  *  Each event is caught and printed to the USART so that they may be monitored.
  */
@@ -139,7 +139,7 @@ EVENT_HANDLER(USB_UIDChange)
  *  Event handler for the USB_PowerOnFail event. When fired, the event is logged to the USART and the program
  *  execution aborted.
  */
-EVENT_HANDLER(USB_PowerOnFail)
+EVENT_HANDLER(USB_InitFailure)
 {
 	char* ModeStrPtr;
 	
@@ -193,8 +193,9 @@ EVENT_HANDLER(USB_DeviceError)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	puts_P(PSTR(EVENT_PREFIX "Ctrl Request\r\n"));
-	printf_P(PSTR(" -- Req Data %d\r\n"), bRequest);
-	printf_P(PSTR(" -- Req Type %d\r\n"), bmRequestType);
+	printf_P(PSTR(" -- Req Data %d\r\n"), USB_ControlRequest.bRequest);
+	printf_P(PSTR(" -- Req Type %d\r\n"), USB_ControlRequest.bmRequestType);
+	printf_P(PSTR(" -- Req Length %d\r\n"), USB_ControlRequest.wLength);
 }
 
 /** Event handler for the USB_ConfigurationChanged event. When fired, the event is logged to the USART. */

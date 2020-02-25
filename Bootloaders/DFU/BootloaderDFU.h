@@ -48,7 +48,12 @@
 		#include "Descriptors.h"
 		
 		#include <LUFA/Drivers/USB/USB.h>                // USB Functionality
-		
+	
+	/* Preprocessor Checks: */
+		#if !defined(SIGNATURE_0) || !defined(SIGNATURE_1) || !defined(SIGNATURE_2)
+			#error Device signature byte constants are not defined due to outdated avr-libc version. See demo documentation.
+		#endif
+	
 	/* Macros: */
 		/** Configuration define. Define this token to true to case the bootloader to reject all memory commands
 		 *  until a memory erase has been performed. When used in conjunction with the lockbits of the AVR, this
@@ -63,7 +68,7 @@
 		/** Minor bootloader version number. */
 		#define BOOTLOADER_VERSION_REV   0
 
-		/** Complete bootloder version number expressed as a packed byte, constructed from the 
+		/** Complete bootloader version number expressed as a packed byte, constructed from the 
 		 *  two individual bootloader version macros.
 		 */
 		#define BOOTLOADER_VERSION       ((BOOTLOADER_VERSION_MINOR << 4) | BOOTLOADER_VERSION_REV)
@@ -100,7 +105,7 @@
 		 */
 		#define DFU_FILLER_BYTES_SIZE    26
 	
-		/** DFU class command request to detatch from the host. */
+		/** DFU class command request to detach from the host. */
 		#define DFU_DETATCH              0x00
 
 		/** DFU class command request to send data from the host to the bootloader. */
@@ -141,7 +146,7 @@
 		/** Type define for a non-returning function pointer to the loaded application. */
 		typedef void (*AppPtr_t)(void) ATTR_NO_RETURN;
 		
-		/** Type define for a strucuture containing a complete DFU command issued by the host. */
+		/** Type define for a structure containing a complete DFU command issued by the host. */
 		typedef struct
 		{
 			uint8_t  Command; /**< Single byte command to perform, one of the COMMAND_* macro values */

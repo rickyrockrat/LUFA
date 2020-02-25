@@ -30,10 +30,21 @@
 
 /** \file
  *
- *  Simple round-robbin cooperative scheduler for use in basic projects where non realtime tasks need
+ *  Simple round-robbin cooperative scheduler for use in basic projects where non real-time tasks need
+ *  to be executed. Each task is executed in sequence, and can be enabled or disabled individually or as a group.
+ */
+ 
+/** @defgroup Group_Scheduler Simple Task Scheduler - LUFA/Scheduler/Scheduler.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - LUFA/Scheduler/Scheduler.c
+ *
+ *  \section Module Description
+ *  Simple round-robbin cooperative scheduler for use in basic projects where non real-time tasks need
  *  to be executed. Each task is executed in sequence, and can be enabled or disabled individually or as a group.
  *
- *  For a task to yield it must return, thus each task should have persistant data marked with the static attribute.
+ *  For a task to yield it must return, thus each task should have persistent data marked with the static attribute.
  *
  *  Usage Example:
  *  \code
@@ -44,8 +55,8 @@
  *      
  *      TASK_LIST
  *      {
- *      	{ Task: MyTask1, TaskStatus: TASK_RUN, GroupID: 1  },
- *      	{ Task: MyTask2, TaskStatus: TASK_RUN, GroupID: 1  },
+ *      	{ .Task = MyTask1, .TaskStatus = TASK_RUN, .GroupID = 1  },
+ *      	{ .Task = MyTask2, .TaskStatus = TASK_RUN, .GroupID = 1  },
  *      }
  *
  *      int main(void)
@@ -63,6 +74,8 @@
  *      	// Implementation Here
  *      }
  *  \endcode
+ *
+ *  @{
  */
  
 #ifndef __SCHEDULER_H__
@@ -102,12 +115,12 @@
 			 *  \code
 			 *      TASK_LIST
 			 *      {
-			 *           { Task: MyTask1, TaskStatus: TASK_RUN, GroupID: 1 },
+			 *           { .Task = MyTask1, .TaskStatus = TASK_RUN, .GroupID = 1 },
 			 *           // More task entries here
 			 *      }
 			 *  \endcode
 			 */
-			#define TASK_LIST                         extern TaskEntry_t Scheduler_TaskList[]; TaskEntry_t Scheduler_TaskList[] = 
+			#define TASK_LIST                         TaskEntry_t Scheduler_TaskList[] = 
 			
 			/** Constant, giving the maximum delay in scheduler ticks which can be stored in a variable of type
 			 *  SchedulerDelayCounter_t.
@@ -120,16 +133,23 @@
 			/** Task status mode constant, for passing to Scheduler_SetTaskMode() or Scheduler_SetGroupTaskMode(). */
 			#define TASK_STOP                         false
 			
-			/** Starts the scheduler in its infinite loop, executing running tasks. This should be placed at the end
-			 *  of the user application's main() function, as it can never return to the calling function.
-			 */
-			#define Scheduler_Start()                 Scheduler_GoSchedule(TOTAL_TASKS);
-			
-			/** Initializes the scheduler so that the scheduler functions can be called before the scheduler itself
-			 *  is started. This must be exeucted before any scheduler function calls other than Scheduler_Start(),
-			 *  and can be ommitted if no such functions could be called before the scheduler is started.
-			 */
-			#define Scheduler_Init()                  Scheduler_InitScheduler(TOTAL_TASKS);
+		/* Pseudo-Function Macros: */
+			#if defined(__DOXYGEN__)
+				/** Starts the scheduler in its infinite loop, executing running tasks. This should be placed at the end
+				 *  of the user application's main() function, as it can never return to the calling function.
+				 */
+				void Scheduler_Start(void);
+				
+				/** Initializes the scheduler so that the scheduler functions can be called before the scheduler itself
+				 *  is started. This must be executed before any scheduler function calls other than Scheduler_Start(),
+				 *  and can be omitted if no such functions could be called before the scheduler is started.
+				 */
+				void Scheduler_Init(void);
+			#else
+				#define Scheduler_Start()                 Scheduler_GoSchedule(TOTAL_TASKS);
+				
+				#define Scheduler_Init()                  Scheduler_InitScheduler(TOTAL_TASKS);
+			#endif
 
 		/* Type Defines: */
 			/** Type define for a pointer to a scheduler task. */
@@ -194,7 +214,7 @@
 			 *
 			 *  Usage Example:
 			 *  \code
-			 *      static SchedulerDelayCounter_t DelayCounter = 10000; // Force immediate run on startup
+			 *      static SchedulerDelayCounter_t DelayCounter = 10000; // Force immediate run on start-up
 			 *				 
 			 *      // Task runs every 10000 ticks, 10 seconds for this demo
 			 *      if (Scheduler_HasDelayElapsed(10000, &DelayCounter))
@@ -261,3 +281,5 @@
 		#endif
 		
 #endif
+
+/** @} */

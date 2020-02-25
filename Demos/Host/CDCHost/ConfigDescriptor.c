@@ -52,7 +52,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 	uint8_t  FoundEndpoints = 0;
 	
 	/* Get Configuration Descriptor size from the device */
-	if (USB_Host_GetDeviceConfigDescriptor(&ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful)
+	if (USB_GetDeviceConfigDescriptor(&ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful)
 	  return ControlError;
 	
 	/* Ensure that the Configuration Descriptor isn't too large */
@@ -63,14 +63,14 @@ uint8_t ProcessConfigurationDescriptor(void)
 	ConfigDescriptorData = alloca(ConfigDescriptorSize);
 
 	/* Retrieve the entire configuration descriptor into the allocated buffer */
-	USB_Host_GetDeviceConfigDescriptor(&ConfigDescriptorSize, ConfigDescriptorData);
+	USB_GetDeviceConfigDescriptor(&ConfigDescriptorSize, ConfigDescriptorData);
 	
 	/* Validate returned data - ensure first entry is a configuration header descriptor */
 	if (DESCRIPTOR_TYPE(ConfigDescriptorData) != DTYPE_Configuration)
 	  return InvalidConfigDataReturned;
 	
-	/* Get the CDC interface from the configuration descriptor */
-	if (USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCInterface))
+	/* Get the CDC control interface from the configuration descriptor */
+	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCControlInterface))
 	{
 		/* Descriptor not found, error out */
 		return NoCDCInterfaceFound;
@@ -80,18 +80,31 @@ uint8_t ProcessConfigurationDescriptor(void)
 	while (FoundEndpoints != ((1 << CDC_NOTIFICATIONPIPE) | (1 << CDC_DATAPIPE_IN) | (1 << CDC_DATAPIPE_OUT)))
 	{
 		/* Fetch the next bulk or interrupt endpoint from the current CDC interface */
-		if (USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+		if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
 		                                   NextInterfaceCDCDataEndpoint))
 		{
-			/* Get the next CDC interface from the configuration descriptor (CDC class has two CDC interfaces) */
-			if (USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCInterface))
+			/* Check to see if the control interface's notification pipe has been found, if so search for the data interface */
+			if (FoundEndpoints & (1 << CDC_NOTIFICATIONPIPE))
 			{
-				/* Descriptor not found, error out */
-				return NoCDCInterfaceFound;
+				/* Get the next CDC data interface from the configuration descriptor (CDC class has two CDC interfaces) */
+				if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCDataInterface))
+				{
+					/* Descriptor not found, error out */
+					return NoCDCInterfaceFound;
+				}
+			}
+			else
+			{
+				/* Get the next CDC control interface from the configuration descriptor (CDC class has two CDC interfaces) */
+				if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCControlInterface))
+				{
+					/* Descriptor not found, error out */
+					return NoCDCInterfaceFound;
+				}
 			}
 
 			/* Fetch the next bulk or interrupt endpoint from the current CDC interface */
-			if (USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+			if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
 											   NextInterfaceCDCDataEndpoint))
 			{
 				/* Descriptor not found, error out */
@@ -155,11 +168,11 @@ uint8_t ProcessConfigurationDescriptor(void)
  *  configuration descriptor, to search for a specific sub descriptor. It can also be used to abort the configuration
  *  descriptor processing if an incompatible descriptor configuration is found.
  *
- *  This comparator searches for the next Interface descriptor of the correct CDC Class, Subclass and Protocol values.
+ *  This comparator searches for the next Interface descriptor of the correct CDC control Class, Subclass and Protocol values.
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextCDCInterface)
+DESCRIPTOR_COMPARATOR(NextCDCControlInterface)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
@@ -168,19 +181,35 @@ DESCRIPTOR_COMPARATOR(NextCDCInterface)
 		    (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).SubClass == CDC_CONTROL_SUBCLASS) &&
 		    (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).Protocol == CDC_CONTROL_PROTOCOL))
 		{
-			return Descriptor_Search_Found;
+			return DESCRIPTOR_SEARCH_Found;
 		}
+	}
+	
+	return DESCRIPTOR_SEARCH_NotFound;
+}
 
+/** Descriptor comparator function. This comparator function is can be called while processing an attached USB device's
+ *  configuration descriptor, to search for a specific sub descriptor. It can also be used to abort the configuration
+ *  descriptor processing if an incompatible descriptor configuration is found.
+ *
+ *  This comparator searches for the next Interface descriptor of the correct CDC data Class, Subclass and Protocol values.
+ *
+ *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
+ */
+DESCRIPTOR_COMPARATOR(NextCDCDataInterface)
+{
+	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
+	{
 		/* Check the CDC descriptor class, subclass and protocol, break out if correct data interface found */
 		if ((DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).Class    == CDC_DATA_CLASS)    &&
 		    (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).SubClass == CDC_DATA_SUBCLASS) &&
 		    (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).Protocol == CDC_DATA_PROTOCOL))
 		{
-			return Descriptor_Search_Found;
+			return DESCRIPTOR_SEARCH_Found;
 		}
 	}
 	
-	return Descriptor_Search_NotFound;
+	return DESCRIPTOR_SEARCH_NotFound;
 }
 
 /** Descriptor comparator function. This comparator function is can be called while processing an attached USB device's
@@ -201,12 +230,12 @@ DESCRIPTOR_COMPARATOR(NextInterfaceCDCDataEndpoint)
 		                                        USB_Descriptor_Endpoint_t).Attributes & EP_TYPE_MASK);
 	
 		if ((EndpointType == EP_TYPE_BULK) || (EndpointType == EP_TYPE_INTERRUPT))
-		  return Descriptor_Search_Found;
+		  return DESCRIPTOR_SEARCH_Found;
 	}
 	else if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
-		return Descriptor_Search_Fail;
+		return DESCRIPTOR_SEARCH_Fail;
 	}
 
-	return Descriptor_Search_NotFound;
+	return DESCRIPTOR_SEARCH_NotFound;
 }

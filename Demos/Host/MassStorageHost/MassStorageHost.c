@@ -36,17 +36,11 @@
 
 #include "MassStorageHost.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA MS Host App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_MassStore_Host   , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_MassStore_Host   , .TaskStatus = TASK_STOP },
 };
 
 /* Globals */
@@ -69,12 +63,12 @@ int main(void)
 	/* Hardware Initialization */
 	SerialStream_Init(9600, false);
 	LEDs_Init();
-	HWB_Init();
+	Buttons_Init();
 	
 	/* Indicate USB not ready */
 	UpdateStatus(Status_USBNotReady);
 
-	/* Startup message */
+	/* Start-up message */
 	puts_P(PSTR(ESC_RESET ESC_BG_WHITE ESC_INVERSE_ON ESC_ERASE_DISPLAY
 	       "MassStore Host Demo running.\r\n" ESC_INVERSE_OFF));
 		   
@@ -137,7 +131,7 @@ EVENT_HANDLER(USB_HostError)
 	for(;;);
 }
 
-/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occured while
+/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
  *  enumerating an attached USB device.
  */
 EVENT_HANDLER(USB_DeviceEnumerationFailed)
@@ -161,16 +155,19 @@ TASK(USB_MassStore_Host)
 	{
 		case HOST_STATE_Addressed:
 			/* Standard request to set the device configuration to configuration 1 */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_SetConfiguration,
-					wValue:        1,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_SetConfiguration,
+					.wValue        = 1,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 				
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control Error (Set Configuration).\r\n"));
@@ -215,46 +212,51 @@ TASK(USB_MassStore_Host)
 			/* Indicate device busy via the status LEDs */
 			UpdateStatus(Status_Busy);
 			
-			/* Reset the Mass Storage device interface, ready for use */
-			if ((ErrorCode = MassStore_MassStorageReset()) != HOST_SENDCONTROL_Successful)
-			{
-				ShowDiskReadError(PSTR("Mass Storage Reset"), ErrorCode);
-				break;
-			}
-			
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = MassStore_GetMaxLUN(&MassStore_MaxLUNIndex)) != HOST_SENDCONTROL_Successful)
 			{	
-				ShowDiskReadError(PSTR("Get Max LUN"), ErrorCode);
+				ShowDiskReadError(PSTR("Get Max LUN"), false, ErrorCode);
 				break;
 			}
 			
 			/* Print number of LUNs detected in the attached device */
 			printf_P(PSTR("Total LUNs: %d.\r\n"), (MassStore_MaxLUNIndex + 1));
-
-			/* Set the prevent removal flag for the device, allowing it to be accessed */
-			if ((ErrorCode = MassStore_PreventAllowMediumRemoval(0, true)) != 0)
+			
+			/* Reset the Mass Storage device interface, ready for use */
+			if ((ErrorCode = MassStore_MassStorageReset()) != HOST_SENDCONTROL_Successful)
 			{
-				ShowDiskReadError(PSTR("Prevent/Allow Medium Removal"), ErrorCode);
+				ShowDiskReadError(PSTR("Mass Storage Reset"), false, ErrorCode);
 				break;
 			}
 			
 			/* Get sense data from the device - many devices will not accept any other commands until the sense data
-			 * is read - both on startup and after a failed command */
+			 * is read - both on start-up and after a failed command */
 			SCSI_Request_Sense_Response_t SenseData;
-			if ((ErrorCode = MassStore_RequestSense(0, &SenseData)) != 0)
+			if (((ErrorCode = MassStore_RequestSense(0, &SenseData)) != 0) || (SCSICommandStatus.Status != Command_Pass))
 			{
-				ShowDiskReadError(PSTR("Request Sense"), ErrorCode);
+				ShowDiskReadError(PSTR("Request Sense"), (SCSICommandStatus.Status != Command_Pass), ErrorCode);
+				break;
+			}
+			
+			/* Set the prevent removal flag for the device, allowing it to be accessed */
+			if (((ErrorCode = MassStore_PreventAllowMediumRemoval(0, true)) != 0) || (SCSICommandStatus.Status != Command_Pass))
+			{
+				ShowDiskReadError(PSTR("Prevent/Allow Medium Removal"), (SCSICommandStatus.Status != Command_Pass), ErrorCode);
 				break;
 			}
 
-			puts_P(PSTR("Waiting until ready"));
+			puts_P(PSTR("Waiting until ready.."));
 			
 			/* Wait until disk ready */
 			do
 			{
 				Serial_TxByte('.');
-				MassStore_TestUnitReady(0);
+				
+				if ((ErrorCode = MassStore_TestUnitReady(0)) != 0)
+				{
+					ShowDiskReadError(PSTR("Test Unit Ready"), false, ErrorCode);
+					break;				
+				}
 			}
 			while ((SCSICommandStatus.Status != Command_Pass) && USB_IsConnected);
 			
@@ -268,27 +270,25 @@ TASK(USB_MassStore_Host)
 			SCSI_Capacity_t DiskCapacity;
 
 			/* Retrieve disk capacity */
-			if ((ErrorCode = MassStore_ReadCapacity(0, &DiskCapacity)) != 0)
+			if (((ErrorCode = MassStore_ReadCapacity(0, &DiskCapacity)) != 0) || (SCSICommandStatus.Status != Command_Pass))
 			{
-				ShowDiskReadError(PSTR("Read Capacity"), ErrorCode);
+				ShowDiskReadError(PSTR("Read Capacity"), (SCSICommandStatus.Status != Command_Pass), ErrorCode);
 				break;
 			}
 			
 			/* Display the disk capacity in blocks * block size bytes */
 			printf_P(PSTR("%lu blocks of %lu bytes.\r\n"), DiskCapacity.Blocks, DiskCapacity.BlockSize);
-			
+
 			/* Create a new buffer capabable of holding a single block from the device */
 			uint8_t BlockBuffer[DiskCapacity.BlockSize];
 
 			/* Read in the first 512 byte block from the device */
-			if ((ErrorCode = MassStore_ReadDeviceBlock(0, 0x00000000, 1, DiskCapacity.BlockSize, BlockBuffer)) != 0)
+			if (((ErrorCode = MassStore_ReadDeviceBlock(0, 0x00000000, 1, DiskCapacity.BlockSize, BlockBuffer)) != 0) ||
+			    (SCSICommandStatus.Status != Command_Pass))
 			{
-				ShowDiskReadError(PSTR("Read Device Block"), ErrorCode);
+				ShowDiskReadError(PSTR("Read Device Block"), (SCSICommandStatus.Status != Command_Pass), ErrorCode);
 				break;
 			}
-			
-			/* Show the number of bytes not transferred in the previous command */
-			printf_P(PSTR("Transfer Residue: %lu\r\n"), SCSICommandStatus.DataTransferResidue);
 			
 			puts_P(PSTR("\r\nContents of first block:\r\n"));
 
@@ -319,10 +319,10 @@ TASK(USB_MassStore_Host)
 				puts_P(PSTR("\r\n"));
 			}
 			
-			puts_P(PSTR("\r\n\r\nPress HWB to read entire ASCII contents of disk...\r\n\r\n"));
+			puts_P(PSTR("\r\n\r\nPress board button to read entire ASCII contents of disk...\r\n\r\n"));
 			
-			/* Wait for HWB to be pressed */
-			while (!(HWB_GetStatus()))
+			/* Wait for the board button to be pressed */
+			while (!(Buttons_GetStatus() & BUTTONS_BUTTON1))
 			{
 				/* Abort if device removed */
 				if (!(USB_IsConnected))
@@ -333,9 +333,10 @@ TASK(USB_MassStore_Host)
 			for (uint32_t CurrBlock = 0; CurrBlock < DiskCapacity.Blocks; CurrBlock++)
 			{
 				/* Read in the next block of data from the device */
-				if ((ErrorCode = MassStore_ReadDeviceBlock(0, CurrBlock, 1, DiskCapacity.BlockSize, BlockBuffer)) != 0)
+				if (((ErrorCode = MassStore_ReadDeviceBlock(0, CurrBlock, 1, DiskCapacity.BlockSize, BlockBuffer)) != 0) ||
+				    (SCSICommandStatus.Status != Command_Pass))
 				{
-					ShowDiskReadError(PSTR("Read Device Block"), ErrorCode);
+					ShowDiskReadError(PSTR("Read Device Block"), (SCSICommandStatus.Status != Command_Pass), ErrorCode);
 					break;
 				}
 
@@ -397,19 +398,29 @@ void UpdateStatus(uint8_t CurrentStatus)
 	LEDs_SetAllLEDs(LEDMask);
 }
 
-/** Indicates that a communication error has ocurred with the attached Mass Storage Device,
+/** Indicates that a communication error has occurred with the attached Mass Storage Device,
  *  printing error codes to the serial port and waiting until the device is removed before
  *  continuing.
  *
  *  \param CommandString  ASCII string located in PROGMEM space indicating what operation failed
+ *  \param FailedAtSCSILayer  Indicates if the command failed at the (logical) SCSI layer or at the physical USB layer
  *  \param ErrorCode      Error code of the function which failed to complete successfully
  */
-void ShowDiskReadError(char* CommandString, uint8_t ErrorCode)
+void ShowDiskReadError(char* CommandString, bool FailedAtSCSILayer, uint8_t ErrorCode)
 {
-	/* Display the error code */
-	printf_P(PSTR(ESC_BG_RED "Command error (%S).\r\n"), CommandString);
-	printf_P(PSTR("  -- Error Code: %d"), ErrorCode);
-	
+	if (FailedAtSCSILayer)
+	{
+		/* Display the error code */
+		printf_P(PSTR(ESC_BG_RED "SCSI command error (%S).\r\n"), CommandString);
+		printf_P(PSTR("  -- Status Code: %d"), ErrorCode);
+	}
+	else
+	{
+		/* Display the error code */
+		printf_P(PSTR(ESC_BG_RED "Command error (%S).\r\n"), CommandString);
+		printf_P(PSTR("  -- Error Code: %d"), ErrorCode);	
+	}
+
 	Pipe_Freeze();
 
 	/* Indicate device error via the status LEDs */

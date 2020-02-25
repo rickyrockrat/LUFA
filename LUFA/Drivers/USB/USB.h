@@ -33,9 +33,27 @@
  *  Master include file for the library USB functionality. This file should be included in all user projects making
  *  use of the USB portions of the library, instead of including any headers in the USB/LowLevel or USB/HighLevel
  *  directories.
+ */
+
+/** @defgroup Group_USB USB - LUFA/Drivers/USB/USB.h
  *
- *  Class specific utility files in USB/Class/ must still be included manually, as they are not normally part of
- *  the USB library unless desired by the library user.
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - LUFA/Drivers/USB/LowLevel/DevChapter9.c
+ *    - LUFA/Drivers/USB/LowLevel/Endpoint.c
+ *    - LUFA/Drivers/USB/LowLevel/Host.c
+ *    - LUFA/Drivers/USB/LowLevel/HostChapter9.c
+ *    - LUFA/Drivers/USB/LowLevel/LowLevel.c
+ *    - LUFA/Drivers/USB/LowLevel/Pipe.c
+ *    - LUFA/Drivers/USB/HighLevel/Events.c
+ *    - LUFA/Drivers/USB/HighLevel/StdDescriptors.c
+ *    - LUFA/Drivers/USB/HighLevel/USBInterrupt.c
+ *    - LUFA/Drivers/USB/HighLevel/USBTask.c
+ *    - LUFA/Drivers/USB/Class/ConfigDescriptor.c
+ *    - LUFA/Drivers/USB/Class/HIDParser.c
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the management of USB communications.
  */
 
 #ifndef __USB_H__
@@ -55,7 +73,13 @@
 		#endif
 		
 	/* Includes: */
-		#include "LowLevel/USBMode.h"
+		#include "HighLevel/USBMode.h"
+		#include "HighLevel/USBTask.h"
+		#include "HighLevel/USBInterrupt.h"
+		#include "HighLevel/Events.h"
+		#include "HighLevel/StdDescriptors.h"
+
+		#include "LowLevel/LowLevel.h"
 	
 		#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
 			#include "LowLevel/Host.h"
@@ -72,12 +96,9 @@
 		#if defined(USB_CAN_BE_BOTH) || defined(__DOXYGEN__)
 			#include "LowLevel/OTG.h"
 		#endif
-
-		#include "LowLevel/LowLevel.h"
-		#include "HighLevel/USBTask.h"
-		#include "HighLevel/USBInterrupt.h"
-		#include "HighLevel/Events.h"
-		#include "HighLevel/StdDescriptors.h"
+		
+		#include "Class/ConfigDescriptor.h"
+		#include "Class/HIDParser.h"
 		
 #endif
 

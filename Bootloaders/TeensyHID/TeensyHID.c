@@ -96,15 +96,15 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Handle HID Class specific requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_SetReport:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Wait until the command (report) has been sent by the host */
-				while (!(Endpoint_IsSetupOUTReceived()));
+				while (!(Endpoint_IsOUTReceived()));
 
 				/* Read in the write destination address */
 				uint16_t PageAddress = Endpoint_Read_Word_LE();
@@ -126,8 +126,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 						/* Check if endpoint is empty - if so clear it and wait until ready for next packet */
 						if (!(Endpoint_BytesInEndpoint()))
 						{
-							Endpoint_ClearSetupOUT();
-							while (!(Endpoint_IsSetupOUTReceived()));
+							Endpoint_ClearOUT();
+							while (!(Endpoint_IsOUTReceived()));
 						}
 
 						/* Write the next data word to the FLASH page */
@@ -142,11 +142,11 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 					boot_rww_enable();
 				}
 
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 			
 			break;

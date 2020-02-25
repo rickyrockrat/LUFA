@@ -36,17 +36,11 @@
  
 #include "KeyboardHost.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA KBD Host App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_Keyboard_Host    , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_Keyboard_Host    , .TaskStatus = TASK_STOP },
 };
 
 
@@ -75,7 +69,7 @@ int main(void)
 	/* Initialize USB Subsystem */
 	USB_Init();
 
-	/* Startup message */
+	/* Start-up message */
 	puts_P(PSTR(ESC_RESET ESC_BG_WHITE ESC_INVERSE_ON ESC_ERASE_DISPLAY
 	       "Keyboard Host Demo running.\r\n" ESC_INVERSE_OFF));
 		   
@@ -132,7 +126,7 @@ EVENT_HANDLER(USB_HostError)
 	for(;;);
 }
 
-/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occured while
+/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
  *  enumerating an attached USB device.
  */
 EVENT_HANDLER(USB_DeviceEnumerationFailed)
@@ -183,47 +177,69 @@ void ReadNextReport(void)
 {
 	USB_KeyboardReport_Data_t KeyboardReport;
 		
-	/* Select the keyboard report data in pipe */
+	/* Select keyboard data pipe */
 	Pipe_SelectPipe(KEYBOARD_DATAPIPE);	
 
-	/* Ensure pipe contains data and is ready to be read before continuing */
-	if (!(Pipe_ReadWriteAllowed()))
-	  return;
+	#if !defined(INTERRUPT_DATA_PIPE)
+	/* Unfreeze keyboard data pipe */
+	Pipe_Unfreeze();
+	#endif
 
-	/* Read in keyboard report data */
-	Pipe_Read_Stream_LE(&KeyboardReport, sizeof(KeyboardReport));
-					
-	/* Clear the IN endpoint, ready for next data packet */
-	Pipe_ClearCurrentBank();
-
-	/* Indicate if the modifier byte is non-zero (special key such as shift is being pressed) */
-	LEDs_ChangeLEDs(LEDS_LED1, (KeyboardReport.Modifier) ? LEDS_LED1 : 0);
-	
-	/* Check if a key has been pressed */
-	if (KeyboardReport.KeyCode)
+	/* Check to see if a packet has been received */
+	if (!(Pipe_IsINReceived()))
 	{
-		/* Toggle status LED to indicate keypress */
-		if (LEDs_GetLEDs() & LEDS_LED2)
-		  LEDs_TurnOffLEDs(LEDS_LED2);
-		else
-		  LEDs_TurnOnLEDs(LEDS_LED2);
-			  
-		char PressedKey = 0;
-
-		/* Retrieve pressed key character if alphanumeric */
-		if ((KeyboardReport.KeyCode >= 0x04) && (KeyboardReport.KeyCode <= 0x1D))
-		  PressedKey = (KeyboardReport.KeyCode - 0x04) + 'A';
-		else if ((KeyboardReport.KeyCode >= 0x1E) && (KeyboardReport.KeyCode <= 0x27))
-		  PressedKey = (KeyboardReport.KeyCode - 0x1E) + '0';
-		else if (KeyboardReport.KeyCode == 0x2C)
-		  PressedKey = ' ';						
-		else if (KeyboardReport.KeyCode == 0x28)
-		  PressedKey = '\n';
-			 
-		/* Print the pressed key character out through the serial port if valid */
-		if (PressedKey)
-		  putchar(PressedKey);
+		#if !defined(INTERRUPT_DATA_PIPE)
+		/* Refreeze HID data IN pipe */
+		Pipe_Freeze();
+		#endif
+			
+		return;
 	}
+	
+	/* Ensure pipe contains data before trying to read from it */
+	if (Pipe_IsReadWriteAllowed())
+	{
+		/* Read in keyboard report data */
+		Pipe_Read_Stream_LE(&KeyboardReport, sizeof(KeyboardReport));
+
+		/* Indicate if the modifier byte is non-zero (special key such as shift is being pressed) */
+		LEDs_ChangeLEDs(LEDS_LED1, (KeyboardReport.Modifier) ? LEDS_LED1 : 0);
+		
+		/* Check if a key has been pressed */
+		if (KeyboardReport.KeyCode)
+		{
+			/* Toggle status LED to indicate keypress */
+			if (LEDs_GetLEDs() & LEDS_LED2)
+			  LEDs_TurnOffLEDs(LEDS_LED2);
+			else
+			  LEDs_TurnOnLEDs(LEDS_LED2);
+				  
+			char PressedKey = 0;
+
+			/* Retrieve pressed key character if alphanumeric */
+			if ((KeyboardReport.KeyCode >= 0x04) && (KeyboardReport.KeyCode <= 0x1D))
+			  PressedKey = (KeyboardReport.KeyCode - 0x04) + 'A';
+			else if ((KeyboardReport.KeyCode >= 0x1E) && (KeyboardReport.KeyCode <= 0x27))
+			  PressedKey = (KeyboardReport.KeyCode - 0x1E) + '0';
+			else if (KeyboardReport.KeyCode == 0x2C)
+			  PressedKey = ' ';						
+			else if (KeyboardReport.KeyCode == 0x28)
+			  PressedKey = '\n';
+				 
+			/* Print the pressed key character out through the serial port if valid */
+			if (PressedKey)
+			  putchar(PressedKey);
+		}
+	}
+	
+						
+	/* Clear the IN endpoint, ready for next data packet */
+	Pipe_ClearIN();
+
+	#if !defined(INTERRUPT_DATA_PIPE)
+	/* Refreeze keyboard data pipe */
+	Pipe_Freeze();
+	#endif
 }
 
 /** Task to set the configuration of the attached device after it has been enumerated, and to read and process
@@ -237,16 +253,19 @@ TASK(USB_Keyboard_Host)
 	{
 		case HOST_STATE_Addressed:
 			/* Standard request to set the device configuration to configuration 1 */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_SetConfiguration,
-					wValue:        1,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_SetConfiguration,
+					.wValue        = 1,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control Error (Set Configuration).\r\n"));
@@ -284,16 +303,19 @@ TASK(USB_Keyboard_Host)
 			}
 		
 			/* HID class request to set the keyboard protocol to the Boot Protocol */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
-					bRequest:      REQ_SetProtocol,
-					wValue:        0,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
+					.bRequest      = REQ_SetProtocol,
+					.wValue        = 0,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control Error (Set Protocol).\r\n"));
@@ -307,22 +329,21 @@ TASK(USB_Keyboard_Host)
 				break;
 			}
 
+			#if defined(INTERRUPT_DATA_PIPE)			
+			/* Select and unfreeze keyboard data pipe */
+			Pipe_SelectPipe(KEYBOARD_DATAPIPE);	
+			Pipe_Unfreeze();
+			#endif
+
 			puts_P(PSTR("Keyboard Enumerated.\r\n"));
-				
+
 			USB_HostState = HOST_STATE_Ready;
 			break;
 		#if !defined(INTERRUPT_DATA_PIPE)
 		case HOST_STATE_Ready:
-			/* Select and unfreeze keyboard data pipe */
-			Pipe_SelectPipe(KEYBOARD_DATAPIPE);	
-			Pipe_Unfreeze();
-
 			/* If a report has been received, read and process it */
-			if (Pipe_ReadWriteAllowed())
-			  ReadNextReport();
+			ReadNextReport();
 
-			/* Freeze keyboard data pipe */
-			Pipe_Freeze();
 			break;
 		#endif
 	}
@@ -334,6 +355,9 @@ TASK(USB_Keyboard_Host)
  */
 ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 {
+	/* Save previously selected pipe before selecting a new pipe */
+	uint8_t PrevSelectedPipe = Pipe_GetCurrentPipe();
+
 	/* Check to see if the keyboard data pipe has caused the interrupt */
 	if (Pipe_HasPipeInterrupted(KEYBOARD_DATAPIPE))
 	{
@@ -350,5 +374,8 @@ ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 			/* Read and process the next report from the device */
 			ReadNextReport();
 	}
+	
+	/* Restore previously selected pipe */
+	Pipe_SelectPipe(PrevSelectedPipe);
 }
 #endif

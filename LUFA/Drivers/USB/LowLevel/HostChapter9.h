@@ -28,14 +28,6 @@
   this software.
 */
 
-/** \file
- *
- *  Module for host mode request processing. This module allows for the transmission of standard, class and
- *  vendor control requests to the default control endpoint of an attached device while in host mode.
- *
- *  \see Chapter 9 of the USB 2.0 specification.
- */
-
 #ifndef __HOSTCHAPTER9_H__
 #define __HOSTCHAPTER9_H__
 
@@ -44,7 +36,8 @@
 		#include <stdbool.h>
 		
 		#include "LowLevel.h"
-		#include "StdRequestType.h"
+		#include "../HighLevel/USBMode.h"
+		#include "../HighLevel/StdRequestType.h"
 
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -52,24 +45,11 @@
 		#endif
 
 	/* Public Interface - May be used in end-application: */
-		/* Type Defines: */
-			/** Type define for a standard USB control request.
-			 *
-			 *  \see StdRequestType.h for information on the request type and data.
-			 *  \see The USB 2.0 specification for more information on standard control requests.
-			 */
-			typedef struct
-			{
-				uint8_t  bmRequestType; /**< Type of the request. */
-				uint8_t  bRequest; /**< Request command code. */
-				uint16_t wValue; /**< wValue parameter of the request. */
-				uint16_t wIndex; /**< wIndex parameter of the request. */
-				uint16_t wLength; /**< Length of the data to transfer in bytes. */
-			} USB_Host_Request_Header_t;
-
 		/* Enums: */
-			/** Enum for the USB_Host_SendControlRequest() return code, indicating the reason for the error
+			/** Enum for the \ref USB_Host_SendControlRequest() return code, indicating the reason for the error
 			 *  if the transfer of the request is unsuccessful.
+			 *
+			 *  \ingroup Group_PipeControlReq
 			 */
 			enum USB_Host_SendControlErrorCodes_t
 			{
@@ -77,29 +57,24 @@
 				HOST_SENDCONTROL_DeviceDisconnect = 1, /**< The attached device was disconnected during the
 				                                        *   request transfer.
 				                                        */
-				HOST_SENDCONTROL_PipeError        = 2, /**< An error occured in the pipe while sending the request. */
+				HOST_SENDCONTROL_PipeError        = 2, /**< An error occurred in the pipe while sending the request. */
 				HOST_SENDCONTROL_SetupStalled     = 3, /**< The attached device stalled the request, usually
 				                                        *   indicating that the request is unsupported on the device.
 				                                        */
 				HOST_SENDCONTROL_SoftwareTimeOut  = 4, /**< The request or data transfer timed out. */
 			};
 			
-		/* Global Variables: */
-			/** Global for the request to send via the USB_Host_SendControlRequest() function. This
-			 *  global should be filled with the correct control request data before sending the request to
-			 *  the attached device while in host mode.
-			 */
-			extern USB_Host_Request_Header_t USB_HostRequest;
-			
 		/* Function Prototypes: */
-			/** Sends the request stored in the USB_HostRequest global structure to the attached device,
+			/** Sends the request stored in the \ref USB_ControlRequest global structure to the attached device,
 			 *  and transfers the data stored in the buffer to the device, or from the device to the buffer
-			 *  as requested.
+			 *  as requested. The transfer is made on the currently selected pipe.
+			 *
+			 *  \ingroup Group_PipeControlReq
 			 *
 			 *  \param BufferPtr  Pointer to the start of the data buffer if the request has a data stage, or
 			 *                    NULL if the request transfers no data to or from the device.
 			 *
-			 *  \return A value from the USB_Host_SendControlErrorCodes_t enum to indicate the result.
+			 *  \return A value from the \ref USB_Host_SendControlErrorCodes_t enum to indicate the result.
 			 */
 			uint8_t USB_Host_SendControlRequest(void* BufferPtr);
 			

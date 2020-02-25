@@ -47,21 +47,24 @@ uint8_t GetHIDReportData(void)
 	/* Create a buffer big enough to hold the entire returned HID report */
 	uint8_t HIDReportData[HIDReportSize];
 	
-	USB_HostRequest = (USB_Host_Request_Header_t)
+	USB_ControlRequest = (USB_Request_Header_t)
 		{
-			bmRequestType: (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_INTERFACE),
-			bRequest:      REQ_GetDescriptor,
-			wValue:        (DTYPE_Report << 8),
-			wIndex:        0,
-			wLength:       HIDReportSize,
+			.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_INTERFACE),
+			.bRequest      = REQ_GetDescriptor,
+			.wValue        = (DTYPE_Report << 8),
+			.wIndex        = 0,
+			.wLength       = HIDReportSize,
 		};
+
+	/* Select the control pipe for the request transfer */
+	Pipe_SelectPipe(PIPE_CONTROLPIPE);
 
 	/* Send control request to retrieve the HID report from the attached device */
 	if (USB_Host_SendControlRequest(HIDReportData) != HOST_SENDCONTROL_Successful)
 	  return ParseControlError;
 
 	/* Send the HID report to the parser for processing */
-	if (ProcessHIDReport(HIDReportData, HIDReportSize, &HIDReportInfo) != HID_PARSE_Successful)
+	if (USB_ProcessHIDReport(HIDReportData, HIDReportSize, &HIDReportInfo) != HID_PARSE_Successful)
 	  return ParseError;
 	
 	return ParseSuccessful;

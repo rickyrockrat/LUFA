@@ -33,17 +33,23 @@
  *  ADC driver for the AT90USB1287, AT90USB1286, AT90USB647, AT90USB646, ATMEGA16U4 and ATMEGA32U4 AVRs.
  *
  *  \note This file should not be included directly. It is automatically included as needed by the ADC driver
- *        dispatch header located in LUFA/Drivers/AT90USBXXX/ADC.h.
+ *        dispatch header located in LUFA/Drivers/Peripheral/ADC.h.
  */
 
+/** \ingroup Group_ADC
+ *  @defgroup Group_ADC_AT90USBXXX67 AT90USBXXX6 and AT90USBXXX7 Models
+ *
+ *  @{
+ */
+ 
 #ifndef __ADC_AT90USBXXX67_H__
 #define __ADC_AT90USBXXX67_H__
 
 	/* Includes: */
+		#include "../../../Common/Common.h"
+		
 		#include <avr/io.h>
 		#include <stdbool.h>
-		
-		#include "../../../Common/Common.h"
 		
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -52,36 +58,11 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(INCLUDE_FROM_ADC_H)
-			#error Do not include this file directly. Include LUFA/Drivers/AT90USBXXX/ADC.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/Peripheral/ADC.h instead.
 		#endif
 
 	/* Public Interface - May be used in end-application: */
-		/* Macros: */
-			/** Initializes the ADC, ready for conversions. This must be called before any other ADC operations.
-			 *  The "mode" parameter should be a mask comprised of a conversion mode (free running or single) and
-			 *  prescaler masks.
-			 */
-			#define  ADC_Init(mode)          MACROS{ ADCSRA = ((1 << ADEN) | mode);         }MACROE
-
-			/** Turns off the ADC. If this is called, any further ADC operations will require a call to the
-			 *  ADC_Init() macro before the ADC can be used again.
-			 */
-			#define  ADC_Off()               MACROS{ ADCSRA = 0;                            }MACROE
-			
-			/** Indicates if the ADC is enabled. This macro will return boolean true if the ADC subsystem is
-			 *  currently enabled, or false otherwise.
-			 */
-			#define  ADC_GetStatus()               ((ADCSRA & (1 << ADEN)) ? true : false)
-
-			/** Indicates if the current ADC conversion is completed, or still in progress. This returns boolean
-			 *  false if the reading is still taking place, or true if the conversion is complete and ready to be
-			 *  read out with ADC_GetResult().
-			 */
-			#define  ADC_IsReadingComplete()         (!(ADCSRA & (1 << ADSC)))
-			
-			/** Returns the result of the last conversion, as a 16-bit wide integer. */
-			#define  ADC_GetResult()                 ADC
-			
+		/* Macros: */			
 			/** Reference mask, for using the voltage present at the AVR's AREF pin for the ADC reference. */
 			#define  ADC_REFERENCE_AREF              0
 
@@ -128,6 +109,51 @@
 			/** Sets the ADC input clock to prescale by a factor of 128 the AVR's system clock. */
 			#define  ADC_PRESCALE_128                ((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))
 
+		/* Pseudo-Function Macros: */
+			#if defined(__DOXYGEN__)
+				/** Initializes the ADC, ready for conversions. This must be called before any other ADC operations.
+				 *  The "mode" parameter should be a mask comprised of a conversion mode (free running or single) and
+				 *  prescaler masks.
+				 *
+				 *  \param Mode  Mask of ADC settings, including adjustment, prescale, mode and reference
+				 */
+				static inline void ADC_Init(uint8_t Mode);
+				
+				/** Turns off the ADC. If this is called, any further ADC operations will require a call to
+				 *  \ref ADC_Init() before the ADC can be used again.
+				 */
+				static inline void ADC_Off(void);
+				
+				/** Indicates if the ADC is currently enabled.
+				 *
+				 *  \return Boolean true if the ADC subsystem is currently enabled, false otherwise.
+				 */
+				static inline bool ADC_GetStatus(void);
+				
+				/** Indicates if the current ADC conversion is completed, or still in progress.
+				 *
+				 *  \return Boolean false if the reading is still taking place, or true if the conversion is
+				 *          complete and ready to be read out with \ref ADC_GetResult()
+				 */
+				static inline bool ADC_IsReadingComplete(void);
+				
+				/** Retrieves the conversion value of the last completed ADC conversion.
+				 *
+				 *  \return The result of the last ADC conversion
+				 */
+				static inline uint16_t ADC_GetResult(void);
+			#else
+				#define  ADC_Init(mode)          MACROS{ ADCSRA = ((1 << ADEN) | mode);         }MACROE
+
+				#define  ADC_Off()               MACROS{ ADCSRA = 0;                            }MACROE
+				
+				#define  ADC_GetStatus()               ((ADCSRA & (1 << ADEN)) ? true : false)
+
+				#define  ADC_IsReadingComplete()         (!(ADCSRA & (1 << ADSC)))
+				
+				#define  ADC_GetResult()                 ADC			
+			#endif
+			
 		/* Inline Functions: */
 			/** Configures the given ADC channel, ready for ADC conversions. This function sets the
 			 *  associated port pin as an input and disables the digital portion of the I/O to reduce
@@ -142,8 +168,8 @@
 			}
 			
 			/** Starts the reading of the given channel, but does not wait until the conversion has completed.
-			 *  Once executed, the conversion status can be determined via the ADC_IsReadingComplete() macro and
-			 *  the result read via the ADC_GetResult() macro.
+			 *  Once executed, the conversion status can be determined via the \ref ADC_IsReadingComplete() macro and
+			 *  the result read via the \ref ADC_GetResult() macro.
 			 *
 			 *  \param MUXMask  Mask comprising of an ADC channel number, reference mask and adjustment mask
 			 */
@@ -175,3 +201,5 @@
 		#endif
 		
 #endif
+
+/** @} */

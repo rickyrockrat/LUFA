@@ -28,18 +28,26 @@
   this software.
 */
 
-#include "Serial_Stream.h"
+#include "Serial.h"
 
-FILE USARTStream = FDEV_SETUP_STREAM(SerialStream_TxByte, SerialStream_RxByte, _FDEV_SETUP_RW);
-
-int SerialStream_TxByte(char DataByte, FILE *Stream)
+void Serial_TxString_P(const char *FlashStringPtr)
 {
-	Serial_TxByte(DataByte);
+	uint8_t CurrByte;
 
-	return 0;
+	while ((CurrByte = pgm_read_byte(FlashStringPtr)) != 0x00)
+	{
+		Serial_TxByte(CurrByte);
+		FlashStringPtr++;
+	}
 }
 
-int SerialStream_RxByte(FILE *Stream)
+void Serial_TxString(const char *StringPtr)
 {
-	return Serial_RxByte();
+	uint8_t CurrByte;
+
+	while ((CurrByte = *StringPtr) != 0x00)
+	{
+		Serial_TxByte(CurrByte);
+		StringPtr++;
+	}
 }

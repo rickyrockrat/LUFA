@@ -28,10 +28,14 @@
   this software.
 */
 
-/** \file
+/** \ingroup Group_USB
+ *  @defgroup Group_USBInterrupt Endpoint and Pipe Interrupts
  *
- *  Main USB interrupt vector handler. This file manages the main USB interrupt vector, for handling such
- *  events as VBUS interrupts (on supported USB AVR models), device connections and disconnections, etc.
+ *  This module manages the main USB interrupt vector, for handling such events as VBUS interrupts
+ *  (on supported USB AVR models), device connections and disconnections, etc. as well as providing
+ *  easy to use macros for the management of the unified Endpoint/Pipe interrupt vector.
+ *
+ *  @{
  */
 
 #ifndef __USBINTERRUPT_H__
@@ -43,7 +47,7 @@
 		
 		#include "../../../Common/Common.h"
 		#include "../LowLevel/LowLevel.h"
-		#include "../LowLevel/USBMode.h"
+		#include "USBMode.h"
 		#include "Events.h"
 		
 	/* Enable C linkage for C++ Compilers: */
@@ -66,7 +70,7 @@
 
 			/** Disables the given USB interrupt vector.
 			 *
-			 *  \see USB_INT_Enable()
+			 *  \see \ref USB_INT_Enable()
 			 */
 			#define USB_INT_Disable(int)             MACROS{ USB_INT_GET_EN_REG(int)   &= ~(USB_INT_GET_EN_MASK(int));  }MACROE
 
@@ -79,7 +83,7 @@
 			#define USB_INT_IsEnabled(int)                 ((USB_INT_GET_EN_REG(int)   &    USB_INT_GET_EN_MASK(int)) ? true : false)
 
 			/** Returns boolean true if the given interrupt flag is set (i.e. the condition for the interrupt has occurred,
-			 *  but the interrupt vector is not neccesarily enabled), otherwise returns false.
+			 *  but the interrupt vector is not necessarily enabled), otherwise returns false.
 			 */
 			#define USB_INT_HasOccurred(int)               ((USB_INT_GET_INT_REG(int)  &    USB_INT_GET_INT_MASK(int)) ? true : false)
 		
@@ -92,7 +96,7 @@
 			 *        which is not always accurate (host may suspend the bus while still connected). If the actual connection state
 			 *        needs to be determined, VBUS should be routed to an external pin, and the auto-detect behaviour turned off by
 			 *        passing the NO_LIMITED_CONTROLLER_CONNECT token to the compiler via the -D switch at compile time. The connection
-			 *        and disconnection events may be manually fired by RAISE_EVENT(), and the USB_IsConnected global changed manually.
+			 *        and disconnection events may be manually fired by \ref RAISE_EVENT(), and the USB_IsConnected global changed manually.
 			 */
 			RAISES_EVENT(USB_Connect);
 
@@ -104,7 +108,7 @@
 			 *        which is not always accurate (host may suspend the bus while still connected). If the actual connection state
 			 *        needs to be determined, VBUS should be routed to an external pin, and the auto-detect behaviour turned off by
 			 *        passing the NO_LIMITED_CONTROLLER_CONNECT token to the compiler via the -D switch at compile time. The connection
-			 *        and disconnection events may be manually fired by RAISE_EVENT(), and the USB_IsConnected global changed manually.
+			 *        and disconnection events may be manually fired by \ref RAISE_EVENT(), and the USB_IsConnected global changed manually.
 			 */
 			RAISES_EVENT(USB_Disconnect);
 
@@ -114,7 +118,7 @@
 				 *
 				 *  \note Not all USB AVR models support VBUS interrupts; this event only exists on supported AVRs.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_VBUSChange);
 
@@ -122,7 +126,7 @@
 				 *
 				 *  \note Not all USB AVR models support VBUS interrupts; this event only exists on supported AVRs.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_VBUSConnect);
 
@@ -130,7 +134,7 @@
 				 *
 				 *  \note Not all USB AVR models support VBUS interrupts; this event only exists on supported AVRs.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_VBUSDisconnect);
 			#endif
@@ -139,21 +143,21 @@
 				/** This module raises the Suspended event when the host suspends the USB interface of the AVR
 				 *  whilst running in device mode.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_Suspend);
 
 				/** This module raises the Wake Up event when the host resumes the USB interface of the AVR
 				 *  whilst running in device mode.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_WakeUp);
 
 				/** This module raises the USB Reset event when the host resets the USB interface of the AVR
 				 *  whilst running in device mode.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_Reset);
 			#endif
@@ -164,7 +168,7 @@
 				 *
 				 *  \note Not all USB AVR models support host mode; this event only exists on supported AVRs.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_HostError);
 
@@ -173,7 +177,7 @@
 				 *
 				 *  \note Not all USB AVR models support host mode; this event only exists on supported AVRs.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_DeviceUnattached);
 			#endif
@@ -184,7 +188,7 @@
 				 *  \note Not all USB AVR models support host mode and thus the UID pin; this event only exists on
 				 *        supported AVRs.
 				 *
-				 *  \see Events.h for more information on this event.
+				 *  \see \ref Group_Events for more information on this event.
 				 */
 				RAISES_EVENT(USB_UIDChange);
 			#endif
@@ -220,5 +224,7 @@
 		#if defined(__cplusplus)
 			}
 		#endif
-		
+
 #endif
+
+/** @} */

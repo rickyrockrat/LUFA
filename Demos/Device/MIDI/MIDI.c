@@ -36,17 +36,11 @@
 
 #include "MIDI.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA MIDI App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_MIDI_Task        , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_MIDI_Task        , .TaskStatus = TASK_STOP },
 };
 
 /** Main program entry point. This routine configures the hardware required by the application, then
@@ -64,7 +58,7 @@ int main(void)
 	/* Hardware Initialization */
 	Joystick_Init();
 	LEDs_Init();
-	HWB_Init();
+	Buttons_Init();
 
 	/* Indicate USB not ready */
 	UpdateStatus(Status_USBNotReady);
@@ -134,14 +128,14 @@ TASK(USB_MIDI_Task)
 	Endpoint_SelectEndpoint(MIDI_STREAM_IN_EPNUM);
 
 	/* Check if endpoint is ready to be written to */
-	if (Endpoint_ReadWriteAllowed())
+	if (Endpoint_IsINReady())
 	{
 		/* Get current joystick mask, XOR with previous to detect joystick changes */
 		uint8_t JoystickStatus  = Joystick_GetStatus();
 		uint8_t JoystickChanges = (JoystickStatus ^ PrevJoystickStatus);
 		
-		/* Get HWB status - if set use channel 10 (percussion), otherwise use channel 1 */
-		uint8_t Channel = ((HWB_GetStatus()) ? MIDI_CHANNEL(10) : MIDI_CHANNEL(1));
+		/* Get board button status - if pressed use channel 10 (percussion), otherwise use channel 1 */
+		uint8_t Channel = ((Buttons_GetStatus() & BUTTONS_BUTTON1) ? MIDI_CHANNEL(10) : MIDI_CHANNEL(1));
 
 		if (JoystickChanges & JOY_LEFT)
 		  SendMIDINoteChange(0x3C, (JoystickStatus & JOY_LEFT), 0, Channel);
@@ -166,8 +160,8 @@ TASK(USB_MIDI_Task)
 	Endpoint_SelectEndpoint(MIDI_STREAM_OUT_EPNUM);
 
 	/* Check if endpoint is ready to be read from, if so discard its (unused) data */
-	if (Endpoint_ReadWriteAllowed())
-	  Endpoint_ClearCurrentBank();
+	if (Endpoint_IsOUTReceived())
+	  Endpoint_ClearOUT();
 }
 
 /** Function to manage status updates to the user. This is done via LEDs on the given board, if available, but may be changed to
@@ -207,7 +201,7 @@ void UpdateStatus(uint8_t CurrentStatus)
 void SendMIDINoteChange(const uint8_t Pitch, const bool OnOff, const uint8_t CableID, const uint8_t Channel)
 {
 	/* Wait until endpoint ready for more data */
-	while (!(Endpoint_ReadWriteAllowed()));
+	while (!(Endpoint_IsReadWriteAllowed()));
 
 	/* Check if the message should be a Note On or Note Off command */
 	uint8_t Command = ((OnOff)? MIDI_COMMAND_NOTE_ON : MIDI_COMMAND_NOTE_OFF);
@@ -221,5 +215,5 @@ void SendMIDINoteChange(const uint8_t Pitch, const bool OnOff, const uint8_t Cab
 	Endpoint_Write_Byte(MIDI_STANDARD_VELOCITY);
 	
 	/* Send the data in the endpoint to the host */
-	Endpoint_ClearCurrentBank();
+	Endpoint_ClearIN();
 }

@@ -36,17 +36,11 @@
  
 #include "KeyboardHostWithParser.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA KBD Host App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_Keyboard_Host    , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_Keyboard_Host    , .TaskStatus = TASK_STOP },
 };
 
 
@@ -75,7 +69,7 @@ int main(void)
 	/* Initialize USB Subsystem */
 	USB_Init();
 
-	/* Startup message */
+	/* Start-up message */
 	puts_P(PSTR(ESC_RESET ESC_BG_WHITE ESC_INVERSE_ON ESC_ERASE_DISPLAY
 	       "Keyboard Host Demo running.\r\n" ESC_INVERSE_OFF));
 		   
@@ -132,7 +126,7 @@ EVENT_HANDLER(USB_HostError)
 	for(;;);
 }
 
-/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occured while
+/** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
  *  enumerating an attached USB device.
  */
 EVENT_HANDLER(USB_DeviceEnumerationFailed)
@@ -190,16 +184,19 @@ TASK(USB_Keyboard_Host)
 	{
 		case HOST_STATE_Addressed:
 			/* Standard request to set the device configuration to configuration 1 */
-			USB_HostRequest = (USB_Host_Request_Header_t)
+			USB_ControlRequest = (USB_Request_Header_t)
 				{
-					bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
-					bRequest:      REQ_SetConfiguration,
-					wValue:        1,
-					wIndex:        0,
-					wLength:       0,
+					.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_DEVICE),
+					.bRequest      = REQ_SetConfiguration,
+					.wValue        = 1,
+					.wIndex        = 0,
+					.wLength       = 0,
 				};
 
-			/* Send the request, display error and wait for device detatch if request fails */
+			/* Select the control pipe for the request transfer */
+			Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
+			/* Send the request, display error and wait for device detach if request fails */
 			if ((ErrorCode = USB_Host_SendControlRequest(NULL)) != HOST_SENDCONTROL_Successful)
 			{
 				puts_P(PSTR("Control Error (Set Configuration).\r\n"));
@@ -255,7 +252,7 @@ TASK(USB_Keyboard_Host)
 				break;	
 			}
 			
-			/* All LEDs off - ready to indicate keypresses */
+			/* All LEDs off - ready to indicate key presses */
 			UpdateStatus(Status_USBReady);
 
 			puts_P(PSTR("Keyboard Enumerated.\r\n"));
@@ -267,74 +264,89 @@ TASK(USB_Keyboard_Host)
 			Pipe_SelectPipe(KEYBOARD_DATAPIPE);	
 			Pipe_Unfreeze();
 
-			/* Check if data has been received from the attached keyboard */
-			if (Pipe_ReadWriteAllowed())
+			/* Check to see if a packet has been received */
+			if (Pipe_IsINReceived())
 			{
-				/* Create buffer big enough for the report */
-				uint8_t KeyboardReport[Pipe_BytesInPipe()];
+				/* Check if data has been received from the attached keyboard */
+				if (Pipe_IsReadWriteAllowed())
+				{
+					/* Create buffer big enough for the report */
+					uint8_t KeyboardReport[Pipe_BytesInPipe()];
 
-				/* Load in the keyboard report */
-				Pipe_Read_Stream_LE(KeyboardReport, Pipe_BytesInPipe());
+					/* Load in the keyboard report */
+					Pipe_Read_Stream_LE(KeyboardReport, Pipe_BytesInPipe());
+				
+					/* Process the read in keyboard report from the device */
+					ProcessKeyboardReport(KeyboardReport);
+				}
 				
 				/* Clear the IN endpoint, ready for next data packet */
-				Pipe_ClearCurrentBank();
-
-				/* Check each HID report item in turn, looking for keyboard scan code reports */
-				for (uint8_t ReportNumber = 0; ReportNumber < HIDReportInfo.TotalReportItems; ReportNumber++)
-				{
-					/* Create a tempoary item pointer to the next report item */
-					HID_ReportItem_t* ReportItem = &HIDReportInfo.ReportItems[ReportNumber];
-
-					/* Check if the current report item is a keyboard scancode */
-					if ((ReportItem->Attributes.Usage.Page      == USAGE_PAGE_KEYBOARD) &&
-					    (ReportItem->Attributes.BitSize         == 8)                   &&
-					    (ReportItem->Attributes.Logical.Maximum > 1)                    &&
-					    (ReportItem->ItemType                   == REPORT_ITEM_TYPE_In))
-					{
-						/* Retrieve the keyboard scancode from the report data retrieved from the device */
-						bool FoundData = GetReportItemInfo(KeyboardReport, ReportItem);
-						
-						/* For multi-report devices - if the requested data was not in the issued report, continue */
-						if (!(FoundData))
-						  continue;
-						
-						/* Key code is an unsigned char in length, cast to the appropriate type */
-						uint8_t KeyCode = (uint8_t)ReportItem->Value;
-
-						/* If scancode is non-zero, a key is being pressed */
-						if (KeyCode)
-						{
-							/* Toggle status LED to indicate keypress */
-							if (LEDs_GetLEDs() & LEDS_LED2)
-							  LEDs_TurnOffLEDs(LEDS_LED2);
-							else
-							  LEDs_TurnOnLEDs(LEDS_LED2);
-
-							char PressedKey = 0;
-
-							/* Convert scancode to printable character if alphanumeric */
-							if ((KeyCode >= 0x04) && (KeyCode <= 0x1D))
-							  PressedKey = (KeyCode - 0x04) + 'A';
-							else if ((KeyCode >= 0x1E) && (KeyCode <= 0x27))
-							  PressedKey = (KeyCode - 0x1E) + '0';
-							else if (KeyCode == 0x2C)
-							  PressedKey = ' ';						
-							else if (KeyCode == 0x28)
-							  PressedKey = '\n';
-								 
-							/* Print the pressed key character out through the serial port if valid */
-							if (PressedKey)
-							  putchar(PressedKey);
-						}
-						
-						/* Once a scancode is found, stop scanning through the report items */
-						break;
-					}
-				}
+				Pipe_ClearIN();
 			}
 
 			/* Freeze keyboard data pipe */
 			Pipe_Freeze();
 			break;
+	}
+}
+
+/** Processes a read HID report from an attached keyboard, extracting out elements via the HID parser results
+ *  as required and prints pressed characters to the serial port. Each time a key is typed, a board LED is toggled.
+ *
+ *  \param KeyboardReport  Pointer to a HID report from an attached keyboard device
+ */
+void ProcessKeyboardReport(uint8_t* KeyboardReport)
+{
+	/* Check each HID report item in turn, looking for keyboard scan code reports */
+	for (uint8_t ReportNumber = 0; ReportNumber < HIDReportInfo.TotalReportItems; ReportNumber++)
+	{
+		/* Create a temporary item pointer to the next report item */
+		HID_ReportItem_t* ReportItem = &HIDReportInfo.ReportItems[ReportNumber];
+
+		/* Check if the current report item is a keyboard scancode */
+		if ((ReportItem->Attributes.Usage.Page      == USAGE_PAGE_KEYBOARD) &&
+			(ReportItem->Attributes.BitSize         == 8)                   &&
+			(ReportItem->Attributes.Logical.Maximum > 1)                    &&
+			(ReportItem->ItemType                   == REPORT_ITEM_TYPE_In))
+		{
+			/* Retrieve the keyboard scancode from the report data retrieved from the device */
+			bool FoundData = USB_GetHIDReportItemInfo(KeyboardReport, ReportItem);
+			
+			/* For multi-report devices - if the requested data was not in the issued report, continue */
+			if (!(FoundData))
+			  continue;
+			
+			/* Key code is an unsigned char in length, cast to the appropriate type */
+			uint8_t KeyCode = (uint8_t)ReportItem->Value;
+
+			/* If scancode is non-zero, a key is being pressed */
+			if (KeyCode)
+			{
+				/* Toggle status LED to indicate keypress */
+				if (LEDs_GetLEDs() & LEDS_LED2)
+				  LEDs_TurnOffLEDs(LEDS_LED2);
+				else
+				  LEDs_TurnOnLEDs(LEDS_LED2);
+
+				char PressedKey = 0;
+
+				/* Convert scancode to printable character if alphanumeric */
+				if ((KeyCode >= 0x04) && (KeyCode <= 0x1D))
+				  PressedKey = (KeyCode - 0x04) + 'A';
+				else if ((KeyCode >= 0x1E) && (KeyCode <= 0x27))
+				  PressedKey = (KeyCode - 0x1E) + '0';
+				else if (KeyCode == 0x2C)
+				  PressedKey = ' ';						
+				else if (KeyCode == 0x28)
+				  PressedKey = '\n';
+					 
+				/* Print the pressed key character out through the serial port if valid */
+				if (PressedKey)
+				  putchar(PressedKey);
+			}
+			
+			/* Once a scancode is found, stop scanning through the report items */
+			break;
+		}
 	}
 }

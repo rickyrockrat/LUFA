@@ -40,6 +40,22 @@
  *  directory.
  */
  
+/** \ingroup Group_BoardDrivers
+ *  @defgroup Group_Joystick Joystick Driver - LUFA/Drivers/Board/Joystick.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - None
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the control of board joystick.
+ *
+ *  If the BOARD value is set to BOARD_USER, this will include the /Board/Dataflash.h file in the user project
+ *  directory. Otherwise, it will include the appropriate built in board driver header file.
+ *
+ *  @{
+ */
+
 #ifndef __JOYSTICK_H__
 #define __JOYSTICK_H__
 
@@ -66,7 +82,7 @@
 		#error The selected board does not contain a joystick.
 	#endif
 
-	/* Psudo-Functions for Doxygen: */
+	/* Pseudo-Functions for Doxygen: */
 	#if defined(__DOXYGEN__)
 		/** Initializes the joystick driver so that the joystick position can be read. This sets the appropriate
 		 *  I/O pins to inputs with their pull-ups enabled.
@@ -83,3 +99,5 @@
 	#endif
 
 #endif
+
+/** @} */

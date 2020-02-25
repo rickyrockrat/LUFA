@@ -36,17 +36,11 @@
 
 #include "AudioInput.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA AudioIn App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: USB_Audio_Task       , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = USB_Audio_Task       , .TaskStatus = TASK_STOP },
 };
 
 
@@ -95,7 +89,7 @@ EVENT_HANDLER(USB_Connect)
 	UpdateStatus(Status_USBEnumerating);
 
 	/* Sample reload timer initialization */
-	OCR0A   = (F_CPU / AUDIO_SAMPLE_FREQUENCY);
+	OCR0A   = (F_CPU / AUDIO_SAMPLE_FREQUENCY) - 1;
 	TCCR0A  = (1 << WGM01);  // CTC mode
 	TCCR0B  = (1 << CS00);   // Fcpu speed
 }
@@ -137,18 +131,16 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Process General and Audio specific control requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_SetInterface:
 			/* Set Interface is not handled by the library, as its function is application-specific */
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_INTERFACE))
 			{
-				uint16_t wValue = Endpoint_Read_Word_LE();
-				
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Check if the host is enabling the audio interface (setting AlternateSetting to 1) */
-				if (wValue)
+				if (USB_ControlRequest.wValue)
 				{
 					/* Start audio task */
 					Scheduler_SetTaskMode(USB_Audio_Task, TASK_RUN);
@@ -160,8 +152,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				}
 				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 
 			break;
@@ -201,8 +193,8 @@ TASK(USB_Audio_Task)
 	/* Select the audio stream endpoint */
 	Endpoint_SelectEndpoint(AUDIO_STREAM_EPNUM);
 	
-	/* Check if the current endpoint can be read from (contains a packet) and that the next sample should be stored */
-	if (Endpoint_ReadWriteAllowed() && (TIFR0 & (1 << OCF0A)))
+	/* Check if the current endpoint can be written to and that the next sample should be stored */
+	if (Endpoint_IsINReady() && (TIFR0 & (1 << OCF0A)))
 	{
 		/* Clear the sample reload timer */
 		TIFR0 |= (1 << OCF0A);
@@ -219,10 +211,10 @@ TASK(USB_Audio_Task)
 		Endpoint_Write_Word_LE(AudioSample);
 
 		/* Check to see if the bank is now full */
-		if (!(Endpoint_ReadWriteAllowed()))
+		if (!(Endpoint_IsReadWriteAllowed()))
 		{
 			/* Send the full packet to the host */
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearIN();
 		}
 	}
 }

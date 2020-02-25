@@ -27,12 +27,14 @@
   arising out of or in connection with the use or performance of
   this software.
 */
-
-/** \file
+ 
+/** \ingroup Group_USB
+ *  @defgroup Group_StreamCallbacks Endpoint and Pipe Stream Callbacks
  *
- *  Macros and enums for the stream callback routines in Endpoint.h and Pipe.c. This module contains the
- *  code required to easily set up stream callback functions which can be used to force early abort of a
- *  stream read/write process.
+ *  Macros and enums for the stream callback routines. This module contains the code required to easily set up
+ *  stream callback functions which can be used to force early abort of a stream read/write process.
+ *
+ *  @{
  */
  
 #ifndef __STREAMCALLBACK_H__
@@ -45,7 +47,7 @@
 			 *  these functions are used) which allow the user application to abort the transfer when certain
 			 *  arbitrary conditions are met.
 			 *
-			 *  Stream callback functions should return a value from the StreamCallback_Return_ErrorCodes_t
+			 *  Stream callback functions should return a value from the \ref StreamCallback_Return_ErrorCodes_t
 			 *  enum.
 			 *
 			 *  Usage Example (Device Endpoint, but applicable for Host Pipes also):
@@ -85,3 +87,5 @@
 			};
 			
 #endif
+
+/** @} */

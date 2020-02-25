@@ -28,7 +28,8 @@
   this software.
 */
 
-#include "USBMode.h"
+#include "../HighLevel/USBMode.h"
+
 #if defined(USB_CAN_BE_DEVICE)
 
 #define  INCLUDE_FROM_ENDPOINT_C
@@ -38,34 +39,23 @@
 uint8_t USB_ControlEndpointSize = ENDPOINT_CONTROLEP_DEFAULT_SIZE;
 #endif
 
-#if !defined(STATIC_ENDPOINT_CONFIGURATION)
-bool Endpoint_ConfigureEndpoint(const uint8_t  Number, const uint8_t Type, const uint8_t Direction,
-			                    const uint16_t Size, const uint8_t Banks)
+uint8_t Endpoint_BytesToEPSizeMaskDynamic(const uint16_t Size)
 {
-	Endpoint_SelectEndpoint(Number);
-	Endpoint_EnableEndpoint();
-
-	UECFG1X = 0;	
-
-	UECFG0X = ((Type << EPTYPE0) | Direction);
-	UECFG1X = ((1 << ALLOC) | Banks | Endpoint_BytesToEPSizeMask(Size));
-
-	return Endpoint_IsConfigured();
+	return Endpoint_BytesToEPSizeMask(Size);
 }
-#else
-bool Endpoint_ConfigureEndpointStatic(const uint8_t Number, const uint8_t UECFG0XData, const uint8_t UECFG1XData)
+
+bool Endpoint_ConfigureEndpoint_Prv(const uint8_t Number, const uint8_t UECFG0XData, const uint8_t UECFG1XData)
 {
 	Endpoint_SelectEndpoint(Number);
 	Endpoint_EnableEndpoint();
 
-	UECFG1X = 0;	
+	UECFG1X = 0;
 
 	UECFG0X = UECFG0XData;
 	UECFG1X = UECFG1XData;
 
 	return Endpoint_IsConfigured();
 }
-#endif
 
 void Endpoint_ClearEndpoints(void)
 {
@@ -81,14 +71,26 @@ void Endpoint_ClearEndpoints(void)
 	}
 }
 
+#if !defined(CONTROL_ONLY_DEVICE)
 uint8_t Endpoint_WaitUntilReady(void)
 {
 	uint16_t TimeoutMSRem = USB_STREAM_TIMEOUT_MS;
 
 	USB_INT_Clear(USB_INT_SOFI);
 
-	while (!(Endpoint_ReadWriteAllowed()))
+	for (;;)
 	{
+		if (Endpoint_GetEndpointDirection() == ENDPOINT_DIR_IN)
+		{
+			if (Endpoint_IsINReady())
+			  return ENDPOINT_READYWAIT_NoError;
+		}
+		else
+		{
+			if (Endpoint_IsOUTReceived())
+			  return ENDPOINT_READYWAIT_NoError;		
+		}
+		
 		if (!(USB_IsConnected))
 		  return ENDPOINT_READYWAIT_DeviceDisconnected;
 		else if (Endpoint_IsStalled())
@@ -102,8 +104,6 @@ uint8_t Endpoint_WaitUntilReady(void)
 			  return ENDPOINT_READYWAIT_Timeout;
 		}
 	}
-	
-	return ENDPOINT_READYWAIT_NoError;
 }
 
 uint8_t Endpoint_Discard_Stream(uint16_t Length
@@ -117,25 +117,28 @@ uint8_t Endpoint_Discard_Stream(uint16_t Length
 	if ((ErrorCode = Endpoint_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Endpoint_ReadWriteAllowed()))
+		if (!(Endpoint_IsReadWriteAllowed()))
 		{
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearOUT();
 
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return ENDPOINT_RWSTREAM_ERROR_CallbackAborted;
+			  return ENDPOINT_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Endpoint_WaitUntilReady()))
 			  return ErrorCode;
 		}
-
-		Endpoint_Discard_Byte();
+		else
+		{
+			Endpoint_Discard_Byte();
+			Length--;
+		}
 	}
 	
-	return ENDPOINT_RWSTREAM_ERROR_NoError;
+	return ENDPOINT_RWSTREAM_NoError;
 }
 
 uint8_t Endpoint_Write_Stream_LE(const void* Buffer, uint16_t Length
@@ -150,25 +153,28 @@ uint8_t Endpoint_Write_Stream_LE(const void* Buffer, uint16_t Length
 	if ((ErrorCode = Endpoint_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Endpoint_ReadWriteAllowed()))
+		if (!(Endpoint_IsReadWriteAllowed()))
 		{
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearIN();
 			
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return ENDPOINT_RWSTREAM_ERROR_CallbackAborted;
+			  return ENDPOINT_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Endpoint_WaitUntilReady()))
 			  return ErrorCode;
 		}
-
-		Endpoint_Write_Byte(*(DataStream++));
+		else
+		{
+			Endpoint_Write_Byte(*(DataStream++));
+			Length--;
+		}
 	}
 	
-	return ENDPOINT_RWSTREAM_ERROR_NoError;
+	return ENDPOINT_RWSTREAM_NoError;
 }
 
 uint8_t Endpoint_Write_Stream_BE(const void* Buffer, uint16_t Length
@@ -183,25 +189,28 @@ uint8_t Endpoint_Write_Stream_BE(const void* Buffer, uint16_t Length
 	if ((ErrorCode = Endpoint_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Endpoint_ReadWriteAllowed()))
+		if (!(Endpoint_IsReadWriteAllowed()))
 		{
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearIN();
 
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return ENDPOINT_RWSTREAM_ERROR_CallbackAborted;
+			  return ENDPOINT_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Endpoint_WaitUntilReady()))
 			  return ErrorCode;
 		}
-
-		Endpoint_Write_Byte(*(DataStream--));
+		else
+		{
+			Endpoint_Write_Byte(*(DataStream--));
+			Length--;
+		}
 	}
 	
-	return ENDPOINT_RWSTREAM_ERROR_NoError;
+	return ENDPOINT_RWSTREAM_NoError;
 }
 
 uint8_t Endpoint_Read_Stream_LE(void* Buffer, uint16_t Length
@@ -216,25 +225,28 @@ uint8_t Endpoint_Read_Stream_LE(void* Buffer, uint16_t Length
 	if ((ErrorCode = Endpoint_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Endpoint_ReadWriteAllowed()))
+		if (!(Endpoint_IsReadWriteAllowed()))
 		{
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearOUT();
 
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return ENDPOINT_RWSTREAM_ERROR_CallbackAborted;
+			  return ENDPOINT_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Endpoint_WaitUntilReady()))
 			  return ErrorCode;
 		}
-		
-		*(DataStream++) = Endpoint_Read_Byte();
+		else
+		{
+			*(DataStream++) = Endpoint_Read_Byte();
+			Length--;
+		}
 	}
 	
-	return ENDPOINT_RWSTREAM_ERROR_NoError;
+	return ENDPOINT_RWSTREAM_NoError;
 }
 
 uint8_t Endpoint_Read_Stream_BE(void* Buffer, uint16_t Length
@@ -249,93 +261,102 @@ uint8_t Endpoint_Read_Stream_BE(void* Buffer, uint16_t Length
 	if ((ErrorCode = Endpoint_WaitUntilReady()))
 	  return ErrorCode;
 
-	while (Length--)
+	while (Length)
 	{
-		if (!(Endpoint_ReadWriteAllowed()))
+		if (!(Endpoint_IsReadWriteAllowed()))
 		{
-			Endpoint_ClearCurrentBank();
+			Endpoint_ClearOUT();
 
 			#if !defined(NO_STREAM_CALLBACKS)
 			if ((Callback != NULL) && (Callback() == STREAMCALLBACK_Abort))
-			  return ENDPOINT_RWSTREAM_ERROR_CallbackAborted;
+			  return ENDPOINT_RWSTREAM_CallbackAborted;
 			#endif
 
 			if ((ErrorCode = Endpoint_WaitUntilReady()))
 			  return ErrorCode;
 		}
-		
-		*(DataStream--) = Endpoint_Read_Byte();
+		else
+		{
+			*(DataStream--) = Endpoint_Read_Byte();
+			Length--;
+		}
 	}
 	
-	return ENDPOINT_RWSTREAM_ERROR_NoError;
+	return ENDPOINT_RWSTREAM_NoError;
 }
+#endif
 
 uint8_t Endpoint_Write_Control_Stream_LE(const void* Buffer, uint16_t Length)
 {
-	uint8_t* DataStream = (uint8_t*)Buffer;
-	bool     SendZLP    = true;
+	uint8_t* DataStream     = (uint8_t*)Buffer;
+	bool     LastPacketFull = false;
 	
-	while (Length && !(Endpoint_IsSetupOUTReceived()))
+	if (Length > USB_ControlRequest.wLength)
+	  Length = USB_ControlRequest.wLength;
+	
+	while (Length && !(Endpoint_IsOUTReceived()))
 	{
-		while (!(Endpoint_IsSetupINReady()));
+		while (!(Endpoint_IsINReady()));
 		
 		while (Length && (Endpoint_BytesInEndpoint() < USB_ControlEndpointSize))
 		{
 			Endpoint_Write_Byte(*(DataStream++));
-			
 			Length--;
 		}
 		
-		SendZLP = (Endpoint_BytesInEndpoint() == USB_ControlEndpointSize);
-		Endpoint_ClearSetupIN();
+		LastPacketFull = (Endpoint_BytesInEndpoint() == USB_ControlEndpointSize);
+		Endpoint_ClearIN();
 	}
 	
-	if (Endpoint_IsSetupOUTReceived())
-	  return ENDPOINT_RWCSTREAM_ERROR_HostAborted;
+	if (Endpoint_IsOUTReceived())
+	  return ENDPOINT_RWCSTREAM_HostAborted;
 	
-	if (SendZLP)
+	if (LastPacketFull)
 	{
-		while (!(Endpoint_IsSetupINReady()));
-		Endpoint_ClearSetupIN();
+		while (!(Endpoint_IsINReady()));
+		Endpoint_ClearIN();
 	}
 	
-	while (!(Endpoint_IsSetupOUTReceived()));
+	while (!(Endpoint_IsOUTReceived()));
 
-	return ENDPOINT_RWCSTREAM_ERROR_NoError;
+	return ENDPOINT_RWCSTREAM_NoError;
 }
 
 uint8_t Endpoint_Write_Control_Stream_BE(const void* Buffer, uint16_t Length)
 {
-	uint8_t* DataStream = (uint8_t*)(Buffer + Length - 1);
-	bool     SendZLP    = true;
+	uint8_t* DataStream     = (uint8_t*)(Buffer + Length - 1);
+	bool     LastPacketFull = false;
 	
-	while (Length && !(Endpoint_IsSetupOUTReceived()))
-	{
-		while (!(Endpoint_IsSetupINReady()));
-		
-		while (Length && (Endpoint_BytesInEndpoint() < USB_ControlEndpointSize))
-		{
-			Endpoint_Write_Byte(*(DataStream--));
-			
-			Length--;
-		}
-		
-		SendZLP = (Endpoint_BytesInEndpoint() == USB_ControlEndpointSize);
-		Endpoint_ClearSetupIN();
-	}
-	
-	if (Endpoint_IsSetupOUTReceived())
-	  return ENDPOINT_RWCSTREAM_ERROR_HostAborted;
-	
-	if (SendZLP)
-	{
-		while (!(Endpoint_IsSetupINReady()));
-		Endpoint_ClearSetupIN();
-	}
-	
-	while (!(Endpoint_IsSetupOUTReceived()));
+	if (Length > USB_ControlRequest.wLength)
+	  Length = USB_ControlRequest.wLength;
 
-	return ENDPOINT_RWCSTREAM_ERROR_NoError;
+	while (Length && !(Endpoint_IsOUTReceived()))
+	{
+		if (Endpoint_IsINReady())
+		{
+			while (Length && (Endpoint_BytesInEndpoint() < USB_ControlEndpointSize))
+			{
+				Endpoint_Write_Byte(*(DataStream--));
+				Length--;
+			}
+			
+			LastPacketFull = (Endpoint_BytesInEndpoint() == USB_ControlEndpointSize);
+			Endpoint_ClearIN();
+		}
+	}
+	
+	if (Endpoint_IsOUTReceived())
+	  return ENDPOINT_RWCSTREAM_HostAborted;
+	
+	if (LastPacketFull)
+	{
+		while (!(Endpoint_IsINReady()));
+		Endpoint_ClearIN();
+	}
+	
+	while (!(Endpoint_IsOUTReceived()));
+
+	return ENDPOINT_RWCSTREAM_NoError;
 }
 
 uint8_t Endpoint_Read_Control_Stream_LE(void* Buffer, uint16_t Length)
@@ -344,21 +365,21 @@ uint8_t Endpoint_Read_Control_Stream_LE(void* Buffer, uint16_t Length)
 	
 	while (Length)
 	{
-		while (!(Endpoint_IsSetupOUTReceived()));
-		
-		while (Length && Endpoint_BytesInEndpoint())
+		if (Endpoint_IsOUTReceived())
 		{
-			*(DataStream++) = Endpoint_Read_Byte();
+			while (Length && Endpoint_BytesInEndpoint())
+			{
+				*(DataStream++) = Endpoint_Read_Byte();
+				Length--;
+			}
 			
-			Length--;
+			Endpoint_ClearOUT();
 		}
-		
-		Endpoint_ClearSetupOUT();
 	}
 	
-	while (!(Endpoint_IsSetupINReady()));
+	while (!(Endpoint_IsINReady()));
 	
-	return ENDPOINT_RWCSTREAM_ERROR_NoError;
+	return ENDPOINT_RWCSTREAM_NoError;
 }
 
 uint8_t Endpoint_Read_Control_Stream_BE(void* Buffer, uint16_t Length)
@@ -367,21 +388,21 @@ uint8_t Endpoint_Read_Control_Stream_BE(void* Buffer, uint16_t Length)
 	
 	while (Length)
 	{
-		while (!(Endpoint_IsSetupOUTReceived()));
-		
-		while (Length && Endpoint_BytesInEndpoint())
+		if (Endpoint_IsOUTReceived())
 		{
-			*(DataStream--) = Endpoint_Read_Byte();
+			while (Length && Endpoint_BytesInEndpoint())
+			{
+				*(DataStream--) = Endpoint_Read_Byte();
+				Length--;
+			}
 			
-			Length--;
+			Endpoint_ClearOUT();
 		}
-		
-		Endpoint_ClearSetupOUT();
 	}
 	
-	while (!(Endpoint_IsSetupINReady()));
+	while (!(Endpoint_IsINReady()));
 
-	return ENDPOINT_RWCSTREAM_ERROR_NoError;
+	return ENDPOINT_RWCSTREAM_NoError;
 }
 
 #endif

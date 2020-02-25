@@ -40,6 +40,22 @@
  *  directory.
  */
  
+/** \ingroup Group_BoardDrivers
+ *  @defgroup Group_Dataflash Dataflash Driver - LUFA/Drivers/Board/Dataflash.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - None
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the control of board Dataflash ICs.
+ *
+ *  If the BOARD value is set to BOARD_USER, this will include the /Board/Dataflash.h file in the user project
+ *  directory. Otherwise, it will include the appropriate built in board driver header file.
+ *
+ *  @{
+ */
+ 
 #ifndef __DATAFLASH_H__
 #define __DATAFLASH_H__
 
@@ -50,7 +66,7 @@
 	#endif
 
 	/* Includes: */
-	#include "../AT90USBXXX/SPI.h"
+	#include "../Peripheral/SPI.h"
 	#include "../../Common/Common.h"
 		
 	/* Enable C linkage for C++ Compilers: */
@@ -59,21 +75,33 @@
 		#endif
 
 	/* Public Interface - May be used in end-application: */
-		/* Macros: */
-			/** Returns the mask of the currently selected Dataflash chip, either DATAFLASH_NO_CHIP or a
-			 *  DATAFLASH_CHIPn mask (where n is the chip number).
-			 */
-			#define Dataflash_GetSelectedChip()          (DATAFLASH_CHIPCS_PORT & DATAFLASH_CHIPCS_MASK)
+		/* Pseudo-Function Macros: */
+			#if defined(__DOXYGEN__)
+				/** Determines the currently selected dataflash chip.
+				 *
+				 *  \return Mask of the currently selected Dataflash chip, either \ref DATAFLASH_NO_CHIP if no chip is selected
+				 *  or a DATAFLASH_CHIPn mask (where n is the chip number).
+				 */
+				static inline uint8_t Dataflash_GetSelectedChip(void);
 
-			/** Selects the dataflash chip given as a chip mask, in the form of DATAFLASH_CHIPn (where n
-			 *  is the chip number).
-			 */
-			#define Dataflash_SelectChip(mask)   MACROS{ DATAFLASH_CHIPCS_PORT = ((DATAFLASH_CHIPCS_PORT \
-			                                             & ~DATAFLASH_CHIPCS_MASK) | mask);              }MACROE
+				/** Selects the given dataflash chip.
+				 *
+				 *  \param  ChipMask  Mask of the Dataflash IC to select, in the form of DATAFLASH_CHIPn mask (where n is
+				 *          the chip number).
+				 */
+				static inline void Dataflash_SelectChip(uint8_t ChipMask);
+
+				/** Deselects the current dataflash chip, so that no dataflash is selected. */
+				static inline void Dataflash_DeselectChip(void);
+			#else
+				#define Dataflash_GetSelectedChip()          (DATAFLASH_CHIPCS_PORT & DATAFLASH_CHIPCS_MASK)
+
+				#define Dataflash_SelectChip(mask)   MACROS{ DATAFLASH_CHIPCS_PORT = ((DATAFLASH_CHIPCS_PORT \
+															 & ~DATAFLASH_CHIPCS_MASK) | mask);              }MACROE
+				
+				#define Dataflash_DeselectChip()             Dataflash_SelectChip(DATAFLASH_NO_CHIP)
+			#endif
 			
-			/** Deselects the current dataflash chip, so that no dataflash is selected. */
-			#define Dataflash_DeselectChip()             Dataflash_SelectChip(DATAFLASH_NO_CHIP)
-
 		/* Inline Functions: */
 			/** Sends a byte to the currently selected dataflash IC, and returns a byte from the dataflash.
 			 *
@@ -182,3 +210,5 @@
 		#endif
 	
 #endif
+
+/** @} */

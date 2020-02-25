@@ -10,6 +10,75 @@
  *  to the next version released. It does not indicate all new additions to the library in each version change, only
  *  areas relevant to making older projects compatible with the API changes of each new release.
  *
+ * \section Sec_Migration090510 Migrating from 090401 to 090510
+ *
+ *  <b>All</b>
+ *    - The ButtLoadTag.h header has been removed, as it was never used for its intended purpose. Projects should either remove all
+ *      BUTTLOADTAG elements, or download and extract ButtLoadTag.h header from the ButtLoad project.
+ *    - The Drivers/AT90USBXXX directory has been renamed to Drivers/Peripheral.
+ *    - The Serial_Stream driver has been renamed to SerialStream to remain consistent with the rest of the library naming scheme.
+ *    - The HWB driver has changed to the Buttons driver. See the board Buttons driver documentation for the new API.
+ *
+ *  <b>Dual Role Mode</b>
+ *    - The USB_PowerOnFail even has been renamed to USB_InitFailure.
+ *    - The functions in OTG.h have been renamed to remain more consistent with the library API. See the functions in OTG.h for more
+ *      details.
+ *
+ *  <b>Library Demos</b>
+ *    - Most demos, bootloaders and applications have had significant changes from previous versions. Applications built off of any
+ *      library demos should update to the latest versions.
+ *
+ *  <b>Device Mode</b>
+ *    - The Endpoint_ClearCurrentBank() macro has been removed, and is now replaced with the Endpoint_ClearIN(), Endpoint_ClearOUT() 
+ *      macros. See Endpoint.h documentation for more details on the new endpoint management macros.
+ *    - The Endpoint_ReadWriteAllowed() macro has been renamed to Endpoint_IsReadWriteAllowed() to be more consistent with the rest of
+ *      the API naming scheme.
+ *    - The Endpoint_IsSetupINReady() and Endpoint_IsSetupOutReceived() macros have been renamed to Endpoint_IsINReady() and
+ *      Endpoint_IsOUTReceived() respectively.
+ *    - The Endpoint_IsSetupReceived() macro has been renamed to Endpoint_IsSETUPReceived().
+ *    - The Endpoint_ClearSetupReceived() macro has been renamed to Endpoint_ClearSETUP().
+ *    - All endpoint read/write/discard aliases which did not have an explicitly endianness specifier (such as Endpoint_Read_Word()) have
+ *      been removed for clarity. Existing projects should use the "_LE" suffix on such calls to use the explicit Little Endian versions.
+ *    - The USB_UnhandledControlPacket event no longer has any parameters. User code should no longer attempt to read in the remainder of
+ *      the Control Request header as all Control Request header data is now preloaded by the library and made available in the
+ *      USB_ControlRequest structure.
+ *    - The FEATURELESS_CONTROL_ONLY_DEVICE token has been renamed to CONTROL_ONLY_DEVICE.
+ *    - The STATIC_ENDPOINT_CONFIGURATION is no longer applicable as the library will apply this optimization when appropriate automatically.
+ *    - The values of the Endpoint_Stream_RW_ErrorCodes_t and Endpoint_ControlStream_RW_ErrorCodes_t enums have had the "ERROR_" portion
+ *      of their names removed.
+ *
+ *  <b>Host Mode</b>
+ *    - The USB_Host_SendControlRequest() function no longer automatically selects the Control pipe (pipe 0) to allow it to be used on
+ *      other control type pipes. Care should be taken to ensure that the Control pipe is always selected before the function is called
+ *      in existing projects where the Control pipe is to be operated on.
+ *    - The USB Host management task now saves and restores the currently selected pipe before and after the task runs. Projects no longer
+ *      need to manage this manually when calling the USB management task.
+ *    - The Pipe_ClearCurrentBank() macro has been removed, and is now replaced with the Pipe_ClearIN(), Pipe_ClearOUT() macros. See
+ *      Pipe.h documentation for more details on the new pipe management macros.
+ *    - The Pipe_ReadWriteAllowed() macro has been renamed to Pipe_IsReadWriteAllowed() to be more consistent with the rest of the API
+ *      naming scheme.
+ *    - The Pipe_IsSetupINReceived() and Pipe_IsOutReady() macros have been renamed to Pipe_IsINReceived() and Pipe_IsOUTReady()
+ *      respectively.
+ *    - The new Pipe_ClearSETUP() macro should be used to send SETUP transactions, rather than the previous Pipe_ClearSetupOUT() macro.
+ *    - The Pipe_IsSetupSent() macro has been renamed to Pipe_IsSETUPSent().
+ *    - The Pipe_ClearSetupSent() macro is no longer applicable and should be removed.
+ *    - All pipe read/write/discard aliases which did not have an explicitly endianness specifier (such as Pipe_Read_Word()) have
+ *      been removed for clarity. Existing projects should use the "_LE" suffix on such calls to use the explicit Little Endian versions.
+ *    - The Host_IsResetBusDone() macro has been renamed to Host_IsBusResetComplete().
+ *    - The Pipe_Ignore_Word() and Pipe_Ignore_DWord() functions have been renamed to Pipe_Discard_Word() and Pipe_Discard_DWord() to remain
+ *      consistent with the rest of the pipe API.
+ *    - It is no longer needed to manually include the headers from LUFA/Drivers/USB/Class, as they are now included along with the rest
+ *      of the USB headers when LUFA/Drivers/USB/USB.h is included.
+ *    - Functions in the ConfigDescriptor.h header file no longer have "Host_" as part of their names.
+ *    - The ProcessHIDReport() has been renamed to USB_ProcessHIDReport(), GetReportItemInfo() has been renamed to USB_GetHIDReportItemInfo()
+ *      and SetReportItemInfo() has been renamed to USB_GetHIDReportItemInfo().
+ *    - The values of the DSearch_Return_ErrorCodes_t and DSearch_Comp_Return_ErrorCodes_t enums have had their respective "Descriptor_Search"
+ *      and "Descriptor_Search_Comp" prefixes changed to all caps.
+ *    - The USB_HostRequest global has been renamed to USB_ControlRequest, and is used in Device mode also. The USB_Host_Request_Header_t
+ *      structure type has been renamed to USB_Request_Header_t.
+ *    - The values of the Pipe_Stream_RW_ErrorCodes_t enum have had the "ERROR_" portion of their names removed.
+ *
+ *
  * \section Sec_Migration090401 Migrating from 090209 to 090401
  *
  *  <b>All</b>
@@ -143,7 +212,7 @@
  *      and/or is self-powered are now accessed and set through the new USB_RemoteWakeupEnabled and
  *      USB_CurrentlySelfPowered macros. See the DevChapter9.h documentation for more details.
  *    - All endpoint stream functions now require an extra Callback function parameter. Existing code may be updated
- *      to either supply NO_STREAM_CALLBACK as the extra parameter, or disable stream callbacks altogether by pasing
+ *      to either supply NO_STREAM_CALLBACK as the extra parameter, or disable stream callbacks altogether by passing
  *      the token NO_STREAM_CALLBACKS to the compiler using the -D switch.
  *
  *  <b>Host Mode</b>
@@ -153,7 +222,7 @@
  *      timeout duration in ms.
  *    - CollectionPath_t has been renamed to HID_CollectionPath_t to be more in line with the other HID parser structures.
  *    - All pipe stream functions now require an extra Callback function parameter. Existing code may be updated
- *      to either supply NO_STREAM_CALLBACK as the extra parameter, or disable stream callbacks altogether by pasing
+ *      to either supply NO_STREAM_CALLBACK as the extra parameter, or disable stream callbacks altogether by passing
  *      the token NO_STREAM_CALLBACKS to the compiler using the -D switch.
  *
  *
@@ -190,7 +259,7 @@
  *      avoid such mistakes in the future, the VERSION_BCD macro has been added to StdDescriptors.h. Existing
  *      projects should at least manually correct the BCD version numbers, or preferably update the descriptors to
  *      encode the version number in BCD format using the new macro.
- *    - The mandatory GetReport class-specific request was accidentally ommitted from previous versions of the demos
+ *    - The mandatory GetReport class-specific request was accidentally omitted from previous versions of the demos
  *      based on the Human Interface Device (HID) class. This has been corrected, and any user projects based on the
  *      HID demos should also be updated accordingly.
  *    - The CDC demos now correctly send an empty packet directly after a full packet, to end the transmission.
@@ -218,13 +287,13 @@
  *      appropriate. It fires in an identical manner to the previously named event, thus the only change to be made
  *      is the event name itself in the user project.
  *    - The USB_Descriptor_Language_t structure no longer exists in StdDescriptors.h, as this was a
- *      psudo-descriptor modelled on the string descriptor. It is replaced by the true USB_Descriptor_String_t type
+ *      pseudo-descriptor modelled on the string descriptor. It is replaced by the true USB_Descriptor_String_t type
  *      descriptor as indicated in the USB specification, thus all device code must be updated accordingly.
- *    - The names of several Endpoint macros have been changed to be more consistant with the rest of the library,
+ *    - The names of several Endpoint macros have been changed to be more consistent with the rest of the library,
  *      with no implementation changes. This means that existing code can be altered to use the new macro names
  *      with no other considerations required. See Endpoint.h for the new macro names.
  *    - The previous version of the MassStorage demo had an incorrect value in the SCSI_Request_Sense_Response_t
- *      strucuture named SenseData in SCSI.c which caused some problems with some hosts. User projects based on this
+ *      structure named SenseData in SCSI.c which caused some problems with some hosts. User projects based on this
  *      demo should correct the structure value to maintain compatibility across multiple OS platforms.
  *    - By default, the descriptor structures use the official USB specification names for the elements. Previous
  *      versions of the library used non-standard (but more verbose) names, which are still usable in the current
@@ -235,7 +304,7 @@
  *    - The USB_Host_Request_Header_t structure in HostChapter9.h (used for issuing control requests) has had its
  *      members renamed to the official USB specification names for requests. Existing code will need to be updated
  *      to use the new names.
- *    - The names of several Pipe macros have been changed to be more consistant with the rest of the library,
+ *    - The names of several Pipe macros have been changed to be more consistent with the rest of the library,
  *      with no implementation changes. This means that existing code can be altered to use the new macro names
  *      with no other considerations required. See Pipe.h for the new macro names.
  *    - By default, the descriptor structures use the official USB specification names for the elements. Previous
@@ -251,5 +320,5 @@
  *      header inside the library.
  *    - The USB_DeviceEnumerationComplete event (see Events.h) now also fires in Device mode, when the host has
  *      finished enumerating the device. Projects relying on the event only firing in Host mode should be updated
- *      so that the event action only ocurrs when the USB_Mode global is set to USB_MODE_HOST.
+ *      so that the event action only occurs when the USB_Mode global is set to USB_MODE_HOST.
  */

@@ -28,38 +28,18 @@
   this software.
 */
 
-#include "Serial.h"
+#include "SerialStream.h"
 
-void Serial_Init(const uint32_t BaudRate, const bool DoubleSpeed)
+FILE USARTStream = FDEV_SETUP_STREAM(SerialStream_TxByte, SerialStream_RxByte, _FDEV_SETUP_RW);
+
+int SerialStream_TxByte(char DataByte, FILE *Stream)
 {
-	UCSR1A = ((DoubleSpeed) ? (1 << U2X1) : 0);
-	UCSR1B = ((1 << RXEN1)  | (1 << TXEN1));
-	UCSR1C = ((1 << UCSZ11) | (1 << UCSZ10));
-	
-	DDRD  |= (1 << 3);	
-	PORTD |= (1 << 2);
-	
-	UBRR1  = SERIAL_UBBRVAL(BaudRate);
+	Serial_TxByte(DataByte);
+
+	return 0;
 }
 
-void Serial_TxString_P(const char *FlashStringPtr)
+int SerialStream_RxByte(FILE *Stream)
 {
-	uint8_t CurrByte;
-
-	while ((CurrByte = pgm_read_byte(FlashStringPtr)) != 0x00)
-	{
-		Serial_TxByte(CurrByte);
-		FlashStringPtr++;
-	}
-}
-
-void Serial_TxString(const char *StringPtr)
-{
-	uint8_t CurrByte;
-
-	while ((CurrByte = *StringPtr) != 0x00)
-	{
-		Serial_TxByte(CurrByte);
-		StringPtr++;
-	}
+	return Serial_RxByte();
 }

@@ -30,19 +30,22 @@
 
 #include "ConfigDescriptor.h"
 
-uint8_t USB_Host_GetDeviceConfigDescriptor(uint16_t* const ConfigSizePtr, void* BufferPtr)
+#if defined(USB_CAN_BE_HOST)
+uint8_t USB_GetDeviceConfigDescriptor(uint16_t* const ConfigSizePtr, void* BufferPtr)
 {
 	uint8_t ErrorCode;
 
-	USB_HostRequest = (USB_Host_Request_Header_t)
+	USB_ControlRequest = (USB_Request_Header_t)
 		{
-			bmRequestType: (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_DEVICE),
-			bRequest:      REQ_GetDescriptor,
-			wValue:        (DTYPE_Configuration << 8),
-			wIndex:        0,
-			wLength:       sizeof(USB_Descriptor_Configuration_Header_t),
+			.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_DEVICE),
+			.bRequest      = REQ_GetDescriptor,
+			.wValue        = (DTYPE_Configuration << 8),
+			.wIndex        = 0,
+			.wLength       = sizeof(USB_Descriptor_Configuration_Header_t),
 		};
 	
+	Pipe_SelectPipe(PIPE_CONTROLPIPE);
+
 	if (BufferPtr == NULL)
 	{
 		uint8_t ConfigHeader[sizeof(USB_Descriptor_Configuration_Header_t)];
@@ -57,35 +60,36 @@ uint8_t USB_Host_GetDeviceConfigDescriptor(uint16_t* const ConfigSizePtr, void* 
 	}
 	else
 	{
-		USB_HostRequest.wLength = *ConfigSizePtr;
+		USB_ControlRequest.wLength = *ConfigSizePtr;
 		
 		ErrorCode      = USB_Host_SendControlRequest(BufferPtr);				
 	}
 
 	return ErrorCode;
 }
+#endif
 
-void USB_Host_GetNextDescriptorOfType(uint16_t* const BytesRem,
-                                      uint8_t** const CurrConfigLoc,
-                                      const uint8_t Type)
+void USB_GetNextDescriptorOfType(uint16_t* const BytesRem,
+                                 uint8_t** const CurrConfigLoc,
+                                 const uint8_t Type)
 {
 	while (*BytesRem)
 	{
-		USB_Host_GetNextDescriptor(BytesRem, CurrConfigLoc);	  
+		USB_GetNextDescriptor(BytesRem, CurrConfigLoc);	  
 
 		if (DESCRIPTOR_TYPE(*CurrConfigLoc) == Type)
 		  return;
 	}
 }
 
-void USB_Host_GetNextDescriptorOfTypeBefore(uint16_t* const BytesRem,
-                                            uint8_t** const CurrConfigLoc,
-                                            const uint8_t Type,
-                                            const uint8_t BeforeType)
+void USB_GetNextDescriptorOfTypeBefore(uint16_t* const BytesRem,
+                                       uint8_t** const CurrConfigLoc,
+                                       const uint8_t Type,
+                                       const uint8_t BeforeType)
 {
 	while (*BytesRem)
 	{
-		USB_Host_GetNextDescriptor(BytesRem, CurrConfigLoc);
+		USB_GetNextDescriptor(BytesRem, CurrConfigLoc);
 
 		if (DESCRIPTOR_TYPE(*CurrConfigLoc) == Type)
 		{
@@ -99,19 +103,18 @@ void USB_Host_GetNextDescriptorOfTypeBefore(uint16_t* const BytesRem,
 	}
 }
 
-void USB_Host_GetNextDescriptorOfTypeAfter(uint16_t* const BytesRem,
-                                           uint8_t** const CurrConfigLoc,
-                                           const uint8_t Type,
-                                           const uint8_t AfterType)
+void USB_GetNextDescriptorOfTypeAfter(uint16_t* const BytesRem,
+                                      uint8_t** const CurrConfigLoc,
+                                      const uint8_t Type,
+                                      const uint8_t AfterType)
 {
-	USB_Host_GetNextDescriptorOfType(BytesRem, CurrConfigLoc, AfterType);
+	USB_GetNextDescriptorOfType(BytesRem, CurrConfigLoc, AfterType);
 	
 	if (*BytesRem)
-	  USB_Host_GetNextDescriptorOfType(BytesRem, CurrConfigLoc, Type);
+	  USB_GetNextDescriptorOfType(BytesRem, CurrConfigLoc, Type);
 }
 			
-uint8_t USB_Host_GetNextDescriptorComp_P(uint16_t* BytesRem, uint8_t** CurrConfigLoc,
-                                         uint8_t (* const ComparatorRoutine)(void*))
+uint8_t USB_GetNextDescriptorComp_Prv(uint16_t* BytesRem, uint8_t** CurrConfigLoc, ComparatorPtr_t ComparatorRoutine)
 {
 	uint8_t ErrorCode;
 		
@@ -120,11 +123,11 @@ uint8_t USB_Host_GetNextDescriptorComp_P(uint16_t* BytesRem, uint8_t** CurrConfi
 		uint8_t*  PrevDescLoc = *CurrConfigLoc;
 		uint16_t  PrevBytesRem = *BytesRem;
 
-		USB_Host_GetNextDescriptor(BytesRem, CurrConfigLoc);
+		USB_GetNextDescriptor(BytesRem, CurrConfigLoc);
 
-		if ((ErrorCode = ComparatorRoutine(*CurrConfigLoc)) != Descriptor_Search_NotFound)
+		if ((ErrorCode = ComparatorRoutine(*CurrConfigLoc)) != DESCRIPTOR_SEARCH_NotFound)
 		{
-			if (ErrorCode == Descriptor_Search_Fail)
+			if (ErrorCode == DESCRIPTOR_SEARCH_Fail)
 			{
 				*CurrConfigLoc = PrevDescLoc;
 				*BytesRem      = PrevBytesRem;
@@ -134,5 +137,5 @@ uint8_t USB_Host_GetNextDescriptorComp_P(uint16_t* BytesRem, uint8_t** CurrConfi
 		}
 	}
 	
-	return Descriptor_Search_Comp_EndOfDescriptor;
+	return DESCRIPTOR_SEARCH_COMP_EndOfDescriptor;
 }

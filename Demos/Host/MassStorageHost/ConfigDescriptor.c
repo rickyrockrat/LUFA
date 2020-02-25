@@ -53,7 +53,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 	uint8_t  FoundEndpoints = 0;
 	
 	/* Get Configuration Descriptor size from the device */
-	if (USB_Host_GetDeviceConfigDescriptor(&ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful)
+	if (USB_GetDeviceConfigDescriptor(&ConfigDescriptorSize, NULL) != HOST_SENDCONTROL_Successful)
 	  return ControlError;
 	
 	/* Ensure that the Configuration Descriptor isn't too large */
@@ -64,14 +64,14 @@ uint8_t ProcessConfigurationDescriptor(void)
 	ConfigDescriptorData = alloca(ConfigDescriptorSize);
 
 	/* Retrieve the entire configuration descriptor into the allocated buffer */
-	USB_Host_GetDeviceConfigDescriptor(&ConfigDescriptorSize, ConfigDescriptorData);
+	USB_GetDeviceConfigDescriptor(&ConfigDescriptorSize, ConfigDescriptorData);
 	
 	/* Validate returned data - ensure first entry is a configuration header descriptor */
 	if (DESCRIPTOR_TYPE(ConfigDescriptorData) != DTYPE_Configuration)
 	  return InvalidConfigDataReturned;
 	
 	/* Get the mass storage interface from the configuration descriptor */
-	if ((ErrorCode = USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+	if ((ErrorCode = USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
 	                                                NextMassStorageInterface)))
 	{
 		/* Descriptor not found, error out */
@@ -82,7 +82,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 	while (FoundEndpoints != ((1 << MASS_STORE_DATA_IN_PIPE) | (1 << MASS_STORE_DATA_OUT_PIPE)))
 	{
 		/* Fetch the next bulk endpoint from the current mass storage interface */
-		if ((ErrorCode = USB_Host_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+		if ((ErrorCode = USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
 		                                                NextInterfaceBulkDataEndpoint)))
 		{
 			/* Descriptor not found, error out */
@@ -137,11 +137,11 @@ DESCRIPTOR_COMPARATOR(NextMassStorageInterface)
 		    (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).SubClass == MASS_STORE_SUBCLASS) &&
 		    (DESCRIPTOR_CAST(CurrentDescriptor, USB_Descriptor_Interface_t).Protocol == MASS_STORE_PROTOCOL))
 		{
-			return Descriptor_Search_Found;
+			return DESCRIPTOR_SEARCH_Found;
 		}
 	}
 	
-	return Descriptor_Search_NotFound;
+	return DESCRIPTOR_SEARCH_NotFound;
 }
 
 /** Descriptor comparator function. This comparator function is can be called while processing an attached USB device's
@@ -162,12 +162,12 @@ DESCRIPTOR_COMPARATOR(NextInterfaceBulkDataEndpoint)
 
 		/* Check the endpoint type, break out if correct BULK type endpoint found */
 		if (EndpointType == EP_TYPE_BULK)
-		  return Descriptor_Search_Found;
+		  return DESCRIPTOR_SEARCH_Found;
 	}
 	else if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
-		return Descriptor_Search_Fail;
+		return DESCRIPTOR_SEARCH_Fail;
 	}
 
-	return Descriptor_Search_NotFound;
+	return DESCRIPTOR_SEARCH_NotFound;
 }

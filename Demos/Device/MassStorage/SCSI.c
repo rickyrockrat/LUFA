@@ -38,36 +38,36 @@
 #define  INCLUDE_FROM_SCSI_C
 #include "SCSI.h"
 
-/** Structure to hold the SCSI reponse data to a SCSI INQUIRY command. This gives information about the device's
+/** Structure to hold the SCSI response data to a SCSI INQUIRY command. This gives information about the device's
  *  features and capabilities.
  */
 SCSI_Inquiry_Response_t InquiryData = 
 	{
-		DeviceType:          0,
-		PeripheralQualifier: 0,
+		.DeviceType          = DEVICE_TYPE_BLOCK,
+		.PeripheralQualifier = 0,
 			
-		Removable:           true,
+		.Removable           = true,
 			
-		Version:             0,
+		.Version             = 0,
 			
-		ResponseDataFormat:  2,
-		NormACA:             false,
-		TrmTsk:              false,
-		AERC:                false,
+		.ResponseDataFormat  = 2,
+		.NormACA             = false,
+		.TrmTsk              = false,
+		.AERC                = false,
 
-		AdditionalLength:    0x1F,
+		.AdditionalLength    = 0x1F,
 			
-		SoftReset:           false,
-		CmdQue:              false,
-		Linked:              false,
-		Sync:                false,
-		WideBus16Bit:        false,
-		WideBus32Bit:        false,
-		RelAddr:             false,
+		.SoftReset           = false,
+		.CmdQue              = false,
+		.Linked              = false,
+		.Sync                = false,
+		.WideBus16Bit        = false,
+		.WideBus32Bit        = false,
+		.RelAddr             = false,
 		
-		VendorID:            "LUFA",
-		ProductID:           "Dataflash Disk",
-		RevisionID:          {'0','.','0','0'},
+		.VendorID            = "LUFA",
+		.ProductID           = "Dataflash Disk",
+		.RevisionID          = {'0','.','0','0'},
 	};
 
 /** Structure to hold the sense data for the last issued SCSI command, which is returned to the host after a SCSI REQUEST SENSE
@@ -75,8 +75,8 @@ SCSI_Inquiry_Response_t InquiryData =
  */
 SCSI_Request_Sense_Response_t SenseData =
 	{
-		ResponseCode:        0x70,
-		AdditionalLength:    0x0A,
+		.ResponseCode        = 0x70,
+		.AdditionalLength    = 0x0A,
 	};
 
 
@@ -88,7 +88,7 @@ void SCSI_DecodeSCSICommand(void)
 {
 	bool CommandSuccess = false;
 
-	/* Run the apropriate SCSI command hander function based on the passed command */
+	/* Run the appropriate SCSI command hander function based on the passed command */
 	switch (CommandBlock.SCSICommandData[0])
 	{
 		case SCSI_CMD_INQUIRY:
@@ -174,7 +174,7 @@ static bool SCSI_Command_Inquiry(void)
 	Endpoint_Write_Stream_LE(&PadBytes, (AllocationLength - BytesTransferred), AbortOnMassStoreReset);
 
 	/* Finalize the stream transfer to send the last packet */
-	Endpoint_ClearCurrentBank();
+	Endpoint_ClearIN();
 
 	/* Succeed the command and update the bytes transferred counter */
 	CommandBlock.DataTransferLength -= BytesTransferred;
@@ -201,7 +201,7 @@ static bool SCSI_Command_Request_Sense(void)
 	Endpoint_Write_Stream_LE(&PadBytes, (AllocationLength - BytesTransferred), AbortOnMassStoreReset);
 
 	/* Finalize the stream transfer to send the last packet */
-	Endpoint_ClearCurrentBank();
+	Endpoint_ClearIN();
 
 	/* Succeed the command and update the bytes transferred counter */
 	CommandBlock.DataTransferLength -= BytesTransferred;
@@ -227,7 +227,7 @@ static bool SCSI_Command_Read_Capacity_10(void)
 	  return false;
 
 	/* Send the endpoint data packet to the host */
-	Endpoint_ClearCurrentBank();
+	Endpoint_ClearIN();
 
 	/* Succeed the command and update the bytes transferred counter */
 	CommandBlock.DataTransferLength -= 8;
@@ -235,7 +235,7 @@ static bool SCSI_Command_Read_Capacity_10(void)
 	return true;
 }
 
-/** Command processing for an issued SCSI SEND DIAGNOSTIC command. This command peforms a quick check of the Dataflash ICs on the
+/** Command processing for an issued SCSI SEND DIAGNOSTIC command. This command performs a quick check of the Dataflash ICs on the
  *  board, and indicates if they are present and functioning correctly. Only the Self-Test portion of the diagnostic command is
  *  supported.
  *

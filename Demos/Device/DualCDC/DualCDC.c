@@ -36,18 +36,12 @@
  
 #include "DualCDC.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA DualCDC App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
-	{ Task: CDC1_Task            , TaskStatus: TASK_STOP },
-	{ Task: CDC2_Task            , TaskStatus: TASK_STOP },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_STOP },
+	{ .Task = CDC1_Task            , .TaskStatus = TASK_STOP },
+	{ .Task = CDC2_Task            , .TaskStatus = TASK_STOP },
 };
 
 /* Globals: */
@@ -57,12 +51,12 @@ TASK_LIST
  *
  *  These values are set by the host via a class-specific request, however they are not required to be used accurately.
  *  It is possible to completely ignore these value or use other settings as the host is completely unaware of the physical
- *  serial link characteristics and instead sends and recieves data in endpoint streams.
+ *  serial link characteristics and instead sends and receives data in endpoint streams.
  */
-CDC_Line_Coding_t LineCoding1 = { BaudRateBPS: 9600,
-                                  CharFormat:  OneStopBit,
-                                  ParityType:  Parity_None,
-                                  DataBits:    8            };
+CDC_Line_Coding_t LineCoding1 = { .BaudRateBPS = 9600,
+                                  .CharFormat  = OneStopBit,
+                                  .ParityType  = Parity_None,
+                                  .DataBits    = 8            };
 
 /** Contains the current baud rate and other settings of the second virtual serial port. While this demo does not use
  *  the physical USART and thus does not use these settings, they must still be retained and returned to the host
@@ -70,17 +64,17 @@ CDC_Line_Coding_t LineCoding1 = { BaudRateBPS: 9600,
  *
  *  These values are set by the host via a class-specific request, however they are not required to be used accurately.
  *  It is possible to completely ignore these value or use other settings as the host is completely unaware of the physical
- *  serial link characteristics and instead sends and recieves data in endpoint streams.
+ *  serial link characteristics and instead sends and receives data in endpoint streams.
  */
-CDC_Line_Coding_t LineCoding2 = { BaudRateBPS: 9600,
-                                  CharFormat:  OneStopBit,
-                                  ParityType:  Parity_None,
-                                  DataBits:    8            };
+CDC_Line_Coding_t LineCoding2 = { .BaudRateBPS = 9600,
+                                  .CharFormat  = OneStopBit,
+                                  .ParityType  = Parity_None,
+                                  .DataBits    = 8            };
 								  
 /** String to print through the first virtual serial port when the joystick is pressed upwards. */
 char JoystickUpString[]      = "Joystick Up\r\n";
 
-/** String to print through the first virtual serial port when the joystick is pressed downwards. */
+/** String to print through the first virtual serial port when the joystick is pressed downward. */
 char JoystickDownString[]    = "Joystick Down\r\n";
 
 /** String to print through the first virtual serial port when the joystick is pressed left. */
@@ -195,7 +189,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	uint8_t* LineCodingData;
 
 	/* Discard the unused wValue parameter */
-	Endpoint_Ignore_Word();
+	Endpoint_Discard_Word();
 
 	/* wIndex indicates the interface being controlled */
 	uint16_t wIndex = Endpoint_Read_Word_LE();
@@ -204,45 +198,45 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	LineCodingData = (wIndex == 0) ? (uint8_t*)&LineCoding1 : (uint8_t*)&LineCoding2;
 
 	/* Process CDC specific control requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_GetLineEncoding:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{	
 				/* Acknowledge the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
 				/* Write the line coding data to the control endpoint */
 				Endpoint_Write_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 				
 				/* Finalize the stream transfer to send the last packet or clear the host abort */
-				Endpoint_ClearSetupOUT();
+				Endpoint_ClearOUT();
 			}
 			
 			break;
 		case REQ_SetLineEncoding:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				/* Acknowledge the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
 				/* Read the line coding data in from the host into the global struct */
 				Endpoint_Read_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 
 				/* Finalize the stream transfer to clear the last packet from the host */
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 			}
 	
 			break;
 		case REQ_SetControlLineState:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				/* Acknowledge the SETUP packet, ready for data transfer */
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 	
 			break;
@@ -313,18 +307,24 @@ TASK(CDC1_Task)
 		Endpoint_Write_Stream_LE(ReportString, strlen(ReportString));
 		
 		/* Finalize the stream transfer to send the last packet */
-		Endpoint_ClearCurrentBank();
+		Endpoint_ClearIN();
+
+		/* Wait until the endpoint is ready for another packet */
+		while (!(Endpoint_IsINReady()));
+		
+		/* Send an empty packet to ensure that the host does not buffer data sent to it */
+		Endpoint_ClearIN();
 	}
 
 	/* Select the Serial Rx Endpoint */
 	Endpoint_SelectEndpoint(CDC1_RX_EPNUM);
 	
 	/* Throw away any received data from the host */
-	if (Endpoint_ReadWriteAllowed())
-	  Endpoint_ClearCurrentBank();
+	if (Endpoint_IsOUTReceived())
+	  Endpoint_ClearOUT();
 }
 
-/** Function to manage CDC data transmission and reception to and from the host for the second CDC interface, which echos back
+/** Function to manage CDC data transmission and reception to and from the host for the second CDC interface, which echoes back
  *  all data sent to it from the host.
  */
 TASK(CDC2_Task)
@@ -333,19 +333,19 @@ TASK(CDC2_Task)
 	Endpoint_SelectEndpoint(CDC2_RX_EPNUM);
 	
 	/* Check to see if any data has been received */
-	if (Endpoint_ReadWriteAllowed())
+	if (Endpoint_IsOUTReceived())
 	{
-		/* Create a temp buffer big enough to hold the incomming endpoint packet */
+		/* Create a temp buffer big enough to hold the incoming endpoint packet */
 		uint8_t  Buffer[Endpoint_BytesInEndpoint()];
 		
-		/* Remember how large the incomming packet is */
+		/* Remember how large the incoming packet is */
 		uint16_t DataLength = Endpoint_BytesInEndpoint();
 	
-		/* Read in the incomming packet into the buffer */
+		/* Read in the incoming packet into the buffer */
 		Endpoint_Read_Stream_LE(&Buffer, DataLength);
 
 		/* Finalize the stream transfer to send the last packet */
-		Endpoint_ClearCurrentBank();
+		Endpoint_ClearOUT();
 
 		/* Select the Serial Tx Endpoint */
 		Endpoint_SelectEndpoint(CDC2_TX_EPNUM);
@@ -354,6 +354,12 @@ TASK(CDC2_Task)
 		Endpoint_Write_Stream_LE(&Buffer, DataLength);
 
 		/* Finalize the stream transfer to send the last packet */
-		Endpoint_ClearCurrentBank();
+		Endpoint_ClearIN();
+
+		/* Wait until the endpoint is ready for the next packet */
+		while (!(Endpoint_IsINReady()));
+
+		/* Send an empty packet to prevent host buffering */
+		Endpoint_ClearIN();
 	}
 }

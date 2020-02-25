@@ -37,16 +37,10 @@
 #define  INCLUDE_FROM_MASSSTORAGE_C
 #include "MassStorage.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA MassStore App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_MassStorage      , TaskStatus: TASK_STOP },
+	{ .Task = USB_MassStorage      , .TaskStatus = TASK_STOP },
 };
 
 /* Global Variables */
@@ -54,9 +48,9 @@ TASK_LIST
 CommandBlockWrapper_t  CommandBlock;
 
 /** Structure to hold the latest Command Status Wrapper to return to the host, containing the status of the last issued command. */
-CommandStatusWrapper_t CommandStatus = { Signature: CSW_SIGNATURE };
+CommandStatusWrapper_t CommandStatus = { .Signature = CSW_SIGNATURE };
 
-/** Flag to asyncronously abort any in-progress data transfers upon the reception of a mass storage reset command. */
+/** Flag to asynchronously abort any in-progress data transfers upon the reception of a mass storage reset command. */
 volatile bool          IsMassStoreReset = false;
 
 /** Main program entry point. This routine configures the hardware required by the application, then
@@ -154,35 +148,35 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Process UFI specific control requests */
-	switch (bRequest)
+	switch (USB_ControlRequest.bRequest)
 	{
 		case REQ_MassStorageReset:
-			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
 				/* Indicate that the current transfer should be aborted */
 				IsMassStoreReset = true;			
 
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupINReady()));
-				Endpoint_ClearSetupIN();
+				while (!(Endpoint_IsINReady()));
+				Endpoint_ClearIN();
 			}
 
 			break;
 		case REQ_GetMaxLUN:
-			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				/* Indicate to the host the number of supported LUNs (virtual disks) on the device */
-				Endpoint_ClearSetupReceived();
+				Endpoint_ClearSETUP();
 
+				/* Indicate to the host the number of supported LUNs (virtual disks) on the device */
 				Endpoint_Write_Byte(TOTAL_LUNS - 1);
 				
-				Endpoint_ClearSetupIN();
+				Endpoint_ClearIN();
 				
 				/* Acknowledge status stage */
-				while (!(Endpoint_IsSetupOUTReceived()));
-				Endpoint_ClearSetupOUT();
+				while (!(Endpoint_IsOUTReceived()));
+				Endpoint_ClearOUT();
 			}
 			
 			break;
@@ -234,7 +228,7 @@ TASK(USB_MassStorage)
 		Endpoint_SelectEndpoint(MASS_STORAGE_OUT_EPNUM);
 		
 		/* Check to see if a command from the host has been issued */
-		if (Endpoint_ReadWriteAllowed())
+		if (Endpoint_IsReadWriteAllowed())
 		{	
 			/* Indicate busy */
 			UpdateStatus(Status_ProcessingCommandBlock);
@@ -262,7 +256,7 @@ TASK(USB_MassStorage)
 				/* Return command status block to the host */
 				ReturnCommandStatus();
 				
-				/* Check if a Mass Storage Reset ocurred */
+				/* Check if a Mass Storage Reset occurred */
 				if (IsMassStoreReset)
 				{
 					/* Reset the data endpoint banks */
@@ -326,7 +320,7 @@ static bool ReadInCommandBlock(void)
 	  return false;
 
 	/* Finalize the stream transfer to send the last packet */
-	Endpoint_ClearCurrentBank();
+	Endpoint_ClearOUT();
 	
 	return true;
 }
@@ -367,7 +361,7 @@ static void ReturnCommandStatus(void)
 	  return;
 
 	/* Finalize the stream transfer to send the last packet */
-	Endpoint_ClearCurrentBank();
+	Endpoint_ClearIN();
 }
 
 /** Stream callback function for the Endpoint stream read and write functions. This callback will abort the current stream transfer
@@ -386,7 +380,7 @@ STREAM_CALLBACK(AbortOnMassStoreReset)
 /** ISR for the general Pipe/Endpoint interrupt vector. This ISR fires when a control request has been issued to the control endpoint,
  *  so that the request can be processed. As several elements of the Mass Storage implementation require asynchronous control requests
  *  (such as endpoint stall clearing and Mass Storage Reset requests during data transfers) this is done via interrupts rather than
- *  polling.
+ *  polling so that they can be processed regardless of the rest of the application's state.
  */
 ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
 {

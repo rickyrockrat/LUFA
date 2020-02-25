@@ -36,19 +36,13 @@
 
 #include "TestApp.h"
 
-/* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,    "LUFA Test App");
-BUTTLOADTAG(BuildTime,   __TIME__);
-BUTTLOADTAG(BuildDate,   __DATE__);
-BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
-
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: TestApp_CheckJoystick, TaskStatus: TASK_RUN  },
-	{ Task: TestApp_CheckHWB     , TaskStatus: TASK_RUN  },
-	{ Task: TestApp_CheckTemp    , TaskStatus: TASK_RUN  },
-	{ Task: USB_USBTask          , TaskStatus: TASK_RUN  },
+	{ .Task = TestApp_CheckJoystick, .TaskStatus = TASK_RUN  },
+	{ .Task = TestApp_CheckButton  , .TaskStatus = TASK_RUN  },
+	{ .Task = TestApp_CheckTemp    , .TaskStatus = TASK_RUN  },
+	{ .Task = USB_USBTask          , .TaskStatus = TASK_RUN  },
 };
 
 /** Main program entry point. This routine configures the hardware required by the application, then
@@ -69,7 +63,7 @@ int main(void)
 	Temperature_Init();
 	Joystick_Init();
 	LEDs_Init();
-	HWB_Init();
+	Buttons_Init();
 	
 	/* Millisecond timer initialization, with output compare interrupt enabled */
 	OCR0A  = 0x7D;
@@ -80,7 +74,7 @@ int main(void)
 	/* Turn on interrupts */
 	sei();
 
-    /* Startup message via USART */
+    /* Start-up message via USART */
 	puts_P(PSTR(ESC_RESET ESC_BG_WHITE ESC_INVERSE_ON ESC_ERASE_DISPLAY
 	       "LUFA Demo running.\r\n" ESC_INVERSE_OFF));
 
@@ -130,30 +124,30 @@ TASK(TestApp_CheckJoystick)
  */
 TASK(TestApp_CheckTemp)
 {
-	static SchedulerDelayCounter_t DelayCounter = 10000; // Force immediate run on startup
+	static SchedulerDelayCounter_t DelayCounter = 10000; // Force immediate run on start-up
 
 	/* Task runs every 10000 ticks, 10 seconds for this demo */
 	if (Scheduler_HasDelayElapsed(10000, &DelayCounter))
 	{
 		printf_P(PSTR("Current temperature: %d Degrees Celcius\r\n\r\n"),
-		         (int)Temperature_GetTemperature());
+		         (int8_t)Temperature_GetTemperature());
 
 		/* Reset the delay counter, ready to count another 10000 tick interval */
 		Scheduler_ResetDelay(&DelayCounter);
 	}	
 }
 
-/** Task responsible for checking the HWB button position, and start-stopping other tasks and the USB
+/** Task responsible for checking the board's first button' position, and start-stopping other tasks and the USB
  *  interface in response to user joystick movements.
  */
-TASK(TestApp_CheckHWB)
+TASK(TestApp_CheckButton)
 {
 	static SchedulerDelayCounter_t DelayCounter = 0;
 	static bool                    IsPressed;
 	static bool                    BlockingJoystickTask;
 	
-	/* Check if HWB pressed (start USB) */
-	if (HWB_GetStatus() == true)
+	/* Check if board button pressed (start USB) */
+	if (Buttons_GetStatus() & BUTTONS_BUTTON1)
 	{
 		/* Debounce - check 100 ticks later to see if button is still being pressed */
 		if ((IsPressed == false) && (Scheduler_HasDelayElapsed(100, &DelayCounter)))
@@ -161,7 +155,7 @@ TASK(TestApp_CheckHWB)
 			/* Set flag, indicating that current pressed state has been handled */
 			IsPressed = true;
 			
-			/* First start of the USB interface permenantly blocks the joystick task */
+			/* First start of the USB interface permanently blocks the joystick task */
 			if (BlockingJoystickTask == false)
 			{
 				Scheduler_SetTaskMode(TestApp_CheckJoystick, TASK_STOP);
@@ -191,7 +185,7 @@ TASK(TestApp_CheckHWB)
 	}
     else
     {
-		/* HWB not pressed - reset debounce interval counter and press handled flag */
+		/* Board button not pressed - reset debounce interval counter and press handled flag */
 		Scheduler_ResetDelay(&DelayCounter);
 		IsPressed = false;
 	}

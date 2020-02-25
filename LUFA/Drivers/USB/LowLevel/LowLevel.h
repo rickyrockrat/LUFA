@@ -28,10 +28,12 @@
   this software.
 */
 
-/** \file
+/** \ingroup Group_USB
+ *  @defgroup Group_USBManagement USB Interface Management
  *
- *  Main low level USB driver. This module manages the low level initialization and shut down of the USB AVR's
- *  USB interface in either device or (if supported) host mode.
+ *  Functions, macros, variables, enums and types related to the setup and management of the USB interface.
+ *
+ *  @{
  */
 
 #ifndef __USBLOWLEVEL_H__
@@ -42,8 +44,10 @@
 		#include <avr/interrupt.h>
 		#include <stdbool.h>
 		
-		#include "USBMode.h"
+		#include "../HighLevel/USBMode.h"
+
 		#include "../../../Common/Common.h"
+		#include "../HighLevel/USBMode.h"
 		#include "../HighLevel/Events.h"
 		#include "../HighLevel/USBTask.h"
 		#include "../HighLevel/USBInterrupt.h"
@@ -68,7 +72,6 @@
 	/* Preprocessor Checks and Defines: */
 		#if !defined(F_CLOCK)
 			#error F_CLOCK is not defined. You must device F_CLOCK to the frequency of the unprescaled input clock in your project makefile.
-			#define F_CLOCK 0
 		#endif
 	
 		#if (F_CLOCK == 8000000)
@@ -99,27 +102,27 @@
 		
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
-			/** Mode mask for the USB_CurrentMode global. This indicates that the USB interface is currently not
+			/** Mode mask for the \ref USB_CurrentMode global. This indicates that the USB interface is currently not
 			 *  initialized into any mode.
 			 */
 			#define USB_MODE_NONE                      0
 
-			/** Mode mask for the USB_CurrentMode global and the USB_Init() function. This indicates that the
+			/** Mode mask for the \ref USB_CurrentMode global and the \ref USB_Init() function. This indicates that the
 			 *  USB interface is or should be initialized in the USB device mode.
 			 */
 			#define USB_MODE_DEVICE                    1
 
 			#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
-				/** Mode mask for the USB_CurrentMode global and the USB_Init() function. This indicates that the
+				/** Mode mask for the \ref USB_CurrentMode global and the \ref USB_Init() function. This indicates that the
 				 *  USB interface is or should be initialized in the USB host mode.
 				 *
 				 *  \note This token is not available on AVR models which do not support host mode.
 				 */
-				#define USB_MODE_HOST                      2
+				#define USB_MODE_HOST                  2
 			#endif
 			
 			#if defined(USB_CAN_BE_BOTH) || defined(__DOXYGEN__)
-				/** Mode mask for the the USB_Init() function. This indicates that the USB interface should be
+				/** Mode mask for the the \ref USB_Init() function. This indicates that the USB interface should be
 				 *  initialized into whatever mode the UID pin of the USB AVR indicates, and that the device
 				 *  should swap over its mode when the level of the UID pin changes during operation.
 				 *
@@ -128,27 +131,27 @@
 				#define USB_MODE_UID                       3
 			#endif
 			
-			/** Regulator disable option mask for USB_Init(). This indicates that the internal 3.3V USB data pad
+			/** Regulator disable option mask for \ref USB_Init(). This indicates that the internal 3.3V USB data pad
 			 *  regulator should be enabled to regulate the data pin voltages to within the USB standard.
 			 *
 			 *  \note See USB AVR data sheet for more information on the internal pad regulator.
 			 */
 			#define USB_OPT_REG_DISABLED               (1 << 1)
 
-			/** Regulator enable option mask for USB_Init(). This indicates that the internal 3.3V USB data pad
+			/** Regulator enable option mask for \ref USB_Init(). This indicates that the internal 3.3V USB data pad
 			 *  regulator should be disabled and the AVR's VCC level used for the data pads.
 			 *
 			 *  \note See USB AVR data sheet for more information on the internal pad regulator.
 			 */
 			#define USB_OPT_REG_ENABLED                (0 << 1)
 			
-			/** Manual PLL control option mask for USB_Init(). This indicates to the library that the user application
+			/** Manual PLL control option mask for \ref USB_Init(). This indicates to the library that the user application
 			 *  will take full responsibility for controlling the AVR's PLL (used to generate the high frequency clock
 			 *  that the USB controller requires) and ensuring that it is locked at the correct frequency for USB operations.
 			 */
 			#define USB_OPT_MANUAL_PLL                 (1 << 2)
 
-			/** Automatic PLL control option mask for USB_Init(). This indicates to the library that the library should
+			/** Automatic PLL control option mask for \ref USB_Init(). This indicates to the library that the library should
 			 *  take full responsibility for controlling the AVR's PLL (used to generate the high frequency clock
 			 *  that the USB controller requires) and ensuring that it is locked at the correct frequency for USB operations.
 			 */
@@ -156,34 +159,27 @@
 
 			/** Mask for a CONTROL type endpoint or pipe.
 			 *
-			 *  \note See Endpoint.h and Pipe.h headers for endpoint/pipe functions.
+			 *  \note See \ref Group_EndpointManagement and \ref Group_PipeManagement for endpoint/pipe functions.
 			 */
-			#define EP_TYPE_CONTROL                    0b00
+			#define EP_TYPE_CONTROL                    0x00
 
 			/** Mask for an ISOCHRONOUS type endpoint or pipe.
 			 *
-			 *  \note See Endpoint.h and Pipe.h headers for endpoint/pipe functions.
+			 *  \note See \ref Group_EndpointManagement and \ref Group_PipeManagement for endpoint/pipe functions.
 			 */
-			#define EP_TYPE_ISOCHRONOUS                0b01
+			#define EP_TYPE_ISOCHRONOUS                0x01
 
 			/** Mask for a BULK type endpoint or pipe.
 			 *
-			 *  \note See Endpoint.h and Pipe.h headers for endpoint/pipe functions.
+			 *  \note See \ref Group_EndpointManagement and \ref Group_PipeManagement for endpoint/pipe functions.
 			 */
-			#define EP_TYPE_BULK                       0b10
+			#define EP_TYPE_BULK                       0x02
 
 			/** Mask for an INTERRUPT type endpoint or pipe.
 			 *
-			 *  \note See Endpoint.h and Pipe.h headers for endpoint/pipe functions.
+			 *  \note See \ref Group_EndpointManagement and \ref Group_PipeManagement for endpoint/pipe functions.
 			 */
-			#define EP_TYPE_INTERRUPT                  0b11
-
-			/** Mask for determining the type of an endpoint or pipe. This should then be compared with the
-			 *  EP_TYPE_* macros elsewhere in this module to determine the exact type of the endpoint or pipe.
-			 *
-			 *  \note See Endpoint.h and Pipe.h headers for endpoint/pipe functions.
-			 */
-			#define EP_TYPE_MASK                       0b11
+			#define EP_TYPE_INTERRUPT                  0x03
 
 			#if defined(USB_FULL_CONTROLLER) || defined(USB_MODIFIED_FULL_CONTROLLER) || defined(__DOXYGEN__)
 				/** Returns boolean true if the VBUS line is currently high (i.e. the USB host is supplying power),
@@ -196,7 +192,7 @@
 
 			/** Detaches the device from the USB bus. This has the effect of removing the device from any
 			 *  host if, ceasing USB communications. If no host is present, this prevents any host from
-			 *  enumerating the device once attached until USB_Attach() is called.
+			 *  enumerating the device once attached until \ref USB_Attach() is called.
 			 */
 			#define USB_Detach()                    MACROS{ UDCON  |=  (1 << DETACH);  }MACROE
 
@@ -216,7 +212,7 @@
 				 *  is not received or acknowledged within this time period, the stream function will fail.
 				 *
 				 *  This value may be overridden in the user project makefile as the value of the 
-				 *  USB_STREAM_TIMEOUT_MS token, and passed to the compiler using the -D switch.
+				 *  \ref USB_STREAM_TIMEOUT_MS token, and passed to the compiler using the -D switch.
 				 */
 				#define USB_STREAM_TIMEOUT_MS       100
 			#endif
@@ -233,7 +229,7 @@
 			 *  interface reset and re-enumeration.
 			 *
 			 *  \param Mode     This is a mask indicating what mode the USB interface is to be initialized to.
-			 *                  Valid mode masks are USB_MODE_DEVICE, USB_MODE_HOST or USB_MODE_UID.
+			 *                  Valid mode masks are \ref USB_MODE_DEVICE, \ref USB_MODE_HOST or \ref USB_MODE_UID.
 			 *
 			 *  \param Options  Mask indicating the options which should be used when initializing the USB
 			 *                  interface to control the USB interface's behaviour. This should be comprised of
@@ -276,7 +272,7 @@
 			
 			/** Shuts down the USB interface. This turns off the USB interface after deallocating all USB FIFO
 			 *  memory, endpoints and pipes. When turned off, no USB functionality can be used until the interface
-			 *  is restarted with the USB_Init() function.
+			 *  is restarted with the \ref USB_Init() function.
 			 */
 			void USB_ShutDown(void);
 
@@ -287,11 +283,11 @@
 
 		/* Enums: */
 			/** Enum for error codes relating to the powering on of the USB interface. These error codes are
-			 *  used in the ErrorCode parameter value of the USB_PowerOnFail event.
+			 *  used in the ErrorCode parameter value of the \ref USB_InitFailure event.
 			 */
-			enum USB_PowerOnErrorCodes_t
+			enum USB_InitErrorCodes_t
 			{
-				POWERON_ERROR_NoUSBModeSpecified       = 0, /**< Indicates that USB_Init() was called with an
+				USB_INITERROR_NoUSBModeSpecified       = 0, /**< Indicates that \ref USB_Init() was called with an
 			                                                 *   invalid or missing Mode parameter.
 			                                                 */
 			};
@@ -308,17 +304,17 @@
 			#endif
 			
 			#if !defined(USE_STATIC_OPTIONS) || defined(__DOXYGEN__)
-				extern volatile uint8_t USB_Options;
-				/** Indicates the current USB options that the USB interface was initialized with when USB_Init()
+				/** Indicates the current USB options that the USB interface was initialized with when \ref USB_Init()
 				 *  was called. This value will be one of the USB_MODE_* masks defined elsewhere in this module.
 				 *
 				 *  \note This variable should be treated as read-only in the user application, and never manually
 				 *        changed in value.
 				 */
+				extern volatile uint8_t USB_Options;
 			#endif
 
 		/* Throwable Events: */
-			/** This module raises the USB_Disconnect event if the USB interface is reset (such as during a mode
+			/** This module raises the \ref USB_Disconnect event if the USB interface is reset (such as during a mode
 			 *  change while in UID mode) while the USB interface is connected to a device when in host mode, or
 			 *  a host while in device mode.
 			 *
@@ -332,7 +328,7 @@
 				 *
 				 *  \see Events.h for more information on this event.
 				 */
-				RAISES_EVENT(USB_PowerOnFail);
+				RAISES_EVENT(USB_InitFailure);
 			#endif
 			
 	/* Private Interface - For use in library only: */
@@ -381,3 +377,5 @@
 		#endif
 			
 #endif
+
+/** @} */

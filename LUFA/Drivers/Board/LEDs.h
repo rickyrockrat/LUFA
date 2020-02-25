@@ -39,7 +39,31 @@
  *  If the BOARD value is set to BOARD_USER, this will include the /Board/LEDs.h file in the user project
  *  directory.
  */
- 
+
+/** \ingroup Group_BoardDrivers
+ *  @defgroup Group_LEDs LEDs Driver - LUFA/Drivers/Board/LEDs.h
+ *
+ *  \section Sec_Dependencies Module Source Dependencies
+ *  The following files must be built with any user project that uses this module:
+ *    - None
+ *
+ *  \section Module Description
+ *  Functions, macros, variables, enums and types related to the control of board LEDs.
+ *
+ *  If the BOARD value is set to BOARD_USER, this will include the /Board/Dataflash.h file in the user project
+ *  directory. Otherwise, it will include the appropriate built in board driver header file.
+ *
+ *  \note To make code as compatible as possible, it is assumed that all boards carry a minimum of four LEDs. If
+ *        a board contains less than four LEDs, the remaining LED masks are defined to 0 so as to have no effect.
+ *        If other behaviour is desired, either alias the remaining LED masks to existing LED masks via the -D 
+ *        switch in the project makefile, or alias them to nothing in the makefile to cause compilation errors when
+ *        a non-existing LED is referenced in application code. Note that this means that it is possible to make
+ *        compatible code for a board with no LEDs by making a board LED driver (see \ref Page_WritingBoardDrivers)
+ *        which contains only stub functions and defines no LEDs.
+ *
+ *  @{
+ */
+
 #ifndef __LEDS_H__
 #define __LEDS_H__
 
@@ -68,7 +92,23 @@
 		#include "Board/LEDs.h"
 	#endif
 	
-	/* Psudo-Functions for Doxygen: */
+	#if !defined(LEDS_LED1)
+		#define LEDS_LED1      0
+	#endif
+
+	#if !defined(LEDS_LED2)
+		#define LEDS_LED2      0
+	#endif
+
+	#if !defined(LEDS_LED3)
+		#define LEDS_LED3      0
+	#endif
+
+	#if !defined(LEDS_LED4)
+		#define LEDS_LED4      0
+	#endif
+	
+	/* Pseudo-Functions for Doxygen: */
 	#if defined(__DOXYGEN__)
 		/** Initializes the board LED driver so that the LEDs can be controlled. This sets the appropriate port
 		 *  I/O pins as outputs, and sets the LEDs to default to off.
@@ -111,3 +151,5 @@
 	#endif
 
 #endif
+
+/** @} */
