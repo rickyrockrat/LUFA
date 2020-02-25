@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -64,6 +64,9 @@
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
 			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
+		
+	/* Includes: */
+		#include "../../../Common/Common.h"
 
 	/* Public Interface - May be used in end-application: */
 	#if defined(__DOXYGEN__)
@@ -106,7 +109,7 @@
 		 *  (i.e. AT32UC3A4*) when defined.
 		 */
 		#define USB_SERIES_UC3A4_AVR
-		
+
 		/** Indicates that the target AVR microcontroller belongs to the AVR32 UC3B0 Series USB controller
 		 *  (i.e. AT32UC3B0*) when defined.
 		 */
@@ -175,7 +178,7 @@
 			#elif (defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__))
 				#define USB_SERIES_4_AVR
 				#define USB_CAN_BE_DEVICE
-			#elif (defined(__AVR_ATmega32U6__) || defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__))
+			#elif (defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__))
 				#define USB_SERIES_6_AVR
 				#define USB_CAN_BE_DEVICE
 			#elif (defined(__AVR_AT90USB647__) || defined(__AVR_AT90USB1287__))
@@ -244,34 +247,28 @@
 				#define USB_CAN_BE_DEVICE
 			#endif
 
-			#if (defined(USB_CAN_BE_DEVICE) && defined(USB_CAN_BE_HOST))
-				#define USB_CAN_BE_BOTH
-			#endif
-
-			#if defined(USB_HOST_ONLY)
+			#if (defined(USB_HOST_ONLY) && defined(USB_DEVICE_ONLY))
+				#error USB_HOST_ONLY and USB_DEVICE_ONLY are mutually exclusive.
+			#elif defined(USB_HOST_ONLY)
 				#if !defined(USB_CAN_BE_HOST)
 					#error USB_HOST_ONLY is not available for the currently selected microcontroller model.
 				#else
 					#undef USB_CAN_BE_DEVICE
-					#undef USB_CAN_BE_BOTH
 				#endif
-			#endif
-
-			#if defined(USB_DEVICE_ONLY)
+			#elif defined(USB_DEVICE_ONLY)
 				#if !defined(USB_CAN_BE_DEVICE)
 					#error USB_DEVICE_ONLY is not available for the currently selected microcontroller model.
 				#else
 					#undef USB_CAN_BE_HOST
-					#undef USB_CAN_BE_BOTH
 				#endif
 			#endif
 
-			#if (defined(USB_HOST_ONLY) && defined(USB_DEVICE_ONLY))
-				#error USB_HOST_ONLY and USB_DEVICE_ONLY are mutually exclusive.
+			#if (defined(USB_CAN_BE_DEVICE) && defined(USB_CAN_BE_HOST))
+				#define USB_CAN_BE_BOTH
 			#endif
 
 			#if (!defined(USB_CAN_BE_DEVICE) && !defined(USB_CAN_BE_HOST))
-				#error The currently selected device or architecture is not supported under the USB component of the library.
+				#error The currently selected device, USB mode or architecture is not supported.
 			#endif
 	#endif
 

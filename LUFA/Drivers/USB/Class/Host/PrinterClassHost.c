@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -81,16 +81,16 @@ uint8_t PRNT_Host_ConfigurePipes(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceI
 	PRNTInterfaceInfo->Config.DataINPipe.Size  = le16_to_cpu(DataINEndpoint->EndpointSize);
 	PRNTInterfaceInfo->Config.DataINPipe.EndpointAddress = DataINEndpoint->EndpointAddress;
 	PRNTInterfaceInfo->Config.DataINPipe.Type  = EP_TYPE_BULK;
-	
+
 	PRNTInterfaceInfo->Config.DataOUTPipe.Size = le16_to_cpu(DataOUTEndpoint->EndpointSize);
 	PRNTInterfaceInfo->Config.DataOUTPipe.EndpointAddress = DataOUTEndpoint->EndpointAddress;
 	PRNTInterfaceInfo->Config.DataOUTPipe.Type = EP_TYPE_BULK;
-	
+
 	if (!(Pipe_ConfigurePipeTable(&PRNTInterfaceInfo->Config.DataINPipe, 1)))
 	  return false;
-	
+
 	if (!(Pipe_ConfigurePipeTable(&PRNTInterfaceInfo->Config.DataOUTPipe, 1)))
-	  return false;	
+	  return false;
 
 	PRNTInterfaceInfo->State.InterfaceNumber  = PrinterInterface->InterfaceNumber;
 	PRNTInterfaceInfo->State.AlternateSetting = PrinterInterface->AlternateSetting;
@@ -275,7 +275,7 @@ uint8_t PRNT_Host_SendString(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo,
 }
 
 uint8_t PRNT_Host_SendData(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo,
-                           void* Buffer,
+                           const void* Buffer,
                            const uint16_t Length)
 {
 	uint8_t ErrorCode;

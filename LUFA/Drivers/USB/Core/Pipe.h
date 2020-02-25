@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -105,7 +105,7 @@
 			{
 				uint8_t  Address; /**< Address of the pipe to configure, or zero if the table entry is to be unused. */
 				uint16_t Size; /**< Size of the pipe bank, in bytes. */
-				uint8_t  EndpointAddress; /** Address of the endpoint in the connected device. */
+				uint8_t  EndpointAddress; /**< Address of the endpoint in the connected device. */
 				uint8_t  Type; /**< Type of the endpoint, a \c EP_TYPE_* mask. */
 				uint8_t  Banks; /**< Number of hardware banks to use for the pipe. */
 			} USB_Pipe_Table_t;

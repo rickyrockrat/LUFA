@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -35,7 +35,7 @@
 #define  __INCLUDE_FROM_USB_CONTROLLER_C
 #include "../USBController.h"
 
-#if (!defined(USB_HOST_ONLY) && !defined(USB_DEVICE_ONLY))
+#if defined(USB_CAN_BE_BOTH)
 volatile uint8_t USB_CurrentMode = USB_MODE_None;
 #endif
 
@@ -43,7 +43,7 @@ volatile uint8_t USB_CurrentMode = USB_MODE_None;
 volatile uint8_t USB_Options;
 #endif
 
-/* Ugly workaround to ensure an aligned table, since __BIGGEST_ALIGNMENT__ == 1 for 8-bit AVR-GCC */
+/* Ugly workaround to ensure an aligned table, since __BIGGEST_ALIGNMENT__ == 1 for the 8-bit AVR-GCC toolchain */
 uint8_t USB_EndpointTable[sizeof(USB_EndpointTable_t) + 1];
 
 void USB_Init(
@@ -66,17 +66,15 @@ void USB_Init(
 	USB_Options = Options;
 	#endif
 
-	USB_IsInitialized = true;
-
 	uint_reg_t CurrentGlobalInt = GetGlobalInterruptMask();
 	GlobalInterruptDisable();
 
 	NVM.CMD  = NVM_CMD_READ_CALIB_ROW_gc;
 	USB.CAL0 = pgm_read_byte(offsetof(NVM_PROD_SIGNATURES_t, USBCAL0));
 	USB.CAL1 = pgm_read_byte(offsetof(NVM_PROD_SIGNATURES_t, USBCAL1));
-	NVM.CMD  = 0;
+	NVM.CMD  = NVM_CMD_NO_OPERATION_gc;
 
-	/* Ugly workaround to ensure an aligned table, since __BIGGEST_ALIGNMENT__ == 1 for the 8-bit AVR-GCC toochain */
+	/* Ugly workaround to ensure an aligned table, since __BIGGEST_ALIGNMENT__ == 1 for the 8-bit AVR-GCC toolchain */
 	USB.EPPTR = ((intptr_t)&USB_EndpointTable[1] & ~(1 << 0));
 	USB.CTRLA = (USB_STFRNUM_bm | ((ENDPOINT_TOTAL_ENDPOINTS - 1) << USB_MAXEP_gp));
 
@@ -88,6 +86,12 @@ void USB_Init(
 	  USB.INTCTRLA = (1 << USB_INTLVL_gp);
 
 	SetGlobalInterruptMask(CurrentGlobalInt);
+
+	#if defined(USB_CAN_BE_BOTH)
+	USB_CurrentMode = Mode;
+	#endif
+
+	USB_IsInitialized = true;
 
 	USB_ResetInterface();
 }
@@ -113,7 +117,7 @@ void USB_ResetInterface(void)
 	#else
 	CLK.USBCTRL = (((F_USB / 6000000) - 1) << CLK_USBPSDIV_gp);
 	#endif
-	
+
 	if (USB_Options & USB_OPT_PLLCLKSRC)
 	  CLK.USBCTRL |= (CLK_USBSRC_PLL_gc   | CLK_USBSEN_bm);
 	else

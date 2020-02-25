@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -74,7 +74,7 @@ void CDC_Device_ProcessControlRequest(USB_ClassInfo_CDC_Device_t* const CDCInter
 					if (USB_DeviceState == DEVICE_STATE_Unattached)
 					  return;
 				}
-				
+
 				CDCInterfaceInfo->State.LineEncoding.BaudRateBPS = Endpoint_Read_32_LE();
 				CDCInterfaceInfo->State.LineEncoding.CharFormat  = Endpoint_Read_8();
 				CDCInterfaceInfo->State.LineEncoding.ParityType  = Endpoint_Read_8();
@@ -138,7 +138,10 @@ void CDC_Device_USBTask(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo)
 	  return;
 
 	#if !defined(NO_CLASS_DRIVER_AUTOFLUSH)
-	CDC_Device_Flush(CDCInterfaceInfo);
+	Endpoint_SelectEndpoint(CDCInterfaceInfo->Config.DataINEndpoint.Address);
+
+	if (Endpoint_IsINReady())
+	  CDC_Device_Flush(CDCInterfaceInfo);
 	#endif
 }
 
@@ -153,7 +156,7 @@ uint8_t CDC_Device_SendString(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo
 }
 
 uint8_t CDC_Device_SendData(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo,
-                            const char* const Buffer,
+                            const void* const Buffer,
                             const uint16_t Length)
 {
 	if ((USB_DeviceState != DEVICE_STATE_Configured) || !(CDCInterfaceInfo->State.LineEncoding.BaudRateBPS))
@@ -329,7 +332,6 @@ static int CDC_Device_getchar_Blocking(FILE* Stream)
 }
 #endif
 
-// cppcheck-suppress unusedFunction
 void CDC_Device_Event_Stub(void)
 {
 

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -198,7 +198,7 @@
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
 			uint8_t CDC_Host_SendData(USB_ClassInfo_CDC_Host_t* const CDCInterfaceInfo,
-			                          const uint8_t* const Buffer,
+			                          const void* const Buffer,
 			                          const uint16_t Length);
 
 			/** Sends a given null-terminated string to the attached USB device, if connected. If a device is not connected when the
@@ -304,7 +304,7 @@
 			void CDC_Host_CreateBlockingStream(USB_ClassInfo_CDC_Host_t* const CDCInterfaceInfo,
 			                                   FILE* const Stream);
 			#endif
-			
+
 			/** CDC class driver event for a control line state change on a CDC host interface. This event fires each time the device notifies
 			 *  the host of a control line state change (containing the virtual serial control line states, such as DCD) and may be hooked in the
 			 *  user program by declaring a handler function with the same name and parameters listed here. The new control line states

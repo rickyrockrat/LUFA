@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -47,8 +47,8 @@
  *  @{
  */
 
-#ifndef __CONFIGDESCRIPTOR_H__
-#define __CONFIGDESCRIPTOR_H__
+#ifndef __CONFIGDESCRIPTORS_H__
+#define __CONFIGDESCRIPTORS_H__
 
 	/* Includes: */
 		#include "../../../Common/Common.h"
@@ -119,16 +119,16 @@
 			{
 				HOST_GETCONFIG_Successful       = 0, /**< No error occurred while retrieving the configuration descriptor. */
 				HOST_GETCONFIG_DeviceDisconnect = 1, /**< The attached device was disconnected while retrieving the configuration
-				                                        * descriptor.
-				                                        */
+				                                      *   descriptor.
+				                                      */
 				HOST_GETCONFIG_PipeError        = 2, /**< An error occurred in the pipe while sending the request. */
 				HOST_GETCONFIG_SetupStalled     = 3, /**< The attached device stalled the request to retrieve the configuration
-				                                        * descriptor.
-				                                        */
+				                                      *   descriptor.
+				                                      */
 				HOST_GETCONFIG_SoftwareTimeOut  = 4, /**< The request or data transfer timed out. */
 				HOST_GETCONFIG_BuffOverflow     = 5, /**< The device's configuration descriptor is too large to fit into the allocated
-				                                        * buffer.
-				                                        */
+				                                      *   buffer.
+				                                      */
 				HOST_GETCONFIG_InvalidData      = 6, /**< The device returned invalid configuration descriptor data. */
 			};
 

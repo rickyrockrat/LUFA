@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -53,12 +53,15 @@
  *  \code
  *      // Initialize the serial USART driver before first use, with 9600 baud (and no double-speed mode)
  *      Serial_Init(9600, false);
- *      
+ *
  *      // Send a string through the USART
- *      Serial_TxString("Test String\r\n");
- *      
- *      // Receive a byte through the USART
- *      uint8_t DataByte = Serial_RxByte();
+ *      Serial_SendString("Test String\r\n");
+ *
+ *      // Send a raw byte through the USART
+ *      Serial_SendByte(0xDC);
+ *
+ *      // Receive a byte through the USART (or -1 if no data received)
+ *      int16_t DataByte = Serial_ReceiveByte();
  *  \endcode
  *
  *  @{
@@ -116,13 +119,13 @@
 			#define SERIAL_2X_UBBRVAL(Baud) ((((F_CPU / 8) + (Baud / 2)) / (Baud)) - 1)
 
 		/* Function Prototypes: */
-			/** Transmits a given string located in program space (FLASH) through the USART.
+			/** Transmits a given NUL terminated string located in program space (FLASH) through the USART.
 			 *
 			 *  \param[in] FlashStringPtr  Pointer to a string located in program space.
 			 */
 			void Serial_SendString_P(const char* FlashStringPtr) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** Transmits a given string located in SRAM memory through the USART.
+			/** Transmits a given NUL terminated string located in SRAM memory through the USART.
 			 *
 			 *  \param[in] StringPtr  Pointer to a string located in SRAM space.
 			 */
@@ -133,7 +136,7 @@
 			 *  \param[in] Buffer  Pointer to a buffer containing the data to send.
 			 *  \param[in] Length  Length of the data to send, in bytes.
 			 */
-			void Serial_SendData(const uint8_t* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
+			void Serial_SendData(const void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Creates a standard character stream from the USART so that it can be used with all the regular functions
 			 *  in the avr-libc \c <stdio.h> library that accept a \c FILE stream as a destination (e.g. \c fprintf). The created
@@ -150,7 +153,7 @@
 			 *  \pre The USART must first be configured via a call to \ref Serial_Init() before the stream is used.
 			 */
 			void Serial_CreateStream(FILE* Stream);
-			
+
 			/** Identical to \ref Serial_CreateStream(), except that reads are blocking until the calling stream function terminates
 			 *  the transfer.
 			 *

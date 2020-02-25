@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -47,7 +47,7 @@
 		#include "../V2Protocol.h"
 		#include "ISPProtocol.h"
 		#include "Config/AppConfig.h"
-		
+
 	/* Preprocessor Checks: */
 		#if ((BOARD == BOARD_XPLAIN) || (BOARD == BOARD_XPLAIN_REV1))
 			#undef ENABLE_ISP_PROTOCOL
@@ -106,16 +106,17 @@
 		 */
 		static inline uint8_t ISPTarget_ReceiveByte(void)
 		{
-			#if !defined(INVERTED_ISP_MISO)
+			uint8_t ReceivedByte;
+
 			if (HardwareSPIMode)
-			  return SPI_ReceiveByte();
+			  ReceivedByte = SPI_ReceiveByte();
 			else
-			  return ISPTarget_TransferSoftSPIByte(0x00);
+			  ReceivedByte = ISPTarget_TransferSoftSPIByte(0x00);
+
+			#if defined(INVERTED_ISP_MISO)
+			return ~ReceivedByte;
 			#else
-			if (HardwareSPIMode)
-			  return ~SPI_ReceiveByte();
-			else
-			  return ~ISPTarget_TransferSoftSPIByte(0x00);
+			return  ReceivedByte;
 			#endif
 		}
 
@@ -128,16 +129,17 @@
 		 */
 		static inline uint8_t ISPTarget_TransferByte(const uint8_t Byte)
 		{
-			#if !defined(INVERTED_ISP_MISO)
+			uint8_t ReceivedByte;
+
 			if (HardwareSPIMode)
-			  return SPI_TransferByte(Byte);
+			  ReceivedByte = SPI_TransferByte(Byte);
 			else
-			  return ISPTarget_TransferSoftSPIByte(Byte);
+			  ReceivedByte = ISPTarget_TransferSoftSPIByte(Byte);
+
+			#if defined(INVERTED_ISP_MISO)
+			return ~ReceivedByte;
 			#else
-			if (HardwareSPIMode)
-			  return ~SPI_TransferByte(Byte);
-			else
-			  return ~ISPTarget_TransferSoftSPIByte(Byte);
+			return  ReceivedByte;
 			#endif
 		}
 

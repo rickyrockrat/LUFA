@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -57,6 +57,13 @@
 
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
+		/* Macros: */
+			#if defined(MAX_ENDPOINT_INDEX)
+				#define ENDPOINT_TABLE_COUNT  (MAX_ENDPOINT_INDEX + 1)
+			#else
+				#define ENDPOINT_TABLE_COUNT  16
+			#endif
+
 		/* Type Defines: */
 			typedef struct
 			{
@@ -64,13 +71,12 @@
 				{
 					USB_EP_t OUT;
 					USB_EP_t IN;
-				} Endpoints[16];
+				} Endpoints[ENDPOINT_TABLE_COUNT];
 				uint16_t FrameNum;
 			} ATTR_PACKED USB_EndpointTable_t;
 
 		/* External Variables: */
 			extern uint8_t USB_EndpointTable[];
-
 	#endif
 
 	/* Includes: */
@@ -176,8 +182,10 @@
 			 *  Calling this function when the USB interface is already initialized will cause a complete USB
 			 *  interface reset and re-enumeration.
 			 *
-			 *  \param[in] Mode     This is a mask indicating what mode the USB interface is to be initialized to, a value
+			 *  \param[in] Mode     Mask indicating what mode the USB interface is to be initialized to, a value
 			 *                      from the \ref USB_Modes_t enum.
+			 *                      \note This parameter does not exist on devices with only one supported USB
+			 *                            mode (device or host).
 			 *
 			 *  \param[in] Options  Mask indicating the options which should be used when initializing the USB
 			 *                      interface to control the USB interface's behavior. This should be comprised of
@@ -232,7 +240,7 @@
 			void USB_ResetInterface(void);
 
 		/* Global Variables: */
-			#if (!defined(USB_HOST_ONLY) && !defined(USB_DEVICE_ONLY)) || defined(__DOXYGEN__)
+			#if defined(USB_CAN_BE_BOTH) || defined(__DOXYGEN__)
 				/** Indicates the mode that the USB interface is currently initialized to, a value from the
 				 *  \ref USB_Modes_t enum.
 				 *
@@ -247,7 +255,9 @@
 				 *        USB interface is not initialized.
 				 */
 				extern volatile uint8_t USB_CurrentMode;
-			#elif defined(USB_DEVICE_ONLY)
+			#elif defined(USB_CAN_BE_HOST)
+				#define USB_CurrentMode USB_MODE_Host
+			#elif defined(USB_CAN_BE_DEVICE)
 				#define USB_CurrentMode USB_MODE_Device
 			#endif
 

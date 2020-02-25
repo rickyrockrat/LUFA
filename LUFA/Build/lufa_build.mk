@@ -1,17 +1,17 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2012.
+#     Copyright (C) Dean Camera, 2013.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
 #
 
 LUFA_BUILD_MODULES         += BUILD
-LUFA_BUILD_TARGETS         += size check-source symbol-sizes all lib elf hex lss clean mostlyclean
+LUFA_BUILD_TARGETS         += size symbol-sizes all lib elf hex lss clean mostlyclean
 LUFA_BUILD_MANDATORY_VARS  += TARGET ARCH MCU SRC F_USB LUFA_PATH
-LUFA_BUILD_OPTIONAL_VARS   += BOARD OPTIMIZATION C_STANDARD CPP_STANDARD F_CPU C_FLAGS CPP_FLAGS ASM_FLAGS CC_FLAGS LD_FLAGS OBJDIR OBJECT_FILES DEBUG_TYPE DEBUG_LEVEL
-LUFA_BUILD_PROVIDED_VARS   += 
-LUFA_BUILD_PROVIDED_MACROS += 
+LUFA_BUILD_OPTIONAL_VARS   += BOARD OPTIMIZATION C_STANDARD CPP_STANDARD F_CPU C_FLAGS CPP_FLAGS ASM_FLAGS CC_FLAGS LD_FLAGS OBJDIR OBJECT_FILES DEBUG_TYPE DEBUG_LEVEL LINKER_RELAXATIONS
+LUFA_BUILD_PROVIDED_VARS   +=
+LUFA_BUILD_PROVIDED_MACROS +=
 
 # -----------------------------------------------------------------------------
 #               LUFA GCC Compiler Buildsystem Makefile Module.
@@ -25,8 +25,6 @@ LUFA_BUILD_PROVIDED_MACROS +=
 #    size                      - List built application size
 #    symbol-sizes              - Print application symbols from the binary ELF
 #                                file as a list sorted by size in bytes
-#    check-source              - Print a list of SRC source files that cannot
-#                                be found
 #    all                       - Build application and list size
 #    lib                       - Build and archive source files into a library
 #    elf                       - Build application ELF debug object file
@@ -36,6 +34,8 @@ LUFA_BUILD_PROVIDED_MACROS +=
 #                                output files
 #    mostlyclean               - Remove intermediatary output files, but
 #                                preserve binaries
+#    <filename>.s              - Compile C/C++ source file into an assembly file
+#                                for manual code inspection
 #
 # MANDATORY PARAMETERS:
 #
@@ -60,6 +60,9 @@ LUFA_BUILD_PROVIDED_MACROS +=
 #    CC_FLAGS                  - Common flags to pass to the C/C++ compiler and
 #                                assembler
 #    LD_FLAGS                  - Flags to pass to the linker
+#    LINKER_RELAXATIONS        - Enable or disable linker relaxations to
+#                                decrease binary size (note: can cause link
+#                                failures on systems with an unpatched binutils)
 #    OBJDIR                    - Directory for the output object and dependency
 #                                files; if equal to ".", the output files will
 #                                be generated in the same folder as the sources
@@ -86,19 +89,20 @@ ERROR_IF_EMPTY   ?= $(if $(strip $($(strip $(1)))), , $(error Makefile $(strip $
 ERROR_IF_NONBOOL ?= $(if $(filter Y N, $($(strip $(1)))), , $(error Makefile $(strip $(1)) option must be Y or N))
 
 # Default values of optionally user-supplied variables
-BOARD           ?= NONE
-OPTIMIZATION    ?= s
-F_CPU           ?=
-C_STANDARD      ?= gnu99
-CPP_STANDARD    ?= gnu++98
-C_FLAGS         ?=
-CPP_FLAGS       ?=
-ASM_FLAGS       ?=
-CC_FLAGS        ?=
-OBJDIR          ?= .
-OBJECT_FILES    ?=
-DEBUG_FORMAT    ?= dwarf-2
-DEBUG_LEVEL     ?= 3
+BOARD              ?= NONE
+OPTIMIZATION       ?= s
+F_CPU              ?=
+C_STANDARD         ?= gnu99
+CPP_STANDARD       ?= gnu++98
+C_FLAGS            ?=
+CPP_FLAGS          ?=
+ASM_FLAGS          ?=
+CC_FLAGS           ?=
+OBJDIR             ?= .
+OBJECT_FILES       ?=
+DEBUG_FORMAT       ?= dwarf-2
+DEBUG_LEVEL        ?= 2
+LINKER_RELAXATIONS ?= Y
 
 # Sanity check user supplied values
 $(foreach MANDATORY_VAR, $(LUFA_BUILD_MANDATORY_VARS), $(call ERROR_IF_UNSET, $(MANDATORY_VAR)))
@@ -114,6 +118,7 @@ $(call ERROR_IF_EMPTY, CPP_STANDARD)
 $(call ERROR_IF_EMPTY, OBJDIR)
 $(call ERROR_IF_EMPTY, DEBUG_FORMAT)
 $(call ERROR_IF_EMPTY, DEBUG_LEVEL)
+$(call ERROR_IF_NONBOOL, LINKER_RELAXATIONS)
 
 # Determine the utility prefix to use for the selected architecture
 ifeq ($(ARCH), AVR8)
@@ -129,6 +134,7 @@ else
 endif
 
 # Output Messages
+MSG_INFO_MESSAGE := ' [INFO]    :'
 MSG_COMPILE_CMD  := ' [GCC]     :'
 MSG_ASSEMBLE_CMD := ' [GAS]     :'
 MSG_NM_CMD       := ' [NM]      :'
@@ -152,15 +158,20 @@ endif
 
 # Convert input source filenames into a list of required output object files
 OBJECT_FILES += $(addsuffix .o, $(basename $(SRC)))
+
+# Check if an output object file directory was specified instead of the input file location
 ifneq ($(OBJDIR),.)
-   $(shell mkdir $(OBJDIR) 2> /dev/null)   
-   VPATH           += $(dir $(SRC))
+   # Prefix all the object filenames with the output object file directory path
    OBJECT_FILES    := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
-   
+
    # Check if any object file (without path) appears more than once in the object file list
    ifneq ($(words $(sort $(OBJECT_FILES))), $(words $(OBJECT_FILES)))
        $(error Cannot build with OBJDIR parameter set - one or more object file name is not unique)
    endif
+
+   # Create the output object file directory if it does not exist and add it to the virtual path list
+   $(shell mkdir $(OBJDIR) 2> /dev/null)
+   VPATH           += $(dir $(SRC))
 endif
 
 # Create a list of dependency files from the list of object files
@@ -188,7 +199,10 @@ BASE_CPP_FLAGS := -x c++ -O$(OPTIMIZATION) -std=$(CPP_STANDARD)
 BASE_ASM_FLAGS := -x assembler-with-cpp
 
 # Create a list of flags to pass to the linker
-BASE_LD_FLAGS := -lm -Wl,-Map=$(TARGET).map,--cref -Wl,--gc-sections -Wl,--relax 
+BASE_LD_FLAGS := -lm -Wl,-Map=$(TARGET).map,--cref -Wl,--gc-sections
+ifeq ($(LINKER_RELAXATIONS), Y)
+   BASE_LD_FLAGS += -Wl,--relax
+endif
 ifeq ($(ARCH), AVR8)
    BASE_LD_FLAGS += -mmcu=$(MCU)
 else ifeq ($(ARCH), XMEGA)
@@ -198,93 +212,116 @@ else ifeq ($(ARCH), UC3)
 endif
 
 # Determine flags to pass to the size utility based on its reported features (only invoke if size target required)
+# and on an architecture where this non-standard patch is available
+ifneq ($(ARCH), UC3)
 size: SIZE_MCU_FLAG    := $(shell $(CROSS)-size --help | grep -- --mcu > /dev/null && echo --mcu=$(MCU) )
 size: SIZE_FORMAT_FLAG := $(shell $(CROSS)-size --help | grep -- --format=.*avr > /dev/null && echo --format=avr )
+endif
 
-
+# Pre-build informational target, to give compiler and project name information when building
 build_begin:
+	@echo $(MSG_INFO_MESSAGE) Begin compilation of project \"$(TARGET)\"...
 	@echo ""
-	@echo Begin compilation of project \"$(TARGET)\"...
-	@echo ""
-	
-build_end:
-	@echo Finished building project \"$(TARGET)\".
-	@echo ""
-
-gcc-version:
 	@$(CROSS)-gcc --version
 
-check-source:
-	@for f in $(SRC); do \
-		if [ ! -f $$f ]; then \
-			echo "Error: Source file not found: $$f"; \
-			exit 1; \
-		fi; \
-	 done
+# Post-build informational target, to project name information when building has completed
+build_end:
+	@echo $(MSG_INFO_MESSAGE) Finished building project \"$(TARGET)\".
 
+# Prints size information of a compiled application (FLASH, RAM and EEPROM usages)
 size: $(TARGET).elf
 	@echo $(MSG_SIZE_CMD) Determining size of \"$<\"
 	@echo ""
-	$(CROSS)-size $(SIZE_MCU_FLAG) $(SIZE_FORMAT_FLAG) $< ; 2>/dev/null;
+	$(CROSS)-size $(SIZE_MCU_FLAG) $(SIZE_FORMAT_FLAG) $<
 
+# Prints size information on the symbols within a compiled application in decimal bytes
 symbol-sizes: $(TARGET).elf
 	@echo $(MSG_NM_CMD) Extracting \"$<\" symbols with decimal byte sizes
 	$(CROSS)-nm --size-sort --demangle --radix=d $<
 
+# Cleans intermediary build files, leaving only the compiled application files
 mostlyclean:
 	@echo $(MSG_REMOVE_CMD) Removing object files of \"$(TARGET)\"
 	rm -f $(OBJECT_FILES)
 	@echo $(MSG_REMOVE_CMD) Removing dependency files of \"$(TARGET)\"
 	rm -f $(DEPENDENCY_FILES)
 
+# Cleans all build files, leaving only the original source code
 clean: mostlyclean
 	@echo $(MSG_REMOVE_CMD) Removing output files of \"$(TARGET)\"
 	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).map $(TARGET).lss $(TARGET).sym $(TARGET).a
 
-all: build_begin check-source gcc-version elf hex lss sym size build_end
+# Performs a complete build of the user application and prints size information afterwards
+all: build_begin elf hex lss sym size build_end
 
+# Helper targets, to build a specific type of output file without having to know the project target name
 lib: lib$(TARGET).a
 elf: $(TARGET).elf
 hex: $(TARGET).hex $(TARGET).eep
 lss: $(TARGET).lss
 sym: $(TARGET).sym
 
+# Default target to *create* the user application's specified source files; if this rule is executed by
+# make, the input source file doesn't exist and an error needs to be presented to the user
+$(SRC):
+	$(error Source file does not exist: $@)
+
+# Compiles an input C source file and generates an assembly listing for it
+%.s: %.c $(MAKEFILE_LIST)
+	@echo $(MSG_COMPILE_CMD) Generating assembly from C file \"$(notdir $<)\"
+	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) $< -o $@
+
+# Compiles an input C++ source file and generates an assembly listing for it
+%.s: %.cpp $(MAKEFILE_LIST)
+	@echo $(MSG_COMPILE_CMD) Generating assembly from C++ file \"$(notdir $<)\"
+	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) $< -o $@
+
+# Compiles an input C source file and generates a linkable object file for it
 $(OBJDIR)/%.o: %.c $(MAKEFILE_LIST)
 	@echo $(MSG_COMPILE_CMD) Compiling C file \"$(notdir $<)\"
 	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
 
+# Compiles an input C++ source file and generates a linkable object file for it
 $(OBJDIR)/%.o: %.cpp $(MAKEFILE_LIST)
 	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
 	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
-	
+
+# Assembles an input ASM source file and generates a linkable object file for it
 $(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
 	@echo $(MSG_ASSEMBLE_CMD) Assembling \"$(notdir $<)\"
 	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
 
+# Generates a library archive file from the user application, which can be linked into other applications
 .PRECIOUS  : $(OBJECT_FILES)
 .SECONDARY : %.a
 %.a: $(OBJECT_FILES)
 	@echo $(MSG_ARCHIVE_CMD) Archiving object files into \"$@\"
 	$(CROSS)-ar rcs $@ $(OBJECT_FILES)
 
+# Generates an ELF debug file from the user application, which can be further processed for FLASH and EEPROM data
+# files, or used for programming and debugging directly
 .PRECIOUS  : $(OBJECT_FILES)
 .SECONDARY : %.elf
 %.elf: $(OBJECT_FILES)
 	@echo $(MSG_LINK_CMD) Linking object files into \"$@\"
-	$(CROSS)-gcc $(BASE_LD_FLAGS) $(LD_FLAGS) $^ -o $@
+	$(CROSS)-gcc $^ -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
 
+# Extracts out the loadable FLASH memory data from the project ELF file, and creates an Intel HEX format file of it
 %.hex: %.elf
 	@echo $(MSG_OBJCPY_CMD) Extracting HEX file data from \"$<\"
 	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $< $@
 
+# Extracts out the loadable EEPROM memory data from the project ELF file, and creates an Intel HEX format file of it
 %.eep: %.elf
 	@echo $(MSG_OBJCPY_CMD) Extracting EEP file data from \"$<\"
 	$(CROSS)-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 --no-change-warnings -O ihex $< $@ || exit 0
 
+# Creates an assembly listing file from an input project ELF file, containing interleaved assembly and source data
 %.lss: %.elf
 	@echo $(MSG_OBJDMP_CMD) Extracting LSS file data from \"$<\"
-	$(CROSS)-objdump -h -S -z $< > $@
+	$(CROSS)-objdump -h -d -S -z $< > $@
 
+# Creates a symbol file listing the loadable and discarded symbols from an input project ELF file
 %.sym: %.elf
 	@echo $(MSG_NM_CMD) Extracting SYM file data from \"$<\"
 	$(CROSS)-nm -n $< > $@
@@ -293,4 +330,4 @@ $(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
 -include $(DEPENDENCY_FILES)
 
 # Phony build targets for this module
-.PHONY: build_begin build_end gcc-version check-source size symbol-sizes lib elf hex lss clean mostlyclean
+.PHONY: build_begin build_end size symbol-sizes lib elf hex lss clean mostlyclean

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -68,7 +68,7 @@ int main(void)
 	SetupHardware();
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
-	sei();
+	GlobalInterruptEnable();
 
 	for (;;)
 	{
@@ -177,13 +177,13 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 	  NewLEDMask |= LEDS_LED1;
 
 	if (Data[1])
-	  NewLEDMask |= LEDS_LED1;
+	  NewLEDMask |= LEDS_LED2;
 
 	if (Data[2])
-	  NewLEDMask |= LEDS_LED1;
+	  NewLEDMask |= LEDS_LED3;
 
 	if (Data[3])
-	  NewLEDMask |= LEDS_LED1;
+	  NewLEDMask |= LEDS_LED4;
 
 	LEDs_SetAllLEDs(NewLEDMask);
 }

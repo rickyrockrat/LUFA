@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -46,7 +46,7 @@ int main(void)
 	puts_P(PSTR(ESC_FG_CYAN "CDC Host Demo running.\r\n" ESC_FG_WHITE));
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
-	sei();
+	GlobalInterruptEnable();
 
 	for (;;)
 	{
@@ -148,7 +148,7 @@ void EVENT_USB_Host_DeviceEnumerationComplete(void)
 		                         " -- Error Code: %d\r\n" ESC_FG_WHITE), ErrorCode);
 
 		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-		return;	
+		return;
 	}
 
 	puts_P(PSTR("CDC Device Enumerated.\r\n"));

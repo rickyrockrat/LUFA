@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -90,24 +90,24 @@ uint8_t SI_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
 	SIInterfaceInfo->Config.DataINPipe.Size  = le16_to_cpu(DataINEndpoint->EndpointSize);
 	SIInterfaceInfo->Config.DataINPipe.EndpointAddress = DataINEndpoint->EndpointAddress;
 	SIInterfaceInfo->Config.DataINPipe.Type  = EP_TYPE_BULK;
-	
+
 	SIInterfaceInfo->Config.DataOUTPipe.Size = le16_to_cpu(DataOUTEndpoint->EndpointSize);
 	SIInterfaceInfo->Config.DataOUTPipe.EndpointAddress = DataOUTEndpoint->EndpointAddress;
 	SIInterfaceInfo->Config.DataOUTPipe.Type = EP_TYPE_BULK;
-	
+
 	SIInterfaceInfo->Config.EventsPipe.Size = le16_to_cpu(EventsEndpoint->EndpointSize);
 	SIInterfaceInfo->Config.EventsPipe.EndpointAddress = EventsEndpoint->EndpointAddress;
 	SIInterfaceInfo->Config.EventsPipe.Type = EP_TYPE_INTERRUPT;
 
 	if (!(Pipe_ConfigurePipeTable(&SIInterfaceInfo->Config.DataINPipe, 1)))
 	  return false;
-	
+
 	if (!(Pipe_ConfigurePipeTable(&SIInterfaceInfo->Config.DataOUTPipe, 1)))
 	  return false;
 
 	if (!(Pipe_ConfigurePipeTable(&SIInterfaceInfo->Config.EventsPipe, 1)))
 	  return false;
-	
+
 	SIInterfaceInfo->State.InterfaceNumber = StillImageInterface->InterfaceNumber;
 	SIInterfaceInfo->State.IsActive = true;
 
@@ -254,7 +254,7 @@ uint8_t SI_Host_ReceiveBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 }
 
 uint8_t SI_Host_SendData(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
-                         void* Buffer,
+                         const void* Buffer,
                          const uint16_t Bytes)
 {
 	uint8_t ErrorCode;

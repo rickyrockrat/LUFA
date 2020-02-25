@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -109,21 +109,24 @@ void USB_Device_ProcessControlRequest(void)
 				  USB_Device_SetConfiguration();
 
 				break;
+
+			default:
+				break;
 		}
 	}
 
 	if (Endpoint_IsSETUPReceived())
 	{
-		Endpoint_StallTransaction();
 		Endpoint_ClearSETUP();
+		Endpoint_StallTransaction();
 	}
 }
 
 static void USB_Device_SetAddress(void)
 {
-	uint8_t    DeviceAddress    = (USB_ControlRequest.wValue & 0x7F);
-	uint_reg_t CurrentGlobalInt = GetGlobalInterruptMask();
-	GlobalInterruptDisable();
+	uint8_t DeviceAddress = (USB_ControlRequest.wValue & 0x7F);
+
+	USB_Device_SetDeviceAddress(DeviceAddress);
 
 	Endpoint_ClearSETUP();
 
@@ -131,10 +134,9 @@ static void USB_Device_SetAddress(void)
 
 	while (!(Endpoint_IsINReady()));
 
-	USB_Device_SetDeviceAddress(DeviceAddress);
-	USB_DeviceState = (DeviceAddress) ? DEVICE_STATE_Addressed : DEVICE_STATE_Default;
+	USB_Device_EnableDeviceAddress(DeviceAddress);
 
-	SetGlobalInterruptMask(CurrentGlobalInt);
+	USB_DeviceState = (DeviceAddress) ? DEVICE_STATE_Addressed : DEVICE_STATE_Default;
 }
 
 static void USB_Device_SetConfiguration(void)

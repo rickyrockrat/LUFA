@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -216,7 +216,18 @@
 			/** Selects the Olimex AVR-ISP-MK2 specific board drivers, including the Button and LED drivers. */
 			#define BOARD_OLIMEXISPMK2         50
 
+			/** Selects the Arduino Leonardo specific board drivers, including the driver for the board LEDs. */
+			#define BOARD_LEONARDO             51
+			
+			/** Selects the UC3-A3 Xplained specific board drivers, including the Button and LED drivers. */
+			#define BOARD_UC3A3_XPLAINED       52
+			
+			/** Selects the USB2AX version 3.1 specific board drivers, including the Button and LEDs drivers. */
+			#define BOARD_USB2AX_V31           53
 
+			/** Selects the Stange-ISP specific board drivers, including the Button and LEDs drivers. */
+			#define BOARD_STANGE_ISP           54
+			
 			#if !defined(__DOXYGEN__)
 				#define BOARD_                 BOARD_NONE
 

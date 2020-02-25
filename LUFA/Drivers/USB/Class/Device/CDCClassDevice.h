@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -100,7 +100,7 @@
 				struct
 				{
 					uint8_t ControlInterfaceNumber; /**< Interface number of the CDC control interface within the device. */
-					
+
 					USB_Endpoint_Table_t DataINEndpoint; /**< Data IN endpoint configuration table. */
 					USB_Endpoint_Table_t DataOUTEndpoint; /**< Data OUT endpoint configuration table. */
 					USB_Endpoint_Table_t NotificationEndpoint; /**< Notification IN Endpoint configuration table. */
@@ -197,7 +197,7 @@
 			 *  \return A value from the \ref Endpoint_Stream_RW_ErrorCodes_t enum.
 			 */
 			uint8_t CDC_Device_SendData(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo,
-			                            const char* const Buffer,
+			                            const void* const Buffer,
 			                            const uint16_t Length) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
 			/** Sends a given null terminated string to the attached USB host, if connected. If a host is not connected when
@@ -316,7 +316,7 @@
 			void CDC_Device_CreateBlockingStream(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo,
 			                                     FILE* const Stream) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 			#endif
-			
+
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Function Prototypes: */

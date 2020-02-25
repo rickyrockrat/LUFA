@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -156,6 +156,12 @@
 			 *  This event is time-critical; exceeding OS-specific delays within this event handler (typically of around
 			 *  1 second) when a transaction is waiting to be processed by the device will prevent break communications
 			 *  and cause the host to reset the USB bus.
+			 *
+			 *  \note This event only exists on microcontrollers that supports USB host mode.
+			 *        \n\n
+			 *
+			 *  \note This event does not exist if the \c USB_DEVICE_ONLY token is supplied to the compiler (see
+			 *        \ref Group_USBManagement documentation).
 			 */
 			void EVENT_USB_Host_DeviceEnumerationComplete(void);
 

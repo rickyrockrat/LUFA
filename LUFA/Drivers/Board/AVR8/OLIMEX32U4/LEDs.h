@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -78,7 +78,7 @@
 
 			#define LEDS_PORTD_MASK_SHIFT 1
 	#endif
-	
+
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
 			/** LED mask for the first LED on the board. */
@@ -86,13 +86,13 @@
 
 			/** LED mask for the second LED on the board. */
 			#define LEDS_LED2        (1 << 0)
-			
+
 			/** LED mask for the third LED on the board. */
-			#define LEDS_LED3        (1 << 5)
+			#define LEDS_LED3        (1 << 6)
 
 			/** LED mask for the fourth LED on the board. */
-			#define LEDS_LED4        (1 << 6)
-			
+			#define LEDS_LED4        (1 << 5)
+
 			/** LED mask for all the LEDs on the board. */
 			#define LEDS_ALL_LEDS    (LEDS_LED1 | LEDS_LED2 | LEDS_LED3 | LEDS_LED4)
 
@@ -162,7 +162,7 @@
 			static inline uint8_t LEDs_GetLEDs(void) ATTR_WARN_UNUSED_RESULT;
 			static inline uint8_t LEDs_GetLEDs(void)
 			{
-				return ((PORTB & LEDS_PORTB_LEDS) | 
+				return ((PORTB & LEDS_PORTB_LEDS) |
 				        ((PORTD & (LEDS_PORTD_LEDS << LEDS_PORTD_MASK_SHIFT)) >> LEDS_PORTD_MASK_SHIFT) |
 				        (PORTE & LEDS_PORTE_LEDS));
 			}

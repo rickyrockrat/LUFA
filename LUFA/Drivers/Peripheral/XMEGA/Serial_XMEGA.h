@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -53,10 +53,10 @@
  *  \code
  *      // Initialize the serial USART driver before first use, with 9600 baud (and no double-speed mode)
  *      Serial_Init(&USARTD0, 9600, false);
- *      
+ *
  *      // Send a string through the USART
  *      Serial_TxString(&USARTD0, "Test String\r\n");
- *      
+ *
  *      // Receive a byte through the USART
  *      uint8_t DataByte = Serial_RxByte(&USARTD0);
  *  \endcode
@@ -139,7 +139,7 @@
 			 *  \param[in]     Length  Length of the data to send, in bytes.
 			 */
 			void Serial_SendData(USART_t* const USART,
-			                     const uint8_t* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
+			                     const void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Creates a standard character stream from the USART so that it can be used with all the regular functions
 			 *  in the avr-libc \c <stdio.h> library that accept a \c FILE stream as a destination (e.g. \c fprintf). The created
@@ -156,7 +156,7 @@
 			 *  \pre The USART must first be configured via a call to \ref Serial_Init() before the stream is used.
 			 */
 			void Serial_CreateStream(FILE* Stream);
-			
+
 			/** Identical to \ref Serial_CreateStream(), except that reads are blocking until the calling stream function terminates
 			 *  the transfer.
 			 *
@@ -183,7 +183,7 @@
 
 				USART->BAUDCTRLB = (BaudValue >> 8);
 				USART->BAUDCTRLA = (BaudValue & 0xFF);
-				
+
 				USART->CTRLC = (USART_CMODE_ASYNCHRONOUS_gc | USART_PMODE_DISABLED_gc | USART_CHSIZE_8BIT_gc);
 				USART->CTRLB = (USART_RXEN_bm | USART_TXEN_bm | (DoubleSpeed ? USART_CLK2X_bm : 0));
 			}
@@ -198,7 +198,7 @@
 				USART->CTRLB = 0;
 				USART->CTRLC = 0;
 			}
-			
+
 			/** Indicates whether a character has been received through the USART.
 			 *
 			 *  \param[in,out] USART  Pointer to the base of the USART peripheral within the device.

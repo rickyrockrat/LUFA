@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -88,11 +88,11 @@ void Serial_SendString(USART_t* const USART,
 }
 
 void Serial_SendData(USART_t* const USART,
-                     const uint8_t* Buffer,
+                     const void* Buffer,
                      uint16_t Length)
 {
 	while (Length--)
-	  Serial_SendByte(USART, *(Buffer++));
+	  Serial_SendByte(USART, *((uint8_t*)Buffer++));
 }
 
 void Serial_CreateStream(FILE* Stream)

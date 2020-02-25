@@ -8,7 +8,7 @@
  */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
   Copyright 2010  Dave Fletcher (fletch [at] fletchtronics [dot] net)
 
   Permission to use, copy, modify, distribute, and sell this
@@ -20,7 +20,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -98,7 +98,7 @@ int main(void)
 	CmdState = CMD_STOP;
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
-	sei();
+	GlobalInterruptEnable();
 
 	for (;;)
 	{

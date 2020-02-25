@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2012.
+#     Copyright (C) Dean Camera, 2013.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
@@ -14,10 +14,18 @@ LUFA_PATH := ../../LUFA/
 CPPCHECK_EXCLUDES := FATFs/            \
                      PetiteFATFs/      \
                      uip/
+
 CPPCHECK_INCLUDES := $(patsubst %/,%,$(LUFA_PATH))/CodeTemplates/               \
                      $(patsubst %/,%,$(LUFA_PATH))/../Projects/AVRISP-MKII/
 
+CPPCHECK_FLAGS    := -U TEMPLATE_FUNC_NAME -U __GNUC__ -U __DOXYGEN__
+
+CPPCHECK_SUPPRESS := variableScope missingInclude unusedFunction
+
 SRC               := $(patsubst %/,%,$(LUFA_PATH))/..
+
+# Build test cannot be run with multiple parallel jobs
+.NOTPARALLEL:
 
 all: begin cppcheck end
 

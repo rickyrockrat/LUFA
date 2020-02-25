@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -87,7 +87,7 @@
 				{
 					USB_Pipe_Table_t DataINPipe; /**< Data IN Pipe configuration table. */
 					USB_Pipe_Table_t DataOUTPipe; /**< Data OUT Pipe configuration table. */
-					
+
 					char*    PropertyStrings[AOA_STRING_TOTAL_STRINGS]; /**< Android Accessory property strings, sent to identify the accessory when the
 					                                                     *   Android device is switched into Open Accessory mode. */
 				} Config; /**< Config data for the USB class interface within the device. All elements in this section
@@ -150,7 +150,7 @@
 			uint8_t AOA_Host_ConfigurePipes(USB_ClassInfo_AOA_Host_t* const AOAInterfaceInfo,
 			                                uint16_t ConfigDescriptorSize,
 			                                void* ConfigDescriptorData) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(3);
-									   
+
 			/** Starts Accessory Mode in the attached Android device. This function will validate the device's Android Open Accessory protocol
 			 *  version, send the configured property strings, and request a switch to Android Open Accessory mode.
 			 *
@@ -175,7 +175,7 @@
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
 			uint8_t AOA_Host_SendData(USB_ClassInfo_AOA_Host_t* const AOAInterfaceInfo,
-			                          const uint8_t* const Buffer,
+			                          const void* const Buffer,
 			                          const uint16_t Length);
 
 			/** Sends a given null-terminated string to the attached USB device, if connected. If a device is not connected when the

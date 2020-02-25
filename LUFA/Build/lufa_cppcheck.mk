@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2012.
+#     Copyright (C) Dean Camera, 2013.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
@@ -92,11 +92,13 @@ endif
 # Output Messages
 MSG_CPPCHECK_CMD         := ' [CPPCHECK]:'
 
-cppcheck-config:
+# Checks the CPPCheck configuration as used in the user project, to determine if any paths are missing or invalid
+cppcheck-config: $(MAKEFILE_LIST)
 	@echo $(MSG_CPPCHECK_CMD) Checking cppcheck configuration check on source files
 	cppcheck $(BASE_CPPCHECK_FLAGS) --check-config $(CPPCHECK_FLAGS) $(SRC)
 
-cppcheck:
+# Runs a static analysis using CPPCheck to determine if there are any issues
+cppcheck: $(MAKEFILE_LIST)
 	@echo $(MSG_CPPCHECK_CMD) Performing static analysis on source files
 	cppcheck $(BASE_CPPCHECK_FLAGS) --enable=$(CPPCHECK_ENABLE) $(CPPCHECK_SUPPRESS:%=--suppress=%) $(CPPCHECK_FLAGS) $(SRC)
 

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -44,9 +44,8 @@
  *
  *  <table>
  *    <tr><th>Name</th><th>Color</th><th>Info</th><th>Active Level</th><th>Port Pin</th></tr>
- *    <tr><td>LEDS_LED1</td><td>Red</td><td>General Indicator</td><td>Low</td><td>PORTD.5</td></tr>
- *    <tr><td>LEDS_LED2</td><td>Green</td><td>General Indicator</td><td>Low</td><td>PORTD.6</td></tr>
- *    <tr><td>LEDS_LED3</td><td>Blue</td><td>General Indicator</td><td>Low</td><td>PORTD.7</td></tr>
+ *    <tr><td>LEDS_LED1</td><td>Blue</td><td>General Indicator</td><td>Low</td><td>PORTD.5</td></tr>
+ *    <tr><td>LEDS_LED2</td><td>Red</td><td>General Indicator</td><td>Low</td><td>PORTD.6</td></tr>
  *  </table>
  *
  *  @{
@@ -76,11 +75,8 @@
 			/** LED mask for the second LED on the board. */
 			#define LEDS_LED2        (1 << 6)
 
-			/** LED mask for the third LED on the board. */
-			#define LEDS_LED3        (1 << 7)
-
 			/** LED mask for all the LEDs on the board. */
-			#define LEDS_ALL_LEDS    (LEDS_LED1 | LEDS_LED2 | LEDS_LED3)
+			#define LEDS_ALL_LEDS    (LEDS_LED1 | LEDS_LED2)
 
 			/** LED mask for the none of the board LEDs. */
 			#define LEDS_NO_LEDS     0
@@ -128,7 +124,7 @@
 			static inline uint8_t LEDs_GetLEDs(void) ATTR_WARN_UNUSED_RESULT;
 			static inline uint8_t LEDs_GetLEDs(void)
 			{
-				return (PORTD & LEDS_ALL_LEDS);
+				return (~PORTD & LEDS_ALL_LEDS);
 			}
 		#endif
 

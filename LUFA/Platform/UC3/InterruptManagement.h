@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -110,7 +110,18 @@
 			#define INTC_IRQ_LINE(IRQIndex)   (IRQIndex % 32)
 
 		/* Function Prototypes: */
+			/** Initializes the interrupt controller ready to handle interrupts. This must be called at the
+			 *  start of the user program before any interrupts are registered or enabled.
+			 */
 			void INTC_Init(void);			
+			
+			/** Retrieves the associated interrupt handler for the interrupt group currently being fired. This
+			 *  is called directly from the exception handler routine before dispatching to the ISR.
+			 *
+			 *  \param[in] InterruptLevel  Priority level of the interrupt.
+			 *
+			 *  \return Pointer to the associated interrupt handler function, or NULL if no handler set.
+			 */
 			InterruptHandlerPtr_t INTC_GetInterruptHandler(const uint_reg_t InterruptLevel);
 
 		/* Inline Functions: */

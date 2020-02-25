@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2012.
+     Copyright (C) Dean Camera, 2013.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -18,7 +18,7 @@
   advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
-  The author disclaim all warranties with regard to this
+  The author disclaims all warranties with regard to this
   software, including all implied warranties of merchantability
   and fitness.  In no event shall the author be liable for any
   special, indirect or consequential damages or any damages
@@ -29,7 +29,7 @@
 */
 
 /** \file
- *  \brief Board specific LED driver header for the Micropendous-32U2.
+ *  \brief Board specific LED driver header for the Micropendous series boards.
  *  \copydetails Group_LEDs_MICROPENDOUS_32U2
  *
  *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver
@@ -99,7 +99,7 @@
 			#define _BOARD_LED1_MASK                (1 << 1)
 			#define _BOARD_LED_PORTLETTER           B
 		#endif
-		
+
 		#define _BOARD_LED_CONCAT2(Reg, Letter)     Reg ## Letter
 		#define _BOARD_LED_CONCAT(Reg, Letter)      _BOARD_LED_CONCAT2(Reg, Letter)
 
