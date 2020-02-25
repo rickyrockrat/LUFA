@@ -6,12 +6,55 @@
    
  /** \page Page_ChangeLog Project Changelog
   *
+  *  \section Sec_ChangeLog090401 Version 090401
+  *
+  *  - Fixed MagStripe project configuration descriptor containing an unused (blank) endpoint descriptor
+  *  - Incorporated makefile changes by Denver Gingerich to retain compatibility with stock (non-WinAVR) AVR-GCC installations
+  *  - Fixed makefile EEPROM programming targets programming FLASH data in addition to EEPROM data
+  *  - LUFA devices now enumerate correctly with LUFA hosts
+  *  - Fixed Configuration Descriptor search routine freezing when a comparitor returned a failure
+  *  - Removed HID report item serial dump in the MouseHostWithParser and KeyboardHostWithParser - useful only for debugging, and
+  *    slowed down the enumeration of HID devices too much
+  *  - Increased the number of bits per track which can be read in the MagStripe project to 8192 when compiled for the AT90USBXXX6/7
+  *  - Fixed KeyboardMouse demo discarding the wIndex value in the REQ_GetReport request
+  *  - USBtoSerial demo now discards all Rx data when not connected to a USB host, rather than buffering characters for transmission
+  *    next time the device is attached to a host.
+  *  - Added new F_CLOCK compile time constant to the library and makefiles, to give the raw input clock (used to feed the PLL before any
+  *    clock prescaling is performed) frequency, so that the PLL prescale mask can be determined
+  *  - Changed stream wait timeout counter to be 16-bit, so that very long timeout periods can be set for correct communications with
+  *    badly designed hosts or devices which greatly exceed the USB specification limits
+  *  - Mass Storage Host demo now uses a USB_STREAM_TIMEOUT_MS of two seconds to maintain compatibility with poorly designed devices
+  *  - Function attribute ATTR_ALWAYSINLINE renamed to ATTR_ALWAYS_INLINE to match other function attribute macro naming conventions
+  *  - Added ATTR_ALWAYS_INLINE attribute to several key inlined library components, to ensure they are inlined in all circumstances
+  *  - Removed SetSystemClockPrescaler() macro, the clock_prescale_set() avr-libc macro has been corrected in recent avr-libc versions
+  *  - Fixed incorrect/missing control status stage transfers on demos, bootloaders and applications (thanks to Nate Lawson)
+  *  - The NO_CLEARSET_FEATURE_REQUEST compile time token has been renamed to FEATURELESS_CONTROL_ONLY_DEVICE, and its function expanded
+  *    to also remove parts of the Get Status chapter 9 request to further reduce code usage
+  *  - Makefile updated to include output giving the currently selected BOARD parameter value
+  *  - Board Dataflash driver now allows for dataflash ICs which use different shifts for setting the current page/byte address (thanks
+  *    to Kenneth Clubb)
+  *  - Added DataflashManager_WriteBlocks_RAM() and DataflashManager_ReadBlocks_RAM() functions to the MassStorage demo, to allow for easy
+  *    interfacing with a FAT library for dataflash file level access
+  *  - Corrected CDC class bootloader to fix a few bugs, changed address counter to store x2 addresses for convenience
+  *  - Fixed typos in the SPI driver SPI_SPEED_FCPU_DIV_64 and SPI_SPEED_FCPU_DIV_128 masks (thanks to Markus Zocholl)
+  *  - Keyboard and Mouse device demos (normal, data interrupt and fully interrupt driven) combined into unified keyboard and mouse demos
+  *  - Keyboard and Mouse host demos (normal and data interrupt driven) combined into unified keyboard and mouse demos
+  *  - Removed AVRISP_Programmer project due to code quality concerns
+  *  - Fixed CDC demo not sending an empty packet after each transfer to prevent the host from buffering incomming data
+  *  - Fixed documentation typos and preprocessor checks relating to misspellings of the USE_RAM_DESCRIPTORS token (thanks to Ian Gregg)
+  *  - Fixed USBTask.h not conditionally including HostChapter9.h only when USB_CAN_BE_HOST is defined (thanks to Ian Gregg)
+  *  - Fixed incorrect ADC driver init register manipulation (thanks to Tobias)
+  *  - Added new GenericHID device demo application
+  *  - Fixed Still Image Host SImage_SendData() function not clearing the pipe bank after sending data
+  *
+  *
   *  \section Sec_ChangeLog090209 Version 090209
   *
   *  - PWM timer mode in AudioOut demo changed to Fast PWM for speed
   *  - Updated Magstripe project to work with the latest hardware revision
   *  - Fixed library not responding to the BCERRI flag correctly in host mode, leading to device lockups
-  *  - Fixed library handling Get Descriptor requests when not addressed as standard requests to the device or interface
+  *  - Fixed library handling Get Descriptor requests when not addressed as standard requests to the device or interface (thanks to
+  *    Nate Lawson)
   *  - Fixed serious data corruption issue in MassStorage demo dataflash write routine
   *  - Added new NO_CLEARSET_FEATURE_REQUEST compile time token
   *  - USB task now restores previous global interrupt state after execution, rather than forcing global interrupts to be enabled
@@ -58,7 +101,7 @@
   *  - Added AVRISP Programmer Project, courtesy of Opendous Inc.
   *  - Fixed CDC Host demo not searching through both CDC interfaces for endpoints
   *  - Fixed incorrect Product String descriptor length in the DFU class bootloader
-  *  - Fixed failed descriptor searches in ConfigDescriptor.c eating the last checked descriptor when another search is started
+  *
   *
   *  \section Sec_ChangeLog081224 Version 081224
   *
@@ -109,6 +152,7 @@
   *  - USB_RemoteWakeupEnabled is now correctly set and cleared by SetFeature and ClearFeature requests from the host
   *  - Changed prototype of GetDescriptor, so that it now returns the descriptor size (or zero if the descriptor doesn't exist)
   *    rather than passing the size back to the caller through a parameter and returning a boolean
+  *
   *
   *  \section Sec_ChangeLog153 Version 1.5.3 - Released 2nd October, 2008
   *
@@ -303,7 +347,7 @@
   *  - Added Endpoint_Read_Stream, Endpoint_Write_Stream, Pipe_Read_Stream and Pipe_Write_Stream functions
   *    (including Big and Little Endian variants)
   *  - Made Dataflash functions inline for speed, removed now empty Dataflash.c driver file
-  *  - Added new SetSystemClockPrescaler() macro - thanks to Joerg Wunsch
+  *  - Added new SetSystemClockPrescaler() macro (thanks to Joerg Wunsch)
   *  - Fixed Endpoint_ClearStall() to function correctly on full USB controller AVRs (AT90USBXXX6/7)
   *  - Endpoint_Setup_In_Clear() and Endpoint_Setup_Out_Clear() no longer set FIFOCON, in line with the
   *    directives in the datasheet

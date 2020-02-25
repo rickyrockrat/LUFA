@@ -93,8 +93,8 @@ int main(void)
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
 
-	/* Disable Clock Division */
-	SetSystemClockPrescaler(0);
+	/* Disable clock division */
+	clock_prescale_set(clock_div_1);
 
 	/* Hardware Initialization */
 	Magstripe_Init();
@@ -204,6 +204,10 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				
 				/* Send the flag to the host */
 				Endpoint_ClearSetupIN();
+
+				/* Acknowledge status stage */
+				while (!(Endpoint_IsSetupOUTReceived()));
+				Endpoint_ClearSetupOUT();
 			}
 			
 			break;
@@ -218,7 +222,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Set or clear the flag depending on what the host indicates that the current Protocol should be */
 				UsingReportProtocol = (wValue != 0x0000);
 				
-				/* Send an empty packet to acknowedge the command */
+				/* Acknowledge status stage */
+				while (!(Endpoint_IsSetupINReady()));
 				Endpoint_ClearSetupIN();
 			}
 			
@@ -234,7 +239,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				/* Get idle period in MSB */
 				IdleCount = (wValue >> 8);
 				
-				/* Send an empty packet to acknowedge the command */
+				/* Acknowledge status stage */
+				while (!(Endpoint_IsSetupINReady()));
 				Endpoint_ClearSetupIN();
 			}
 			
@@ -249,6 +255,10 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				
 				/* Send the flag to the host */
 				Endpoint_ClearSetupIN();
+
+				/* Acknowledge status stage */
+				while (!(Endpoint_IsSetupOUTReceived()));
+				Endpoint_ClearSetupOUT();
 			}
 
 			break;
@@ -306,13 +316,13 @@ bool GetNextReport(USB_KeyboardReport_Data_t* ReportData)
 		if (OddReport)
 		{
 			/* Set the report key code to the key code for the next data bit */
-			ReportData->KeyCode[0] = BitBuffer_GetNextBit(Buffer) ? KEY_1 : KEY_0;
+			ReportData->KeyCode = BitBuffer_GetNextBit(Buffer) ? KEY_1 : KEY_0;
 			
 			/* If buffer is now empty, a new line must be sent instead of the terminating bit */
 			if (!(Buffer->Elements))
 			{
 				/* Set the keycode to the code for an enter key press */
-				ReportData->KeyCode[0] = KEY_ENTER;				
+				ReportData->KeyCode = KEY_ENTER;				
 			}
 		}
 

@@ -16,6 +16,7 @@
 # Carlos Lamas
 # Dean Camera
 # Opendous Inc.
+# Denver Gingerich
 #
 #----------------------------------------------------------------------------
 # On command line:
@@ -30,18 +31,6 @@
 #
 # make program = Download the hex file to the device, using avrdude.
 #                Please customize the avrdude settings below first!
-#
-# make dfu = Download the hex file to the device, using dfu-programmer (must
-#            have dfu-programmer installed).
-#
-# make flip = Download the hex file to the device, using Atmel FLIP (must
-#             have Atmel FLIP installed).
-#
-# make dfu-ee = Download the eeprom file to the device, using dfu-programmer
-#               (must have dfu-programmer installed).
-#
-# make flip-ee = Download the eeprom file to the device, using Atmel FLIP
-#                (must have Atmel FLIP installed).
 #
 # make doxygen = Generate DoxyGen documentation for the project (must have
 #                DoxyGen installed)
@@ -89,6 +78,20 @@ BOARD  = USBKEY
 F_CPU = 8000000
 
 
+# Input clock frequency.
+#     This will define a symbol, F_CLOCK, in all source code files equal to the 
+#     input clock frequency (before any prescaling is performed). This value may
+#     differ from F_CPU if prescaling is used on the latter, and is required as the
+#     raw input clock is fed directly to the PLL sections of the AVR for high speed
+#     clock generation for the USB and other AVR subsections. Do NOT tack on a 'UL'
+#     at the end, this will be done automatically to create a 32-bit value in your
+#     source code.
+#
+#     If no clock division is performed on the input clock inside the AVR (via the
+#     CPU clock adjust registers or the clock division fuses), this will be equal to F_CPU.
+F_CLOCK = 8000000
+
+
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
@@ -103,17 +106,22 @@ TARGET = BootloaderCDC
 OBJDIR = .
 
 
+# Path to the LUFA library
+LUFA_PATH = ../..
+
+
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c                                          \
-	  Descriptors.c                                        \
-	  ../../LUFA/Drivers/USB/LowLevel/LowLevel.c           \
-	  ../../LUFA/Drivers/USB/LowLevel/Endpoint.c           \
-	  ../../LUFA/Drivers/USB/LowLevel/DevChapter9.c        \
-	  ../../LUFA/Drivers/USB/HighLevel/USBTask.c           \
-	  ../../LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
-	  ../../LUFA/Drivers/USB/HighLevel/Events.c            \
-	  ../../LUFA/Drivers/USB/HighLevel/StdDescriptors.c    \
-	  
+SRC = $(TARGET).c                                                 \
+	  Descriptors.c                                               \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/LowLevel.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Endpoint.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/DevChapter9.c        \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/StdDescriptors.c    \
+
+
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC = 
 
@@ -145,7 +153,7 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = ../../
+EXTRAINCDIRS = $(LUFA_PATH)/
 
 
 # Compiler flag to set the C Standard level.
@@ -161,9 +169,11 @@ BOOT_START = 0x1E000
 
 
 # Place -D or -U options here for C sources
-CDEFS  = -DF_CPU=$(F_CPU)UL -DBOARD=BOARD_$(BOARD) -DUSE_NONSTANDARD_DESCRIPTOR_NAMES -DSTATIC_ENDPOINT_CONFIGURATION
-CDEFS += -DUSB_DEVICE_ONLY -DUSE_STATIC_OPTIONS="(USB_DEVICE_OPT_FULLSPEED | USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)"
-CDEFS += -DUSE_RAM_DESCRIPTORS -DBOOT_START_ADDR=$(BOOT_START)UL -DFIXED_CONTROL_ENDPOINT_SIZE=8 -DUSE_SINGLE_DEVICE_CONFIGURATION
+CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD)
+CDEFS += -DUSB_DEVICE_ONLY -DUSE_NONSTANDARD_DESCRIPTOR_NAMES
+CDEFS += -DSTATIC_ENDPOINT_CONFIGURATION -DFIXED_CONTROL_ENDPOINT_SIZE=8
+CDEFS += -DUSE_STATIC_OPTIONS="(USB_DEVICE_OPT_FULLSPEED | USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)"
+CDEFS += -DUSE_RAM_DESCRIPTORS -DBOOT_START_ADDR=$(BOOT_START)UL -DUSE_SINGLE_DEVICE_CONFIGURATION
 
 
 # Place -D or -U options here for ASM sources
@@ -193,6 +203,10 @@ CFLAGS += -ffunction-sections
 CFLAGS += -fpack-struct
 CFLAGS += -fshort-enums
 CFLAGS += -fno-inline-small-functions
+CFLAGS += -fno-reorder-blocks
+CFLAGS += -fno-reorder-blocks-and-partition
+CFLAGS += -fno-reorder-functions
+CFLAGS += -fno-toplevel-reorder
 CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wundef
@@ -437,7 +451,7 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target.
-all: begin gccversion sizebefore build checkhooks checklibmode sizeafter end
+all: begin gccversion sizebefore build checkhooks checklibmode checkboard sizeafter end
 
 # Change the build target to build a HEX file or a library.
 build: elf hex eep lss sym
@@ -468,7 +482,9 @@ end:
 
 # Display size of file.
 HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
-ELFSIZE = $(SIZE) --mcu=$(MCU) --format=avr $(TARGET).elf
+ELFSIZE = $(SIZE) $(MCU_FLAG) $(FORMAT_FLAG) $(TARGET).elf
+MCU_FLAG = $(shell $(SIZE) --help | grep -- --mcu > /dev/null && echo --mcu=$(MCU) )
+FORMAT_FLAG = $(shell $(SIZE) --help | grep -- --format=.*avr > /dev/null && echo --format=avr )
 
 sizebefore:
 	@if test -f $(TARGET).elf; then echo; echo $(MSG_SIZE_BEFORE); $(ELFSIZE); \
@@ -484,8 +500,8 @@ checkhooks: build
 	@$(shell) (grep -s '^Event.*LUFA/.*\\.o' $(TARGET).map | \
 	           cut -d' ' -f1 | cut -d'_' -f2- | grep ".*") || \
 			   echo "(None)"
-	@echo ----- End Unhooked LUFA Events -----
-	
+	@echo ------------------------------------
+
 checklibmode:
 	@echo
 	@echo ----------- Library Mode -----------
@@ -494,6 +510,12 @@ checklibmode:
 	          || echo "No specific mode (both device and host mode allowable)."
 	@echo ------------------------------------
 
+checkboard:
+	@echo
+	@echo ---------- Selected Board ----------
+	@echo Selected board model is $(BOARD).
+	@echo ------------------------------------
+	
 # Display compiler version information.
 gccversion : 
 	@$(CC) --version
@@ -504,29 +526,6 @@ gccversion :
 program: $(TARGET).hex $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
-flip: $(TARGET).hex
-	batchisp -hardware usb -device $(MCU) -operation erase f
-	batchisp -hardware usb -device $(MCU) -operation loadbuffer $(TARGET).hex program
-	batchisp -hardware usb -device $(MCU) -operation start reset 0
-
-dfu: $(TARGET).hex
-	dfu-programmer $(MCU) erase
-	dfu-programmer $(MCU) flash --debug 1 $(TARGET).hex
-	dfu-programmer $(MCU) reset
-
-flip-ee: $(TARGET).hex $(TARGET).eep
-	mv $(TARGET).eep $(TARGET)eep.hex
-	batchisp -hardware usb -device $(MCU) -operation memory EEPROM erase F memory FLASH erase F
-	batchisp -hardware usb -device $(MCU) -operation memory EEPROM
-	loadbuffer $(TARGET)eep.hex memory FLASH loadbuffer $(TARGET).hex
-	program
-	batchisp -hardware usb -device $(MCU) -operation start reset 0
-
-dfu-ee: $(TARGET).hex $(TARGET).eep
-	dfu-programmer $(MCU) erase
-	dfu-programmer $(MCU) flash --debug 1 $(TARGET).hex
-	dfu-programmer $(MCU) eeprom --debug 1 $(TARGET).eep
-	dfu-programmer $(MCU) reset
 
 # Generate avr-gdb config/init file which does the following:
 #     define the reset signal, load the target file, connect to target, and set 
@@ -666,10 +665,11 @@ clean: begin clean_list clean_binary end
 
 clean_binary:
 	$(REMOVE) $(TARGET).hex
-
+	
 clean_list:
 	@echo $(MSG_CLEANING)
 	$(REMOVE) $(TARGET).eep
+	$(REMOVE) $(TARGET)eep.hex
 	$(REMOVE) $(TARGET).cof
 	$(REMOVE) $(TARGET).elf
 	$(REMOVE) $(TARGET).map
@@ -687,7 +687,7 @@ doxygen:
 	@echo Generating Project Documentation...
 	@doxygen Doxygen.conf
 	@echo Documentation Generation Complete.
-	
+
 clean_doxygen:
 	rm -rf Documentation
 
@@ -700,8 +700,8 @@ $(shell mkdir $(OBJDIR) 2>/dev/null)
 
 
 # Listing of phony targets.
-.PHONY : all checkhooks checklibmode begin  \
-finish end sizebefore sizeafter gccversion  \
-build elf hex eep lss sym coff extcoff      \
-clean clean_list clean_binary program debug \
-gdb-config doxygen
+.PHONY : all checkhooks checklibmode checkboard   \
+begin finish end sizebefore sizeafter gccversion  \
+build elf hex eep lss sym coff extcoff clean      \
+clean_list clean_binary program debug gdb-config  \
+doxygen

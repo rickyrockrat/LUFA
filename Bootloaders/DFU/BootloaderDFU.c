@@ -32,13 +32,6 @@
  *
  *  Main source file for the DFU class bootloader. This file contains the complete bootloader logic.
  */
- 
-/** Configuration define. Define this token to true to case the bootloader to reject all memory commands
- *  until a memory erase has been performed. When used in conjunction with the lockbits of the AVR, this
- *  can protect the AVR's firmware from being dumped from a secured AVR. When false, memory operations are
- *  allowed at any time.
- */
-#define SECURE_MODE           false
 
 #define  INCLUDE_FROM_BOOTLOADER_C
 #include "BootloaderDFU.h"
@@ -57,7 +50,7 @@ bool RunBootloader = true;
 
 /** Flag to indicate if the bootloader is waiting to exit. When the host requests the bootloader to exit and
  *  jump to the application address it specifies, it sends two sequential commands which must be properly
- *  acknowedged. Upon reception of the first the RunBootloader flag is cleared and the WaitForExit flag is set,
+ *  acknowledged. Upon reception of the first the RunBootloader flag is cleared and the WaitForExit flag is set,
  *  causing the bootloader to wait for the final exit command before shutting down.
  */
 bool WaitForExit = false;
@@ -109,8 +102,8 @@ int main (void)
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
 
-	/* Disable Clock Division */
-	SetSystemClockPrescaler(0);
+	/* Disable clock division */
+	clock_prescale_set(clock_div_1);
 	
 	/* Relocate the interrupt vector table to the bootloader section */
 	MCUCR = (1 << IVCE);
@@ -305,7 +298,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 
 			Endpoint_ClearSetupOUT();
 
-			/* Send ZLP to the host to acknowedge the request */
+			/* Acknowledge status stage */
+			while (!(Endpoint_IsSetupINReady()));
 			Endpoint_ClearSetupIN();
 				
 			break;
@@ -392,7 +386,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 
 			Endpoint_ClearSetupIN();
 
-			/* Send ZLP to the host to acknowedge the request */
+			/* Acknowledge status stage */
 			while (!(Endpoint_IsSetupOUTReceived()));
 			Endpoint_ClearSetupOUT();
 
@@ -415,6 +409,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 
 			Endpoint_ClearSetupIN();
 			
+			/* Acknowledge status stage */
 			while (!(Endpoint_IsSetupOUTReceived()));
 			Endpoint_ClearSetupOUT();
 	
@@ -424,9 +419,11 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 			
 			/* Reset the status value variable to the default OK status */
 			DFU_Status = OK;
-			
-			Endpoint_ClearSetupIN();
 
+			/* Acknowledge status stage */
+			while (!(Endpoint_IsSetupINReady()));
+			Endpoint_ClearSetupIN();
+			
 			break;
 		case DFU_GETSTATE:
 			Endpoint_ClearSetupReceived();
@@ -436,6 +433,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 		
 			Endpoint_ClearSetupIN();
 			
+			/* Acknowledge status stage */
 			while (!(Endpoint_IsSetupOUTReceived()));
 			Endpoint_ClearSetupOUT();
 
@@ -446,6 +444,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 			/* Reset the current state variable to the default idle state */
 			DFU_State = dfuIDLE;
 			
+			/* Acknowledge status stage */
+			while (!(Endpoint_IsSetupINReady()));
 			Endpoint_ClearSetupIN();
 
 			break;
@@ -677,7 +677,7 @@ static void ProcessWriteCommand(void)
 static void ProcessReadCommand(void)
 {
 	const uint8_t BootloaderInfo[3] = {BOOTLOADER_VERSION, BOOTLOADER_ID_BYTE1, BOOTLOADER_ID_BYTE2};
-	const uint8_t SignatureInfo[3]  = {SIGNATURE_BYTE_1, SIGNATURE_BYTE_2, SIGNATURE_BYTE_3};
+	const uint8_t SignatureInfo[3]  = {SIGNATURE_0, SIGNATURE_1, SIGNATURE_2};
 
 	uint8_t DataIndexToRead = SentCommand.Data[1];
 

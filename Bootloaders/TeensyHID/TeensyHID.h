@@ -41,6 +41,7 @@
 		#include <avr/wdt.h>
 		#include <avr/boot.h>
 		#include <avr/wdt.h>
+		#include <avr/power.h>
 		#include <util/delay.h>
 		#include <stdbool.h>
 
@@ -56,9 +57,9 @@
 
 	/* Macros: */
 		/** HID Class specific request to send the next HID report to the device. */
-		#define REQ_SetReport           0x09
+		#define REQ_SetReport             0x09
 		
-		#define TEENSY_STARTAPPLICATION 0xFFFF
+		#define TEENSY_STARTAPPLICATION   0xFFFF
 
 	/* Event Handlers: */
 		/** Indicates that this module will catch the USB_Disconnect event when thrown by the library. */

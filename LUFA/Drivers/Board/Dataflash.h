@@ -52,21 +52,7 @@
 	/* Includes: */
 	#include "../AT90USBXXX/SPI.h"
 	#include "../../Common/Common.h"
-	
-	#if !defined(BOARD)
-		#error BOARD must be set in makefile to a value specified in BoardTypes.h.
-	#elif (BOARD == BOARD_USBKEY)
-		#include "USBKEY/Dataflash.h"
-	#elif (BOARD == BOARD_STK525)
-		#include "STK525/Dataflash.h"
-	#elif (BOARD == BOARD_STK526)
-		#include "STK526/Dataflash.h"
-	#elif (BOARD == BOARD_USER)
-		#include "Board/Dataflash.h"
-	#else
-		#error The selected board does not contain a dataflash IC.
-	#endif
-	
+		
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
@@ -89,6 +75,54 @@
 			#define Dataflash_DeselectChip()             Dataflash_SelectChip(DATAFLASH_NO_CHIP)
 
 		/* Inline Functions: */
+			/** Sends a byte to the currently selected dataflash IC, and returns a byte from the dataflash.
+			 *
+			 *  \param Byte of data to send to the dataflash
+			 *
+			 *  \return Last response byte from the dataflash
+			 */
+			static inline uint8_t Dataflash_TransferByte(const uint8_t Byte) ATTR_ALWAYS_INLINE;
+			static inline uint8_t Dataflash_TransferByte(const uint8_t Byte)
+			{
+				return SPI_TransferByte(Byte);
+			}
+
+			/** Sends a byte to the currently selected dataflash IC, and ignores the next byte from the dataflash.
+			 *
+			 *  \param Byte of data to send to the dataflash
+			 */
+			static inline void Dataflash_SendByte(const uint8_t Byte) ATTR_ALWAYS_INLINE;
+			static inline void Dataflash_SendByte(const uint8_t Byte)
+			{
+				SPI_SendByte(Byte);
+			}
+			
+			/** Sends a dummy byte to the currently selected dataflash IC, and returns the next byte from the dataflash.
+			 *
+			 *  \return Last response byte from the dataflash
+			 */
+			static inline uint8_t Dataflash_ReceiveByte(void) ATTR_ALWAYS_INLINE ATTR_WARN_UNUSED_RESULT;
+			static inline uint8_t Dataflash_ReceiveByte(void)
+			{
+				return SPI_ReceiveByte();
+			}
+
+		/* Includes: */
+			#if !defined(BOARD)
+				#error BOARD must be set in makefile to a value specified in BoardTypes.h.
+			#elif (BOARD == BOARD_USBKEY)
+				#include "USBKEY/Dataflash.h"
+			#elif (BOARD == BOARD_STK525)
+				#include "STK525/Dataflash.h"
+			#elif (BOARD == BOARD_STK526)
+				#include "STK526/Dataflash.h"
+			#elif (BOARD == BOARD_USER)
+				#include "Board/Dataflash.h"
+			#else
+				#error The selected board does not contain a dataflash IC.
+			#endif
+
+		/* Inline Functions: */
 			/** Initializes the dataflash driver (including the SPI driver) so that commands and data may be
 			 *  sent to an attached dataflash IC.
 			 *
@@ -101,53 +135,16 @@
 
 				SPI_Init(PrescalerMask, true);
 			}
-
-			/** Sends a byte to the currently selected dataflash IC, and returns a byte from the dataflash.
-			 *
-			 *  \param Byte of data to send to the dataflash
-			 *
-			 *  \return Last response byte from the dataflash
-			 */
-			static inline uint8_t Dataflash_TransferByte(const uint8_t Byte) ATTR_ALWAYSINLINE;
-			static inline uint8_t Dataflash_TransferByte(const uint8_t Byte)
-			{
-				return SPI_TransferByte(Byte);
-			}
-
-			/** Sends a byte to the currently selected dataflash IC, and ignores the next byte from the dataflash.
-			 *
-			 *  \param Byte of data to send to the dataflash
-			 */
-			static inline void Dataflash_SendByte(const uint8_t Byte) ATTR_ALWAYSINLINE;
-			static inline void Dataflash_SendByte(const uint8_t Byte)
-			{
-				SPI_SendByte(Byte);
-			}
-			
-			/** Sends a dummy byte to the currently selected dataflash IC, and returns the next byte from the dataflash.
-			 *
-			 *  \return Last response byte from the dataflash
-			 */
-			static inline uint8_t Dataflash_ReceiveByte(void) ATTR_ALWAYSINLINE ATTR_WARN_UNUSED_RESULT;
-			static inline uint8_t Dataflash_ReceiveByte(void)
-			{
-				return SPI_ReceiveByte();
-			}
 			
 			/** Toggles the select line of the currently selected dataflash IC, so that it is ready to receive
 			 *  a new command.
 			 */
 			static inline void Dataflash_ToggleSelectedChipCS(void)
 			{
-				#if (DATAFLASH_TOTALCHIPS == 2)
-					uint8_t SelectedChipMask = Dataflash_GetSelectedChip();
+				uint8_t SelectedChipMask = Dataflash_GetSelectedChip();
 					
-					Dataflash_DeselectChip();
-					Dataflash_SelectChip(SelectedChipMask);
-				#else
-					Dataflash_DeselectChip();
-					Dataflash_SelectChip(DATAFLASH_CHIP1);	
-				#endif
+				Dataflash_DeselectChip();
+				Dataflash_SelectChip(SelectedChipMask);
 			}
 
 			/** Spinloops while the currently selected dataflash is busy executing a command, such as a main
@@ -162,28 +159,14 @@
 
 			/** Selects a dataflash IC from the given page number, which should range from 0 to
 			 *  ((DATAFLASH_PAGES * DATAFLASH_TOTALCHIPS) - 1). For boards containing only one
-			 *  dataflash IC, this will select DATAFLASH_CHIP1. If the given page number is outside the total number
-			 *  of pages contained in the boards dataflash ICs, all dataflash ICs are deselected.
+			 *  dataflash IC, this will select DATAFLASH_CHIP1. If the given page number is outside
+			 *  the total number of pages contained in the boards dataflash ICs, all dataflash ICs
+			 *  are deselected.
 			 *
 			 *  \param PageAddress  Address of the page to manipulate, ranging from
 			 *                      ((DATAFLASH_PAGES * DATAFLASH_TOTALCHIPS) - 1).
 			 */
-			static inline void Dataflash_SelectChipFromPage(const uint16_t PageAddress)
-			{
-				Dataflash_DeselectChip();
-				
-				if (PageAddress >= (DATAFLASH_PAGES * DATAFLASH_TOTALCHIPS))
-				  return;
-
-				#if (DATAFLASH_TOTALCHIPS == 2)
-					if (PageAddress & 0x01)
-					  Dataflash_SelectChip(DATAFLASH_CHIP2);
-					else
-					  Dataflash_SelectChip(DATAFLASH_CHIP1);
-				#else
-					Dataflash_SelectChip(DATAFLASH_CHIP1);
-				#endif
-			}
+			static inline void Dataflash_SelectChipFromPage(const uint16_t PageAddress);
 
 			/** Sends a set of page and buffer address bytes to the currently selected dataflash IC, for use with
 			 *  dataflash commands which require a complete 24-byte address.
@@ -191,16 +174,7 @@
 			 *  \param PageAddress  Page address within the selected dataflash IC
 			 *  \param BufferByte   Address within the dataflash's buffer
 			 */
-			static inline void Dataflash_SendAddressBytes(uint16_t PageAddress, const uint16_t BufferByte)
-			{	
-				#if (DATAFLASH_TOTALCHIPS == 2)
-					PageAddress >>= 1;
-				#endif
-
-				Dataflash_SendByte(PageAddress >> 5);
-				Dataflash_SendByte((PageAddress << 3) | (BufferByte >> 8));
-				Dataflash_SendByte(BufferByte);
-			}
+			static inline void Dataflash_SendAddressBytes(uint16_t PageAddress, const uint16_t BufferByte);
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

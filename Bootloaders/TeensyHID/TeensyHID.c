@@ -53,8 +53,8 @@ int main(void)
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
 
-	/* Disable Clock Division */
-	SetSystemClockPrescaler(0);
+	/* Disable clock division */
+	clock_prescale_set(clock_div_1);
 
 	/* Relocate the interrupt vector table to the bootloader section */
 	MCUCR = (1 << IVCE);
@@ -144,10 +144,8 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 
 				Endpoint_ClearSetupOUT();
 
-				/* Wait until the host is ready to receive the request confirmation */
+				/* Acknowledge status stage */
 				while (!(Endpoint_IsSetupINReady()));
-				
-				/* Handshake the request by sending an empty IN packet */
 				Endpoint_ClearSetupIN();
 			}
 			

@@ -12,11 +12,13 @@
  *  This is due to two reasons; one, it is the hardware the author posesses, and two, it is the most popular Atmel
  *  USB demonstration board to date.
  *
+ *
  *  \section Sec_Prerequisites Prerequisites
  *  Before you can compile any of the LUFA library code or demos, you will need a recent distribution of avr-libc (1.6.2+)
  *  and the AVR-GCC (4.2+) compiler. For Windows users, the best way to obtain these is the WinAVR project
  *  (http://winavr.sourceforge.net) as this provides a single-file setup for everything required to compile your
  *  own AVR projects.
+ *
  *
  *  \section Sec_Configuring Configuring the Demos, Bootloaders and Projects
  *  If the target AVR model, clock speed, board or other settings are different to the current settings, they must be changed
@@ -34,7 +36,8 @@
  *
  *    - <b>MCU</b>, the target AVR processor.
  *    - <b>BOARD</b>, the target board hardware
- *    - <b>F_CPU</b>, the target AVR master clock frequency
+ *    - <b>F_CLOCK</b>, the target raw master clock frequency, before any prescaling is performed
+ *    - <b>F_CPU</b>, the target AVR CPU master clock frequency, after any prescaling
  *    - <b>CDEFS</b>, the C preprocessor defines which configure the source code
  *
  *  These values should be changed to reflect the build hardware.
@@ -57,12 +60,20 @@
  *  directory into a /Board/ folder inside the application directory, and the stub driver completed with the appropriate code to drive the
  *  custom board's hardware.
  *
- *  \subsection SSec_F_CPU The F_CPU Parameter
- *  This parameter indicates the target AVR's master clock frequency, in Hz. Consult your AVR model's datasheet for allowable clock frequencies
- *  if the USB interface is to be operational.
+ *  \subsection SSec_F_CLOCK The F_CLOCK Parameter
+ *  This parameter indicates the target AVR's input clock frequency, in Hz. This is the actual clock input, before any prescaling is performed. In the
+ *  USB AVR architecture, the input clock before any prescaling is fed directly to the PLL subsystem, and thus the PLL is derived directly from the
+ *  clock input. The PLL then feeds the USB and other sections of the AVR with the correct upscaled frequencies required for those sections to function.
  *
- *  <b>Note that this value does not actually *alter* the AVR's clock frequency</b>, it is just a way to indicate to the library the clock frequency
+ *  <b>Note that this value does not actually *alter* the AVR's input clock frequency</b>, it is just a way to indicate to the library the clock frequency
  *  of the AVR as set by the AVR's fuses. If this value does not reflect the actual running frequency of the AVR, incorrect operation of one of more
+ *  library components will ocurr.
+ *
+ *  \subsection SSec_F_CPU The F_CPU Parameter
+ *  This parameter indicates the target AVR's master CPU clock frequency, in Hz.
+ *
+ *  <b>Note that this value does not actually *alter* the AVR's CPU clock frequency</b>, it is just a way to indicate to the library the clock frequency
+ *  of the AVR core as set by the AVR's fuses. If this value does not reflect the actual running frequency of the AVR, incorrect operation of one of more
  *  library components will ocurr.
  *
  *  \subsection SSec_CDEFS The CDEFS Parameter
@@ -74,6 +85,7 @@
  *  made to function through the altering of the makefile settings alone (or at all). Settings such as the USB mode (device, host or both), the USB
  *  interface speed (Low or Full speed) and other LUFA configuration options can be set here - refer to the library documentation for details on the
  *  configuration parameters.
+ *
  *
  *  \section Sec_Compiling Compiling a LUFA Application
  *  Compiling the LUFA demos, applications and/or bootloaders is very simple. LUFA comes with makefile scripts for
@@ -94,6 +106,7 @@
  *  Each demo, project and bootloader contains an AVRStudio project (.aps) which can be used to build each project. Once opened
  *  in AVRStudio, the project can be built and cleaned using the GUI buttons or menus. Note that the AVRStudio project files make
  *  use of the external project makefile, thus the procedure for configuring a demo remains the same regardless of the build environment.
+ *
  *
  *  \section Sec_Programming Programming a USB AVR
  *  Once you have built an application, you will need a way to program in the resulting ".HEX" file (and, if your

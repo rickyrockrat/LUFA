@@ -68,7 +68,7 @@ void Pipe_ClearPipes(void)
 
 uint8_t Pipe_WaitUntilReady(void)
 {
-	uint8_t TimeoutMSRem = USB_STREAM_TIMEOUT_MS;
+	uint16_t TimeoutMSRem = USB_STREAM_TIMEOUT_MS;
 
 	USB_INT_Clear(USB_INT_HSOFI);
 
@@ -190,7 +190,7 @@ uint8_t Pipe_Discard_Stream(uint16_t Length
 }
 
 uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length
-							#if !defined(NO_STREAM_CALLBACKS)
+#if !defined(NO_STREAM_CALLBACKS)
                                  , uint8_t (* const Callback)(void)
 #endif
 								 )
@@ -223,7 +223,7 @@ uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length
 }
 
 uint8_t Pipe_Read_Stream_BE(void* Buffer, uint16_t Length
-							#if !defined(NO_STREAM_CALLBACKS)
+#if !defined(NO_STREAM_CALLBACKS)
                                  , uint8_t (* const Callback)(void)
 #endif
 								 )
