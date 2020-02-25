@@ -1,0 +1,14 @@
+============================================
+        MyUSB PROJECT SCRATCHPAD
+============================================
+
+Bugs:
+	* N/A
+	
+To Document:
+	* OTG API
+	
+To Do:
+	* Finish OTG API - error bit API, VBUS API, interrupt API, OTG feature get/set
+	* Port to AT90USB82 and AT90USB162
+	* Auto suspend/wakeup management code in host

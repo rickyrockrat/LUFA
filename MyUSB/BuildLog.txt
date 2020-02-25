@@ -1,0 +1,1164 @@
+========================================== 
+=  This is a log of a complete build of  = 
+=  the MyUSB project and its demo apps.  = 
+========================================== 
+= NB: Some portions of this log use UNIX = 
+= style end-of-line markers, which might = 
+= be misinterpreted by Windows programs. = 
+=                                        = 
+= Programs such as WordPad will display  = 
+= this log correctly on Windows systems. = 
+========================================== 
+ 
+START BUILD TIME: 22:11:31.28  DATE: Thu 24/01/2008 
+ 
+ 
+ 
+Executing "make all" on all MyUSB library elements.
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: AudioInput.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: AudioInput.elf
+
+Creating load file for Flash: AudioInput.hex
+
+Creating load file for EEPROM: AudioInput.eep
+
+Creating Extended Listing: AudioInput.lss
+
+Creating Symbol Table: AudioInput.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    2792 bytes (2.1% Full)
+(.text + .data + .bootloader)
+
+Data:         15 bytes (0.2% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: AudioOutput.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: AudioOutput.elf
+
+Creating load file for Flash: AudioOutput.hex
+
+Creating load file for EEPROM: AudioOutput.eep
+
+Creating Extended Listing: AudioOutput.lss
+
+Creating Symbol Table: AudioOutput.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    2850 bytes (2.2% Full)
+(.text + .data + .bootloader)
+
+Data:         15 bytes (0.2% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: CDC.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: CDC.elf
+
+Creating load file for Flash: CDC.hex
+
+Creating load file for EEPROM: CDC.eep
+
+Creating Extended Listing: CDC.lss
+
+Creating Symbol Table: CDC.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    3300 bytes (2.5% Full)
+(.text + .data + .bootloader)
+
+Data:         23 bytes (0.3% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: Joystick.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: Joystick.elf
+
+Creating load file for Flash: Joystick.hex
+
+Creating load file for EEPROM: Joystick.eep
+
+Creating Extended Listing: Joystick.lss
+
+Creating Symbol Table: Joystick.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_UnhandledControlPacket
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    2776 bytes (2.1% Full)
+(.text + .data + .bootloader)
+
+Data:         14 bytes (0.2% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: Keyboard.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: Keyboard.elf
+
+Creating load file for Flash: Keyboard.hex
+
+Creating load file for EEPROM: Keyboard.eep
+
+Creating Extended Listing: Keyboard.lss
+
+Creating Symbol Table: Keyboard.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_UnhandledControlPacket
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    2748 bytes (2.1% Full)
+(.text + .data + .bootloader)
+
+Data:         14 bytes (0.2% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: KeyboardHost.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial_Stream.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Pipe.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Host.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/HostChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Linking: KeyboardHost.elf
+
+Creating load file for Flash: KeyboardHost.hex
+
+Creating load file for EEPROM: KeyboardHost.eep
+
+Creating Extended Listing: KeyboardHost.lss
+
+Creating Symbol Table: KeyboardHost.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_Disconnect
+USB_PowerOnFail
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_HOST_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    5982 bytes (4.6% Full)
+(.text + .data + .bootloader)
+
+Data:         80 bytes (1.0% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: KeyboardHostViaInt.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial_Stream.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Pipe.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Host.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/HostChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Linking: KeyboardHostViaInt.elf
+
+Creating load file for Flash: KeyboardHostViaInt.hex
+
+Creating load file for EEPROM: KeyboardHostViaInt.eep
+
+Creating Extended Listing: KeyboardHostViaInt.lss
+
+Creating Symbol Table: KeyboardHostViaInt.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_Disconnect
+USB_PowerOnFail
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_HOST_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    6120 bytes (4.7% Full)
+(.text + .data + .bootloader)
+
+Data:         81 bytes (1.0% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: Magstripe.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: Magstripe.elf
+
+Creating load file for Flash: Magstripe.hex
+
+Creating load file for EEPROM: Magstripe.eep
+
+Creating Extended Listing: Magstripe.lss
+
+Creating Symbol Table: Magstripe.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_UnhandledControlPacket
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    2818 bytes (2.1% Full)
+(.text + .data + .bootloader)
+
+Data:       1038 bytes (12.7% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: MassStorage.c
+
+Compiling C: Descriptors.c
+
+Compiling C: SCSI.c
+
+Compiling C: DataflashManager.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USBKEY/Dataflash.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: MassStorage.elf
+
+Creating load file for Flash: MassStorage.hex
+
+Creating load file for EEPROM: MassStorage.eep
+
+Creating Extended Listing: MassStorage.lss
+
+Creating Symbol Table: MassStorage.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    5800 bytes (4.4% Full)
+(.text + .data + .bootloader)
+
+Data:         78 bytes (1.0% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: MassStorageHost.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial_Stream.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Pipe.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Host.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/HostChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Linking: MassStorageHost.elf
+
+Creating load file for Flash: MassStorageHost.hex
+
+Creating load file for EEPROM: MassStorageHost.eep
+
+Creating Extended Listing: MassStorageHost.lss
+
+Creating Symbol Table: MassStorageHost.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_Disconnect
+USB_PowerOnFail
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_HOST_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    6746 bytes (5.1% Full)
+(.text + .data + .bootloader)
+
+Data:        105 bytes (1.3% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: Mouse.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: Mouse.elf
+
+Creating load file for Flash: Mouse.hex
+
+Creating load file for EEPROM: Mouse.eep
+
+Creating Extended Listing: Mouse.lss
+
+Creating Symbol Table: Mouse.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_UnhandledControlPacket
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    2774 bytes (2.1% Full)
+(.text + .data + .bootloader)
+
+Data:         14 bytes (0.2% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: MouseHost.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial_Stream.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Pipe.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Host.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/HostChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Linking: MouseHost.elf
+
+Creating load file for Flash: MouseHost.hex
+
+Creating load file for EEPROM: MouseHost.eep
+
+Creating Extended Listing: MouseHost.lss
+
+Creating Symbol Table: MouseHost.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_Disconnect
+USB_PowerOnFail
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_HOST_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    6040 bytes (4.6% Full)
+(.text + .data + .bootloader)
+
+Data:         80 bytes (1.0% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: MouseHostViaInt.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial_Stream.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Pipe.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Host.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/HostChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Linking: MouseHostViaInt.elf
+
+Creating load file for Flash: MouseHostViaInt.hex
+
+Creating load file for EEPROM: MouseHostViaInt.eep
+
+Creating Extended Listing: MouseHostViaInt.lss
+
+Creating Symbol Table: MouseHostViaInt.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_Disconnect
+USB_PowerOnFail
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_HOST_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    6152 bytes (4.7% Full)
+(.text + .data + .bootloader)
+
+Data:         81 bytes (1.0% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: TestApp.c
+
+Compiling C: TestEvents.c
+
+Compiling C: Descriptors.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/MemoryAllocator/DynAlloc.c
+
+Compiling C: ../../MyUSB/Drivers/USBKEY/Temperature.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial_Stream.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Pipe.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/HostChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Host.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: TestApp.elf
+
+Creating load file for Flash: TestApp.hex
+
+Creating load file for EEPROM: TestApp.eep
+
+Creating Extended Listing: TestApp.lss
+
+Creating Symbol Table: TestApp.sym
+
+------- Unhooked MyUSB Events -------
+(None)
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+No specific mode (both device and host mode allowable).
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    8380 bytes (6.4% Full)
+(.text + .data + .bootloader)
+
+Data:         75 bytes (0.9% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+-------- begin --------
+Cleaning project:
+-------- end --------
+
+
+-------- begin --------
+avr-gcc (GCC) 4.2.2 (WinAVR 20071221rc1)
+Copyright (C) 2007 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Compiling C: USBtoSerial.c
+
+Compiling C: Descriptors.c
+
+Compiling C: RingBuff.c
+
+Compiling C: ../../MyUSB/Scheduler/Scheduler.c
+
+Compiling C: ../../MyUSB/Drivers/AT90USB_64x_128x/Serial.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/Endpoint.c
+
+Compiling C: ../../MyUSB/Drivers/USB/LowLevel/DevChapter9.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBTask.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/Events.c
+
+Compiling C: ../../MyUSB/Drivers/USB/HighLevel/StdDescriptors.c
+
+Linking: USBtoSerial.elf
+
+Creating load file for Flash: USBtoSerial.hex
+
+Creating load file for EEPROM: USBtoSerial.eep
+
+Creating Extended Listing: USBtoSerial.lss
+
+Creating Symbol Table: USBtoSerial.sym
+
+------- Unhooked MyUSB Events -------
+USB_Connect
+USB_DeviceError
+USB_Disconnect
+USB_PowerOnFail
+USB_Reset
+USB_Suspend
+USB_VBUSChange
+USB_VBUSConnect
+USB_VBUSDisconnect
+USB_WakeUp
+----- End Unhooked MyUSB Events -----
+
+----------- Library Mode -----------
+USB_DEVICE_ONLY
+------------------------------------
+
+Size after:
+AVR Memory Usage
+----------------
+Device: at90usb1287
+
+Program:    3678 bytes (2.8% Full)
+(.text + .data + .bootloader)
+
+Data:        290 bytes (3.5% Full)
+(.data + .bss + .noinit)
+
+
+
+-------- end --------
+
+
+MyUSB "make all" operation complete.
+ 
+ 
+ 
+END BUILD TIME: 22:12:36.16  DATE: Thu 24/01/2008 
+ 
+========================================== 
+=           End of build log.            = 
+========================================== 
