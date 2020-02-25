@@ -89,7 +89,11 @@ F_CPU = 8000000
 #
 #     If no clock division is performed on the input clock inside the AVR (via the
 #     CPU clock adjust registers or the clock division fuses), this will be equal to F_CPU.
-F_CLOCK = 8000000
+F_CLOCK = $(F_CPU)
+
+
+# Starting byte address of the bootloader
+BOOT_START = 0x1E000
 
 
 # Output format. (can be srec, ihex, binary)
@@ -110,10 +114,21 @@ OBJDIR = .
 LUFA_PATH = ../..
 
 
+# LUFA library compile-time options
+LUFA_OPTS  = -D USB_DEVICE_ONLY
+LUFA_OPTS += -D USE_NONSTANDARD_DESCRIPTOR_NAMES
+LUFA_OPTS += -D DEVICE_STATE_AS_GPIOR=0
+LUFA_OPTS += -D CONTROL_ONLY_DEVICE
+LUFA_OPTS += -D FIXED_CONTROL_ENDPOINT_SIZE=32
+LUFA_OPTS += -D FIXED_NUM_CONFIGURATIONS=1
+LUFA_OPTS += -D USE_RAM_DESCRIPTORS
+LUFA_OPTS += -D USE_STATIC_OPTIONS="(USB_DEVICE_OPT_FULLSPEED | USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)"
+LUFA_OPTS += -D NO_INTERNAL_SERIAL
+
+
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c                                                 \
 	  Descriptors.c                                               \
-	  $(LUFA_PATH)/LUFA/Scheduler/Scheduler.c                     \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/DevChapter9.c        \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Endpoint.c           \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Host.c               \
@@ -124,7 +139,6 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/HIDParser.c             \
 
  
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -169,16 +183,9 @@ EXTRAINCDIRS = $(LUFA_PATH)/
 CSTANDARD = -std=gnu99
 
 
-# Starting byte address of the bootloader
-BOOT_START = 0x1E000
-
-
 # Place -D or -U options here for C sources
-CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD)
-CDEFS += -DUSB_DEVICE_ONLY -DUSE_NONSTANDARD_DESCRIPTOR_NAMES -DCONTROL_ONLY_DEVICE
-CDEFS += -DFIXED_CONTROL_ENDPOINT_SIZE=32 -DUSE_SINGLE_DEVICE_CONFIGURATION
-CDEFS += -DUSE_STATIC_OPTIONS="(USB_DEVICE_OPT_FULLSPEED | USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)"
-CDEFS += -DUSE_RAM_DESCRIPTORS -DBOOT_START_ADDR=$(BOOT_START)UL
+CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD) $(LUFA_OPTS)
+CDEFS += -DBOOT_START_ADDR=$(BOOT_START)UL
 
 
 # Place -D or -U options here for ASM sources
@@ -209,10 +216,6 @@ CFLAGS += -fdata-sections
 CFLAGS += -fpack-struct
 CFLAGS += -fshort-enums
 CFLAGS += -fno-inline-small-functions
-CFLAGS += -fno-reorder-blocks
-CFLAGS += -fno-reorder-blocks-and-partition
-CFLAGS += -fno-reorder-functions
-CFLAGS += -fno-toplevel-reorder
 CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wundef
@@ -457,7 +460,7 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target.
-all: begin gccversion sizebefore build checkhooks checklibmode checkboard sizeafter end
+all: begin gccversion sizebefore build showeventhooks showliboptions showtarget sizeafter end
 
 # Change the build target to build a HEX file or a library.
 build: elf hex eep lss sym
@@ -500,27 +503,29 @@ sizeafter:
 	@if test -f $(TARGET).elf; then echo; echo $(MSG_SIZE_AFTER); $(ELFSIZE); \
 	2>/dev/null; echo; fi
 
-checkhooks: build
+showeventhooks: build
 	@echo
-	@echo ------- Unhooked LUFA Events -------
+	@echo -------- Unhooked LUFA Events --------
 	@$(shell) (grep -s '^EVENT_.*LUFA/.*\\.o' $(TARGET).map | \
 	           cut -d' ' -f1 | cut -d'_' -f2- | grep ".*") || \
 			   echo "(None)"
-	@echo ------------------------------------
+	@echo --------------------------------------
 
-checklibmode:
+showliboptions:
 	@echo
-	@echo ----------- Library Mode -----------
-	@$(shell) ($(CC) $(ALL_CFLAGS) -E -dM - < /dev/null \
-	          | grep 'USB_\(DEVICE\|HOST\)_ONLY' | cut -d' ' -f2 | grep ".*") \
-	          || echo "No specific mode (both device and host mode allowable)."
-	@echo ------------------------------------
+	@echo ---- Compile Time Library Options ----
+	@for i in $(LUFA_OPTS:-D%=%); do \
+		echo $$i; \
+	done
+	@echo --------------------------------------
 
-checkboard:
+showtarget:
 	@echo
-	@echo ---------- Selected Board ----------
-	@echo Selected board model is $(BOARD).
-	@echo ------------------------------------
+	@echo --------- Target Information ---------
+	@echo AVR Model: $(MCU)
+	@echo Board:     $(BOARD)
+	@echo Clock:     $(F_CPU)Hz CPU, $(F_CLOCK)Hz Master
+	@echo --------------------------------------
 	
 # Display compiler version information.
 gccversion : 
@@ -706,8 +711,7 @@ $(shell mkdir $(OBJDIR) 2>/dev/null)
 
 
 # Listing of phony targets.
-.PHONY : all checkhooks checklibmode checkboard   \
-begin finish end sizebefore sizeafter gccversion  \
-build elf hex eep lss sym coff extcoff clean      \
-clean_list clean_binary program debug gdb-config  \
-doxygen
+.PHONY : all showeventhooks showliboptions showtarget  \
+begin finish end sizebefore sizeafter gccversion build \
+elf hex eep lss sym coff extcoff program clean debug   \
+clean_list clean_binary gdb-config doxygen

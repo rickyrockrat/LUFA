@@ -67,6 +67,26 @@ bool RunBootloader = true;
  */
 int main(void)
 {
+	/* Setup hardware required for the bootloader */
+	SetupHardware();
+
+	while (RunBootloader)
+	{
+		CDC_Task();
+		USB_USBTask();
+	}
+	
+	/* Reset all configured hardware to their default states for the user app */
+	ResetHardware();
+
+	/* Start the user application */
+	AppPtr_t AppStartPtr = (AppPtr_t)0x0000;
+	AppStartPtr();	
+}
+
+/** Configures all hardware required for the bootloader. */
+void SetupHardware(void)
+{
 	/* Disable watchdog if enabled by bootloader/fuses */
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
@@ -80,18 +100,11 @@ int main(void)
 	
 	/* Initialize USB Subsystem */
 	USB_Init();
+}
 
-	while (RunBootloader)
-	{
-		USB_USBTask();
-		CDC_Task();
-	}
-	
-	Endpoint_SelectEndpoint(CDC_TX_EPNUM);
-
-	/* Wait until any pending transmissions have completed before shutting down */
-	while (!(Endpoint_IsINReady()));
-	
+/** Resets all configured hardware required for the bootloader back to their original states. */
+void ResetHardware(void)
+{
 	/* Shut down the USB subsystem */
 	USB_ShutDown();
 	
@@ -99,27 +112,14 @@ int main(void)
 	MCUCR = (1 << IVCE);
 	MCUCR = 0;
 
-	/* Reset any used hardware ports back to their defaults */
-	PORTD = 0;
-	DDRD  = 0;
-	
-	#if defined(PORTE)
-	PORTE = 0;
-	DDRE  = 0;
-	#endif
-	
 	/* Re-enable RWW section */
 	boot_rww_enable();
-
-	/* Start the user application */
-	AppPtr_t AppStartPtr = (AppPtr_t)0x0000;
-	AppStartPtr();	
 }
 
 /** Event handler for the USB_Disconnect event. This indicates that the bootloader should exit and the user
  *  application started.
  */
-void EVENT_USB_Disconnect(void)
+void EVENT_USB_Device_Disconnect(void)
 {
 	/* Upon disconnection, run user application */
 	RunBootloader = false;
@@ -128,7 +128,7 @@ void EVENT_USB_Disconnect(void)
 /** Event handler for the USB_ConfigurationChanged event. This configures the device's endpoints ready
  *  to relay data to and from the attached USB host.
  */
-void EVENT_USB_ConfigurationChanged(void)
+void EVENT_USB_Device_ConfigurationChanged(void)
 {
 	/* Setup CDC Notification, Rx and Tx Endpoints */
 	Endpoint_ConfigureEndpoint(CDC_NOTIFICATION_EPNUM, EP_TYPE_INTERRUPT,
@@ -144,11 +144,11 @@ void EVENT_USB_ConfigurationChanged(void)
 	                           ENDPOINT_BANK_SINGLE);
 }
 
-/** Event handler for the USB_UnhandledControlPacket event. This is used to catch standard and class specific
+/** Event handler for the USB_UnhandledControlRequest event. This is used to catch standard and class specific
  *  control requests that are not handled internally by the USB library, so that they can be handled appropriately
  *  for the application.
  */
-void EVENT_USB_UnhandledControlPacket(void)
+void EVENT_USB_Device_UnhandledControlRequest(void)
 {
 	uint8_t* LineCodingData = (uint8_t*)&LineCoding;
 
@@ -165,9 +165,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 				
 				Endpoint_ClearIN();
 				
-				/* Acknowledge status stage */
-				while (!(Endpoint_IsOUTReceived()));
-				Endpoint_ClearOUT();
+				Endpoint_ClearStatusStage();
 			}
 			
 			break;
@@ -176,16 +174,18 @@ void EVENT_USB_UnhandledControlPacket(void)
 			{
 				Endpoint_ClearSETUP();
 
-				while (!(Endpoint_IsOUTReceived()));
-
+				while (!(Endpoint_IsOUTReceived()))
+				{				
+					if (USB_DeviceState == DEVICE_STATE_Unattached)
+					  return;
+				}
+			
 				for (uint8_t i = 0; i < sizeof(LineCoding); i++)
 				  *(LineCodingData++) = Endpoint_Read_Byte();
 
 				Endpoint_ClearOUT();
 
-				/* Acknowledge status stage */
-				while (!(Endpoint_IsINReady()));
-				Endpoint_ClearIN();
+				Endpoint_ClearStatusStage();
 			}
 	
 			break;
@@ -194,9 +194,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 			{
 				Endpoint_ClearSETUP();
 				
-				/* Acknowledge status stage */
-				while (!(Endpoint_IsINReady()));
-				Endpoint_ClearIN();
+				Endpoint_ClearStatusStage();
 			}
 	
 			break;
@@ -206,7 +204,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 /** Reads or writes a block of EEPROM or FLASH memory to or from the appropriate CDC data endpoint, depending
  *  on the AVR910 protocol command issued.
  *
- *  \param Command  Single character AVR910 protocol command indicating what memory operation to perform
+ *  \param[in] Command  Single character AVR910 protocol command indicating what memory operation to perform
  */
 static void ReadWriteMemoryBlock(const uint8_t Command)
 {
@@ -237,18 +235,10 @@ static void ReadWriteMemoryBlock(const uint8_t Command)
 
 		while (BlockSize--)
 		{
-			if (MemoryType == 'E')
-			{
-				/* Read the next EEPROM byte into the endpoint */
-				WriteNextResponseByte(eeprom_read_byte((uint8_t*)(uint16_t)(CurrAddress >> 1)));
-
-				/* Increment the address counter after use */
-				CurrAddress += 2;
-			}
-			else
+			if (MemoryType == 'F')
 			{
 				/* Read the next FLASH byte from the current FLASH page */
-				#if defined(RAMPZ)
+				#if (FLASHEND > 0xFFFF)
 				WriteNextResponseByte(pgm_read_byte_far(CurrAddress | HighByte));
 				#else
 				WriteNextResponseByte(pgm_read_byte(CurrAddress | HighByte));					
@@ -260,6 +250,14 @@ static void ReadWriteMemoryBlock(const uint8_t Command)
 				
 				HighByte = !HighByte;
 			}
+			else
+			{
+				/* Read the next EEPROM byte into the endpoint */
+				WriteNextResponseByte(eeprom_read_byte((uint8_t*)(uint16_t)(CurrAddress >> 1)));
+
+				/* Increment the address counter after use */
+				CurrAddress += 2;
+			}			
 		}
 	}
 	else
@@ -333,7 +331,12 @@ static uint8_t FetchNextCommandByte(void)
 	while (!(Endpoint_IsReadWriteAllowed()))
 	{
 		Endpoint_ClearOUT();
-		while (!(Endpoint_IsOUTReceived()));
+
+		while (!(Endpoint_IsOUTReceived()))
+		{
+			if (USB_DeviceState == DEVICE_STATE_Unattached)
+			  return 0;
+		}
 	}
 	
 	/* Fetch the next byte from the OUT endpoint */
@@ -343,7 +346,7 @@ static uint8_t FetchNextCommandByte(void)
 /** Writes the next response byte to the CDC data IN endpoint, and sends the endpoint back if needed to free up the
  *  bank when full ready for the next byte in the packet to the host.
  *
- *  \param Response  Next response byte to send to the host
+ *  \param[in] Response  Next response byte to send to the host
  */
 static void WriteNextResponseByte(const uint8_t Response)
 {
@@ -354,7 +357,12 @@ static void WriteNextResponseByte(const uint8_t Response)
 	if (!(Endpoint_IsReadWriteAllowed()))
 	{
 		Endpoint_ClearIN();
-		while (!(Endpoint_IsINReady()));
+		
+		while (!(Endpoint_IsINReady()))
+		{				
+			if (USB_DeviceState == DEVICE_STATE_Unattached)
+			  return;
+		}
 	}
 	
 	/* Write the next byte to the OUT endpoint */
@@ -364,7 +372,7 @@ static void WriteNextResponseByte(const uint8_t Response)
 /** Task to read in AVR910 commands from the CDC data OUT endpoint, process them, perform the required actions
  *  and send the appropriate response back to the host.
  */
-TASK(CDC_Task)
+void CDC_Task(void)
 {
 	/* Select the OUT endpoint */
 	Endpoint_SelectEndpoint(CDC_RX_EPNUM);
@@ -424,9 +432,9 @@ TASK(CDC_Task)
 		}
 		else if (Command == 's')
 		{
-			WriteNextResponseByte(SIGNATURE_2);		
-			WriteNextResponseByte(SIGNATURE_1);
-			WriteNextResponseByte(SIGNATURE_0);
+			WriteNextResponseByte(AVR_SIGNATURE_3);		
+			WriteNextResponseByte(AVR_SIGNATURE_2);
+			WriteNextResponseByte(AVR_SIGNATURE_1);
 		}
 		else if (Command == 'b')
 		{
@@ -513,7 +521,7 @@ TASK(CDC_Task)
 		}
 		else if (Command == 'R')
 		{
-			#if defined(RAMPZ)
+			#if (FLASHEND > 0xFFFF)
 			uint16_t ProgramWord = pgm_read_word_far(CurrAddress);
 			#else
 			uint16_t ProgramWord = pgm_read_word(CurrAddress);			
@@ -563,8 +571,20 @@ TASK(CDC_Task)
 		/* If a full endpoint's worth of data was sent, we need to send an empty packet afterwards to signal end of transfer */
 		if (IsEndpointFull)
 		{
-			while (!(Endpoint_IsINReady()));
+			while (!(Endpoint_IsINReady()))
+			{				
+				if (USB_DeviceState == DEVICE_STATE_Unattached)
+				  return;
+			}
+
 			Endpoint_ClearIN();
+		}
+
+		/* Wait until the data has been sent to the host */
+		while (!(Endpoint_IsINReady()))
+		{				
+			if (USB_DeviceState == DEVICE_STATE_Unattached)
+			  return;
 		}
 		
 		/* Select the OUT endpoint */

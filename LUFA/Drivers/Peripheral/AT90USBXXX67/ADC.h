@@ -115,7 +115,7 @@
 				 *  The "mode" parameter should be a mask comprised of a conversion mode (free running or single) and
 				 *  prescaler masks.
 				 *
-				 *  \param Mode  Mask of ADC settings, including adjustment, prescale, mode and reference
+				 *  \param[in] Mode  Mask of ADC settings, including adjustment, prescale, mode and reference
 				 */
 				static inline void ADC_Init(uint8_t Mode);
 				
@@ -159,19 +159,44 @@
 			 *  associated port pin as an input and disables the digital portion of the I/O to reduce
 			 *  power consumption.
 			 *
-			 *  \param Channel  ADC channel number to set up for conversions
+			 *  \param[in] Channel  ADC channel number to set up for conversions
 			 */
 			static inline void ADC_SetupChannel(const uint8_t Channel)
 			{
+				#if (defined(__AVR_AT90USB1286__) || defined(__AVR_AT90USB646__) || \
+					 defined(__AVR_AT90USB1287__) || defined(__AVR_AT90USB647__) || \
+					 defined(__AVR_ATmega32U6__))				
 				DDRF  &= ~(1 << Channel);
 				DIDR0 |=  (1 << Channel);
+				#elif (defined(__AVR_ATmega16U4__) || defined(__AVR_ATmega32U4__))
+				if (Channel < 8)
+				{
+					DDRF  &= ~(1 << Channel);
+					DIDR0 |=  (1 << Channel);
+				}
+				else if (Channel == 8)
+				{
+					DDRD  &= ~(1 << 4);
+					DIDR2 |=  (1 << 0);
+				}
+				else if (Channel < 11)
+				{
+					DDRD  &= ~(1 << (Channel - 3));
+					DIDR2 |=  (1 << (Channel - 8));
+				}
+				else
+				{
+					DDRB  &= ~(1 << (Channel - 7));
+					DIDR2 |=  (1 << (Channel - 8));
+				}
+				#endif
 			}
 			
 			/** Starts the reading of the given channel, but does not wait until the conversion has completed.
 			 *  Once executed, the conversion status can be determined via the \ref ADC_IsReadingComplete() macro and
 			 *  the result read via the \ref ADC_GetResult() macro.
 			 *
-			 *  \param MUXMask  Mask comprising of an ADC channel number, reference mask and adjustment mask
+			 *  \param[in] MUXMask  Mask comprising of an ADC channel number, reference mask and adjustment mask
 			 */
 			static inline void ADC_StartReading(const uint8_t MUXMask)
 			{
@@ -183,7 +208,7 @@
 			/** Performs a complete single reading from channel, including a polling spinloop to wait for the
 			 *  conversion to complete, and the returning of the converted value.
 			 *
-			 *  \param MUXMask  Mask comprising of an ADC channel number, reference mask and adjustment mask
+			 *  \param[in] MUXMask  Mask comprising of an ADC channel number, reference mask and adjustment mask
 			 */
 			static inline uint16_t ADC_GetChannelReading(const uint8_t MUXMask) ATTR_WARN_UNUSED_RESULT;
 			static inline uint16_t ADC_GetChannelReading(const uint8_t MUXMask)

@@ -6,41 +6,13 @@
 #      www.fourwalledcubicle.com
 #
 
-# Makefile to build all the LUFA Host Demos. Call with "make all" to
-# rebuild all Host demos.
+# Makefile to build all the LUFA Class Driver and Low Level Demos. Call with
+# "make all" to rebuild all demos of both types.
 
 # Projects are pre-cleaned before each one is built, to ensure any
 # custom LUFA library build options are reflected in the compiled
 # code.
 
-all:
-	make -C CDCHost clean
-	make -C CDCHost all	
-
-	make -C GenericHIDHost clean
-	make -C GenericHIDHost all	
-
-	make -C KeyboardHost clean
-	make -C KeyboardHost all	
-
-	make -C MassStorageHost clean
-	make -C MassStorageHost all	
-
-	make -C MouseHost clean
-	make -C MouseHost all	
-
-	make -C MouseHostWithParser clean
-	make -C MouseHostWithParser all	
-
-	make -C StillImageHost clean
-	make -C StillImageHost all	
-
 %:
-	make -C CDCHost $@
-	make -C GenericHIDHost $@
-	make -C KeyboardHost $@
-	make -C KeyboardHostWithParser $@
-	make -C MassStorageHost $@
-	make -C MouseHost $@
-	make -C MouseHostWithParser $@
-	make -C StillImageHost $@
+#	make -C ClassDriver/ $@        <TODO: Re-enable after Host class drivers complete>
+	make -C LowLevel/ $@

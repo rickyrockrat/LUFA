@@ -101,7 +101,7 @@ F_CPU = 8000000
 #
 #     If no clock division is performed on the input clock inside the AVR (via the
 #     CPU clock adjust registers or the clock division fuses), this will be equal to F_CPU.
-F_CLOCK = 8000000
+F_CLOCK = $(F_CPU)
 
 
 # Output format. (can be srec, ihex, binary)
@@ -122,12 +122,15 @@ OBJDIR = .
 LUFA_PATH = ../../..
 
 
+# LUFA library compile-time options
+LUFA_OPTS  = -D USE_NONSTANDARD_DESCRIPTOR_NAMES
+LUFA_OPTS += -D USE_FLASH_DESCRIPTORS
+
+
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c                                                 \
 	  TestEvents.c                                                \
 	  Descriptors.c                                               \
-	  $(LUFA_PATH)/LUFA/Scheduler/Scheduler.c                     \
-	  $(LUFA_PATH)/LUFA/MemoryAllocator/DynAlloc.c                \
 	  $(LUFA_PATH)/LUFA/Drivers/Board/Temperature.c               \
 	  $(LUFA_PATH)/LUFA/Drivers/Peripheral/SerialStream.c         \
 	  $(LUFA_PATH)/LUFA/Drivers/Peripheral/Serial.c               \
@@ -141,7 +144,6 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/HIDParser.c             \
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -187,9 +189,7 @@ CSTANDARD = -std=gnu99
 
 
 # Place -D or -U options here for C sources
-CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD)
-CDEFS += -DUSE_NONSTANDARD_DESCRIPTOR_NAMES
-CDEFS += -DNUM_BLOCKS=100 -DBLOCK_SIZE=8 -DNUM_HANDLES=20
+CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD) $(LUFA_OPTS)
 
 
 # Place -D or -U options here for ASM sources
@@ -462,7 +462,7 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target.
-all: begin gccversion sizebefore build checkhooks checklibmode checkboard sizeafter end
+all: begin gccversion sizebefore build showeventhooks showliboptions showtarget sizeafter end
 
 # Change the build target to build a HEX file or a library.
 build: elf hex eep lss sym
@@ -505,27 +505,29 @@ sizeafter:
 	@if test -f $(TARGET).elf; then echo; echo $(MSG_SIZE_AFTER); $(ELFSIZE); \
 	2>/dev/null; echo; fi
 
-checkhooks: build
+showeventhooks: build
 	@echo
-	@echo ------- Unhooked LUFA Events -------
+	@echo -------- Unhooked LUFA Events --------
 	@$(shell) (grep -s '^EVENT_.*LUFA/.*\\.o' $(TARGET).map | \
 	           cut -d' ' -f1 | cut -d'_' -f2- | grep ".*") || \
 			   echo "(None)"
-	@echo ------------------------------------
+	@echo --------------------------------------
 
-checklibmode:
+showliboptions:
 	@echo
-	@echo ----------- Library Mode -----------
-	@$(shell) ($(CC) $(ALL_CFLAGS) -E -dM - < /dev/null \
-	          | grep 'USB_\(DEVICE\|HOST\)_ONLY' | cut -d' ' -f2 | grep ".*") \
-	          || echo "No specific mode (both device and host mode allowable)."
-	@echo ------------------------------------
+	@echo ---- Compile Time Library Options ----
+	@for i in $(LUFA_OPTS:-D%=%); do \
+		echo $$i; \
+	done
+	@echo --------------------------------------
 
-checkboard:
+showtarget:
 	@echo
-	@echo ---------- Selected Board ----------
-	@echo Selected board model is $(BOARD).
-	@echo ------------------------------------
+	@echo --------- Target Information ---------
+	@echo AVR Model: $(MCU)
+	@echo Board:     $(BOARD)
+	@echo Clock:     $(F_CPU)Hz CPU, $(F_CLOCK)Hz Master
+	@echo --------------------------------------
 	
 # Display compiler version information.
 gccversion : 
@@ -536,26 +538,6 @@ gccversion :
 # Program the device.  
 program: $(TARGET).hex $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
-
-flip: $(TARGET).hex
-	batchisp -hardware usb -device $(MCU) -operation erase f
-	batchisp -hardware usb -device $(MCU) -operation loadbuffer $(TARGET).hex program
-	batchisp -hardware usb -device $(MCU) -operation start reset 0
-
-dfu: $(TARGET).hex
-	dfu-programmer $(MCU) erase
-	dfu-programmer $(MCU) flash --debug 1 $(TARGET).hex
-	dfu-programmer $(MCU) reset
-
-flip-ee: $(TARGET).hex $(TARGET).eep
-	copy $(TARGET).eep $(TARGET)eep.hex
-	batchisp -hardware usb -device $(MCU) -operation memory EEPROM erase
-	batchisp -hardware usb -device $(MCU) -operation memory EEPROM loadbuffer $(TARGET)eep.hex program
-	batchisp -hardware usb -device $(MCU) -operation start reset 0
-
-dfu-ee: $(TARGET).hex $(TARGET).eep
-	dfu-programmer $(MCU) flash-eeprom --debug 1 --suppress-bootloader-mem $(TARGET).eep
-	dfu-programmer $(MCU) reset
 
 
 # Generate avr-gdb config/init file which does the following:
@@ -731,8 +713,8 @@ $(shell mkdir $(OBJDIR) 2>/dev/null)
 
 
 # Listing of phony targets.
-.PHONY : all checkhooks checklibmode checkboard   \
-begin finish end sizebefore sizeafter gccversion  \
-build elf hex eep lss sym coff extcoff clean      \
-clean_list clean_binary program debug gdb-config  \
-doxygen dfu flip flip-ee dfu-ee
+.PHONY : all showeventhooks showliboptions showtarget  \
+begin finish end sizebefore sizeafter gccversion build \
+elf hex eep lss sym coff extcoff program clean debug   \
+clean_list clean_binary gdb-config doxygen dfu flip    \
+flip-ee dfu-ee

@@ -47,12 +47,7 @@
 	
 		#include "Descriptors.h"
 		
-		#include <LUFA/Drivers/USB/USB.h>                // USB Functionality
-	
-	/* Preprocessor Checks: */
-		#if !defined(SIGNATURE_0) || !defined(SIGNATURE_1) || !defined(SIGNATURE_2)
-			#error Device signature byte constants are not defined due to outdated avr-libc version. See demo documentation.
-		#endif
+		#include <LUFA/Drivers/USB/USB.h>
 	
 	/* Macros: */
 		/** Configuration define. Define this token to true to case the bootloader to reject all memory commands
@@ -81,16 +76,16 @@
 		
 		/** Convenience macro, used to determine if the issued command is the given one-byte long command.
 		 *
-		 *  \param dataarr  Command byte array to check against
-		 *  \param cb1      First command byte to check
+		 *  \param[in] dataarr  Command byte array to check against
+		 *  \param[in] cb1      First command byte to check
 		 */
 		#define IS_ONEBYTE_COMMAND(dataarr, cb1)       (dataarr[0] == cb1)
 
 		/** Convenience macro, used to determine if the issued command is the given two-byte long command.
 		 *
-		 *  \param dataarr  Command byte array to check against
-		 *  \param cb1      First command byte to check
-		 *  \param cb2      Second command byte to check
+		 *  \param[in] dataarr  Command byte array to check against
+		 *  \param[in] cb1      First command byte to check
+		 *  \param[in] cb2      Second command byte to check
 		 */
 		#define IS_TWOBYTE_COMMAND(dataarr, cb1, cb2) ((dataarr[0] == cb1) && (dataarr[1] == cb2))
 	
@@ -193,8 +188,11 @@
 		};
 				
 	/* Function Prototypes: */
-		void EVENT_USB_Disconnect(void);
-		void EVENT_USB_UnhandledControlPacket(void);
+		void SetupHardware(void);
+		void ResetHardware(void);
+
+		void EVENT_USB_Device_Disconnect(void);
+		void EVENT_USB_Device_UnhandledControlRequest(void);
 
 		#if defined(INCLUDE_FROM_BOOTLOADER_C)
 			static void DiscardFillerBytes(uint8_t NumberOfBytes);

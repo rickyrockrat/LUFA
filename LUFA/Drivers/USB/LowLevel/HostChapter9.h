@@ -71,8 +71,8 @@
 			 *
 			 *  \ingroup Group_PipeControlReq
 			 *
-			 *  \param BufferPtr  Pointer to the start of the data buffer if the request has a data stage, or
-			 *                    NULL if the request transfers no data to or from the device.
+			 *  \param[in] BufferPtr  Pointer to the start of the data buffer if the request has a data stage, or
+			 *                        NULL if the request transfers no data to or from the device.
 			 *
 			 *  \return A value from the \ref USB_Host_SendControlErrorCodes_t enum to indicate the result.
 			 */
@@ -90,7 +90,7 @@
 	
 		/* Function Prototypes: */
 			#if defined(INCLUDE_FROM_HOSTCHAPTER9_C)
-				static uint8_t USB_Host_Wait_For_Setup_IOS(const uint8_t WaitType);
+				static uint8_t USB_Host_WaitForIOS(const uint8_t WaitType);
 			#endif
 	#endif
 

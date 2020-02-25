@@ -6,6 +6,19 @@
  
 /** \mainpage DFU Class USB AVR Bootloader
  *
+ *  \section SSec_Compat Demo Compatibility:
+ *
+ *  The following table indicates what microcontrollers are compatible with this demo.
+ *
+ *  - AT90USB1287
+ *  - AT90USB1286
+ *  - AT90USB647
+ *  - AT90USB646
+ *  - ATMEGA32U6
+ *  - ATMEGA32U4
+ *  - ATMEGA16U4
+ *  - AT90USB162
+ *
  *  \section SSec_Info USB Information:
  *
  *  The following table gives a rundown of the USB utilization of this demo.
@@ -72,13 +85,6 @@
  *    <td>If defined to true, the bootloader will not accept any memory commands other than a chip erase on start-up, until an
  *        erase has been performed. This can be used in conjunction with the AVR's lockbits to prevent the AVRs firmware from
  *        being dumped by unauthorized persons.</td>
- *   </tr>
- *   <tr>
- *    <td>SIGNATURE_0, SIGNATURE_1, SIGNATURE_2</td>
- *    <td>Makefile CDEFS</td>
- *    <td>AVR part signature bytes. These are normally defined as part of the AVR device header files in recent avr-libc
- *        distributions. If your avr-libc library is out of date and does not define these values, you can define them
- *        manually in the makefile CDEFS.</td>
  *   </tr>
  *  </table>
  */

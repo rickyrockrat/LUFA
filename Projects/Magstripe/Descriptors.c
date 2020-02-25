@@ -93,9 +93,9 @@ USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 		
 	.ManufacturerStrIndex   = 0x01,
 	.ProductStrIndex        = 0x02,
-	.SerialNumStrIndex      = NO_DESCRIPTOR,
+	.SerialNumStrIndex      = USE_INTERNAL_SERIAL,
 		
-	.NumberOfConfigurations = 1
+	.NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
 };
 
 /** Configuration descriptor structure. This descriptor, located in FLASH memory, describes the usage
@@ -138,11 +138,11 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 
 	.KeyboardHID = 
 		{  
-			.Header                 = {.Size = sizeof(USB_Descriptor_HID_t), .Type = DTYPE_HID},
+			.Header                 = {.Size = sizeof(USB_HID_Descriptor_t), .Type = DTYPE_HID},
 			
 			.HIDSpec                = VERSION_BCD(01.11),
 			.CountryCode            = 0x00,
-			.TotalHIDDescriptors    = 1,
+			.TotalReportDescriptors = 1,
 			.HIDReportType          = DTYPE_Report,
 			.HIDReportLength        = sizeof(KeyboardReport)
 		},
@@ -154,7 +154,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_IN | KEYBOARD_EPNUM),
 			.Attributes             = EP_TYPE_INTERRUPT,
 			.EndpointSize           = KEYBOARD_EPSIZE,
-			.PollingIntervalMS      = 0x04
+			.PollingIntervalMS      = 0x01
 		},
 };
 
@@ -234,7 +234,7 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 			break;
 		case DTYPE_HID:
 			Address = (void*)&ConfigurationDescriptor.KeyboardHID;
-			Size    = sizeof(USB_Descriptor_HID_t);
+			Size    = sizeof(USB_HID_Descriptor_t);
 			break;
 		case DTYPE_Report:
 			Address = (void*)&KeyboardReport;

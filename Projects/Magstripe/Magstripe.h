@@ -40,46 +40,23 @@
 	/* Includes: */
 		#include <avr/io.h>
 		#include <avr/wdt.h>
-		#include <avr/interrupt.h>
 		#include <avr/power.h>
-		#include <stdbool.h>
-		#include <string.h>
 
 		#include "Descriptors.h"
-
 		#include "Lib/MagstripeHW.h"
 		#include "Lib/CircularBitBuffer.h"
 
-		#include <LUFA/Version.h>                    // Library Version Information
-		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
-		#include <LUFA/Scheduler/Scheduler.h>        // Simple scheduler for task management
-
-		
-	/* Task Definitions: */
-		/** Task definition for the keyboard and magnetic card reading task. */
-		TASK(USB_Keyboard_Report);
-		
-		TASK(Magstripe_Read);
+		#include <LUFA/Version.h>
+		#include <LUFA/Drivers/USB/USB.h>
+		#include <LUFA/Drivers/USB/Class/HID.h>
 
 	/* Macros: */
-		/** HID Class Specific Request to get the current HID report from the device. */
-		#define REQ_GetReport      0x01
-
-		/** HID Class Specific Request to get the current device idle count. */
-		#define REQ_GetIdle        0x02
-
-		/** HID Class Specific Request to set the current HID report to the device. */
-		#define REQ_SetReport      0x09
-
-		/** HID Class Specific Request to set the device's idle count. */
-		#define REQ_SetIdle        0x0A
-
-		/** HID Class Specific Request to get the current HID report protocol mode. */
-		#define REQ_GetProtocol    0x03
-
-		/** HID Class Specific Request to set the current HID report protocol mode. */
-		#define REQ_SetProtocol    0x0B
-		
+		/** Total number of tracks which can be read from the card, between 1 and 3. */
+		#define TOTAL_TRACKS       3
+	
+		/** HID keyboard keycode to indicate that no is currently pressed. */
+		#define KEY_NONE           0
+	
 		/** HID keyboard keycode to indicate that the "1" key is currently pressed. */
 		#define KEY_1              30
 
@@ -102,11 +79,15 @@
 		} USB_KeyboardReport_Data_t;
 	
 	/* Function Prototypes: */
-		void EVENT_USB_Connect(void);
-		void EVENT_USB_Disconnect(void);
-		void EVENT_USB_ConfigurationChanged(void);
-		void EVENT_USB_UnhandledControlPacket(void);
-	
-		bool GetNextReport(USB_KeyboardReport_Data_t* ReportData);
+		void SetupHardware(void);
+		void ReadMagstripeData(void);
 		
+		void EVENT_USB_Device_ConfigurationChanged(void);
+		void EVENT_USB_Device_UnhandledControlRequest(void);
+
+		bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, uint8_t* const ReportID,
+                                                 void* ReportData, uint16_t* ReportSize);
+		void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, const uint8_t ReportID, 
+		                                          const void* ReportData, const uint16_t ReportSize);
+														  
 #endif

@@ -46,12 +46,7 @@
 
 		#include "Descriptors.h"
 
-		#include <LUFA/Drivers/USB/USB.h>                // USB Functionality
-
-	/* Preprocessor Checks: */
-		#if !defined(SIGNATURE_0) || !defined(SIGNATURE_1) || !defined(SIGNATURE_2)
-			#error Device signature byte constants are not defined due to outdated avr-libc version. See demo documentation.
-		#endif
+		#include <LUFA/Drivers/USB/USB.h>
 
 	/* Macros: */
 		/** CDC Class Specific request to get the line encoding on a CDC-ACM virtual serial port, including the
@@ -118,13 +113,14 @@
 			Parity_Space        = 4, /**< Space data parity checking */
 		};
 		
-	/* Tasks: */
-		TASK(CDC_Task);
-
 	/* Function Prototypes: */
-		void EVENT_USB_Disconnect(void);
-		void EVENT_USB_ConfigurationChanged(void);
-		void EVENT_USB_UnhandledControlPacket(void);
+		void CDC_Task(void);
+		void SetupHardware(void);
+		void ResetHardware(void);
+
+		void EVENT_USB_Device_Disconnect(void);
+		void EVENT_USB_Device_ConfigurationChanged(void);
+		void EVENT_USB_Device_UnhandledControlRequest(void);
 
 		#if defined(INCLUDE_FROM_BOOTLOADERCDC_C) || defined(__DOXYGEN__)
 			static void    ReadWriteMemoryBlock(const uint8_t Command);

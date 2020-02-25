@@ -96,7 +96,24 @@ uint16_t EndAddr = 0x0000;
  *  runs the bootloader processing routine until instructed to soft-exit, or hard-reset via the watchdog to start
  *  the loaded application code.
  */
-int main (void)
+int main(void)
+{
+	/* Configure hardware required by the bootloader */
+	SetupHardware();
+
+	/* Run the USB management task while the bootloader is supposed to be running */
+	while (RunBootloader || WaitForExit)
+	  USB_USBTask();
+	
+	/* Reset configured hardware back to their original states for the user application */
+	ResetHardware();
+	
+	/* Start the user application */
+	AppStartPtr();
+}
+
+/** Configures all hardware required for the bootloader. */
+void SetupHardware(void)
 {
 	/* Disable watchdog if enabled by bootloader/fuses */
 	MCUSR &= ~(1 << WDRF);
@@ -111,45 +128,33 @@ int main (void)
 
 	/* Initialize the USB subsystem */
 	USB_Init();
+}
 
-	/* Run the USB management task while the bootloader is supposed to be running */
-	while (RunBootloader || WaitForExit)
-	  USB_USBTask();
-	
+/** Resets all configured hardware required for the bootloader back to their original states. */
+void ResetHardware(void)
+{
 	/* Shut down the USB subsystem */
 	USB_ShutDown();
 	
 	/* Relocate the interrupt vector table back to the application section */
 	MCUCR = (1 << IVCE);
 	MCUCR = 0;
-
-	/* Reset any used hardware ports back to their defaults */
-	PORTD = 0;
-	DDRD  = 0;
-	
-	#if defined(PORTE)
-	PORTE = 0;
-	DDRE  = 0;
-	#endif
-	
-	/* Start the user application */
-	AppStartPtr();
 }
 
 /** Event handler for the USB_Disconnect event. This indicates that the bootloader should exit and the user
  *  application started.
  */
-void EVENT_USB_Disconnect(void)
+void EVENT_USB_Device_Disconnect(void)
 {
 	/* Upon disconnection, run user application */
 	RunBootloader = false;
 }
 
-/** Event handler for the USB_UnhandledControlPacket event. This is used to catch standard and class specific
+/** Event handler for the USB_UnhandledControlRequest event. This is used to catch standard and class specific
  *  control requests that are not handled internally by the USB library (including the DFU commands, which are
  *  all issued via the control endpoint), so that they can be handled appropriately for the application.
  */
-void EVENT_USB_UnhandledControlPacket(void)
+void EVENT_USB_Device_UnhandledControlRequest(void)
 {
 	/* Get the size of the command and data from the wLength value */
 	SentCommand.DataSize = USB_ControlRequest.wLength;
@@ -172,7 +177,11 @@ void EVENT_USB_UnhandledControlPacket(void)
 			/* If the request has a data stage, load it into the command struct */
 			if (SentCommand.DataSize)
 			{
-				while (!(Endpoint_IsOUTReceived()));
+				while (!(Endpoint_IsOUTReceived()))
+				{				
+					if (USB_DeviceState == DEVICE_STATE_Unattached)
+					  return;
+				}
 
 				/* First byte of the data stage is the DNLOAD request's command */
 				SentCommand.Command = Endpoint_Read_Byte();
@@ -230,7 +239,12 @@ void EVENT_USB_UnhandledControlPacket(void)
 							if (!(Endpoint_BytesInEndpoint()))
 							{
 								Endpoint_ClearOUT();
-								while (!(Endpoint_IsOUTReceived()));
+
+								while (!(Endpoint_IsOUTReceived()))
+								{				
+									if (USB_DeviceState == DEVICE_STATE_Unattached)
+									  return;
+								}
 							}
 
 							/* Write the next word into the current flash page */
@@ -274,7 +288,12 @@ void EVENT_USB_UnhandledControlPacket(void)
 							if (!(Endpoint_BytesInEndpoint()))
 							{
 								Endpoint_ClearOUT();
-								while (!(Endpoint_IsOUTReceived()));
+
+								while (!(Endpoint_IsOUTReceived()))
+								{				
+									if (USB_DeviceState == DEVICE_STATE_Unattached)
+									  return;
+								}
 							}
 
 							/* Read the byte from the USB interface and write to to the EEPROM */
@@ -292,16 +311,18 @@ void EVENT_USB_UnhandledControlPacket(void)
 
 			Endpoint_ClearOUT();
 
-			/* Acknowledge status stage */
-			while (!(Endpoint_IsINReady()));
-			Endpoint_ClearIN();
-				
+			Endpoint_ClearStatusStage();
+
 			break;
 		case DFU_UPLOAD:
 			Endpoint_ClearSETUP();
 
-			while (!(Endpoint_IsINReady()));
-
+			while (!(Endpoint_IsINReady()))
+			{				
+				if (USB_DeviceState == DEVICE_STATE_Unattached)
+				  return;
+			}
+							
 			if (DFU_State != dfuUPLOAD_IDLE)
 			{
 				if ((DFU_State == dfuERROR) && IS_ONEBYTE_COMMAND(SentCommand.Data, 0x01))       // Blank Check
@@ -338,11 +359,16 @@ void EVENT_USB_UnhandledControlPacket(void)
 						if (Endpoint_BytesInEndpoint() == FIXED_CONTROL_ENDPOINT_SIZE)
 						{
 							Endpoint_ClearIN();
-							while (!(Endpoint_IsINReady()));
+
+							while (!(Endpoint_IsINReady()))
+							{				
+								if (USB_DeviceState == DEVICE_STATE_Unattached)
+								  return;
+							}
 						}
 
 						/* Read the flash word and send it via USB to the host */
-						#if defined(RAMPZ)
+						#if (FLASHEND > 0xFFFF)
 							Endpoint_Write_Word_LE(pgm_read_word_far(CurrFlashAddress.Long));
 						#else
 							Endpoint_Write_Word_LE(pgm_read_word(CurrFlashAddress.Long));							
@@ -363,7 +389,12 @@ void EVENT_USB_UnhandledControlPacket(void)
 						if (Endpoint_BytesInEndpoint() == FIXED_CONTROL_ENDPOINT_SIZE)
 						{
 							Endpoint_ClearIN();
-							while (!(Endpoint_IsINReady()));
+							
+							while (!(Endpoint_IsINReady()))
+							{				
+								if (USB_DeviceState == DEVICE_STATE_Unattached)
+								  return;
+							}
 						}
 
 						/* Read the EEPROM byte and send it via USB to the host */
@@ -380,10 +411,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 
 			Endpoint_ClearIN();
 
-			/* Acknowledge status stage */
-			while (!(Endpoint_IsOUTReceived()));
-			Endpoint_ClearOUT();
-
+			Endpoint_ClearStatusStage();
 			break;
 		case DFU_GETSTATUS:
 			Endpoint_ClearSETUP();
@@ -403,10 +431,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 
 			Endpoint_ClearIN();
 			
-			/* Acknowledge status stage */
-			while (!(Endpoint_IsOUTReceived()));
-			Endpoint_ClearOUT();
-	
+			Endpoint_ClearStatusStage();
 			break;		
 		case DFU_CLRSTATUS:
 			Endpoint_ClearSETUP();
@@ -414,10 +439,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 			/* Reset the status value variable to the default OK status */
 			DFU_Status = OK;
 
-			/* Acknowledge status stage */
-			while (!(Endpoint_IsINReady()));
-			Endpoint_ClearIN();
-			
+			Endpoint_ClearStatusStage();
 			break;
 		case DFU_GETSTATE:
 			Endpoint_ClearSETUP();
@@ -427,21 +449,15 @@ void EVENT_USB_UnhandledControlPacket(void)
 		
 			Endpoint_ClearIN();
 			
-			/* Acknowledge status stage */
-			while (!(Endpoint_IsOUTReceived()));
-			Endpoint_ClearOUT();
-
+			Endpoint_ClearStatusStage();
 			break;
 		case DFU_ABORT:
 			Endpoint_ClearSETUP();
 			
 			/* Reset the current state variable to the default idle state */
 			DFU_State = dfuIDLE;
-			
-			/* Acknowledge status stage */
-			while (!(Endpoint_IsINReady()));
-			Endpoint_ClearIN();
 
+			Endpoint_ClearStatusStage();
 			break;
 	}
 }
@@ -449,7 +465,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 /** Routine to discard the specified number of bytes from the control endpoint stream. This is used to
  *  discard unused bytes in the stream from the host, including the memory program block suffix.
  *
- *  \param NumberOfBytes  Number of bytes to discard from the host from the control endpoint
+ *  \param[in] NumberOfBytes  Number of bytes to discard from the host from the control endpoint
  */
 static void DiscardFillerBytes(uint8_t NumberOfBytes)
 {
@@ -460,10 +476,16 @@ static void DiscardFillerBytes(uint8_t NumberOfBytes)
 			Endpoint_ClearOUT();
 
 			/* Wait until next data packet received */
-			while (!(Endpoint_IsOUTReceived()));
+			while (!(Endpoint_IsOUTReceived()))
+			{				
+				if (USB_DeviceState == DEVICE_STATE_Unattached)
+				  return;
+			}
 		}
-
-		Endpoint_Discard_Byte();						
+		else
+		{
+			Endpoint_Discard_Byte();
+		}
 	}
 }
 
@@ -585,7 +607,7 @@ static void ProcessMemReadCommand(void)
 		while (CurrFlashAddress < BOOT_START_ADDR)
 		{
 			/* Check if the current byte is not blank */
-			#if defined(RAMPZ)
+			#if (FLASHEND > 0xFFFF)
 			if (pgm_read_byte_far(CurrFlashAddress) != 0xFF)
 			#else
 			if (pgm_read_byte(CurrFlashAddress) != 0xFF)
@@ -671,7 +693,7 @@ static void ProcessWriteCommand(void)
 static void ProcessReadCommand(void)
 {
 	const uint8_t BootloaderInfo[3] = {BOOTLOADER_VERSION, BOOTLOADER_ID_BYTE1, BOOTLOADER_ID_BYTE2};
-	const uint8_t SignatureInfo[3]  = {SIGNATURE_0, SIGNATURE_1, SIGNATURE_2};
+	const uint8_t SignatureInfo[3]  = {AVR_SIGNATURE_1,    AVR_SIGNATURE_2,     AVR_SIGNATURE_3};
 
 	uint8_t DataIndexToRead = SentCommand.Data[1];
 

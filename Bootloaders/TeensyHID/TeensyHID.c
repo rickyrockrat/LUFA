@@ -33,7 +33,6 @@
  *  Main source file for the TeensyHID bootloader. This file contains the complete bootloader logic.
  */
  
-#define  INCLUDE_FROM_TEENSYHID_C
 #include "TeensyHID.h"
 
 /* Global Variables: */
@@ -49,6 +48,24 @@ bool RunBootloader = true;
  */
 int main(void)
 {
+	/* Setup hardware required for the bootloader */
+	SetupHardware();
+	
+	while (RunBootloader)
+	  USB_USBTask();
+
+	/* Wait 100ms to give the host time to register the disconnection */
+	_delay_ms(100);
+
+	/* Enable the watchdog and force a timeout to reset the AVR */
+	wdt_enable(WDTO_250MS);
+					
+	for (;;);
+}
+
+/** Configures all hardware required for the bootloader. */
+void SetupHardware(void)
+{
 	/* Disable watchdog if enabled by bootloader/fuses */
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
@@ -62,26 +79,12 @@ int main(void)
 
 	/* Initialize USB subsystem */
 	USB_Init();
-	
-	while (RunBootloader)
-	  USB_USBTask();
-	  
-	/* Shut down the USB interface, so that the host will register the disconnection */
-	USB_ShutDown();
-
-	/* Wait 100ms to give the host time to register the disconnection */
-	_delay_ms(100);
-
-	/* Enable the watchdog and force a timeout to reset the AVR */
-	wdt_enable(WDTO_250MS);
-					
-	for (;;);
 }
 
 /** Event handler for the USB_ConfigurationChanged event. This configures the device's endpoints ready
  *  to relay data to and from the attached USB host.
  */
-void EVENT_USB_ConfigurationChanged(void)
+void EVENT_USB_Device_ConfigurationChanged(void)
 {
 	/* Setup HID Report Endpoint */
 	Endpoint_ConfigureEndpoint(HID_EPNUM, EP_TYPE_INTERRUPT,
@@ -89,11 +92,11 @@ void EVENT_USB_ConfigurationChanged(void)
 	                           ENDPOINT_BANK_SINGLE);
 }
 
-/** Event handler for the USB_UnhandledControlPacket event. This is used to catch standard and class specific
+/** Event handler for the USB_UnhandledControlRequest event. This is used to catch standard and class specific
  *  control requests that are not handled internally by the USB library (including the HID commands, which are
  *  all issued via the control endpoint), so that they can be handled appropriately for the application.
  */
-void EVENT_USB_UnhandledControlPacket(void)
+void EVENT_USB_Device_UnhandledControlRequest(void)
 {
 	/* Handle HID Class specific requests */
 	switch (USB_ControlRequest.bRequest)
@@ -105,7 +108,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 				
 				/* Wait until the command (report) has been sent by the host */
 				while (!(Endpoint_IsOUTReceived()));
-
+			
 				/* Read in the write destination address */
 				uint16_t PageAddress = Endpoint_Read_Word_LE();
 				
@@ -144,9 +147,7 @@ void EVENT_USB_UnhandledControlPacket(void)
 
 				Endpoint_ClearOUT();
 
-				/* Acknowledge status stage */
-				while (!(Endpoint_IsINReady()));
-				Endpoint_ClearIN();
+				Endpoint_ClearStatusStage();
 			}
 			
 			break;

@@ -39,7 +39,7 @@ uint8_t USB_ConfigurationNumber;
 bool    USB_RemoteWakeupEnabled;
 bool    USB_CurrentlySelfPowered;
 
-void USB_Device_ProcessControlPacket(void)
+void USB_Device_ProcessControlRequest(void)
 {
 	bool     RequestHandled = false;
 	uint8_t* RequestHeader  = (uint8_t*)&USB_ControlRequest;
@@ -106,7 +106,7 @@ void USB_Device_ProcessControlPacket(void)
 	}
 
 	if (!(RequestHandled))
-	  EVENT_USB_UnhandledControlPacket();
+	  EVENT_USB_Device_UnhandledControlRequest();
 	  
 	if (Endpoint_IsSETUPReceived())
 	{
@@ -117,38 +117,74 @@ void USB_Device_ProcessControlPacket(void)
 
 static void USB_Device_SetAddress(void)
 {
+	uint8_t DeviceAddress = (USB_ControlRequest.wValue & 0x7F);
+
 	Endpoint_ClearSETUP();
 	
 	Endpoint_ClearIN();
 	
-	while (!(Endpoint_IsINReady()));
+	while (!(Endpoint_IsINReady()))
+	{
+		if (USB_DeviceState == DEVICE_STATE_Unattached)
+		  return;
+	}
 
-	UDADDR = ((1 << ADDEN) | ((uint8_t)USB_ControlRequest.wValue & 0x7F));
+	UDADDR = ((1 << ADDEN) | DeviceAddress);
+
+	if (DeviceAddress)
+	  USB_DeviceState = DEVICE_STATE_Addressed;
 
 	return;
 }
 
 static void USB_Device_SetConfiguration(void)
 {
-	bool AlreadyConfigured = (USB_ConfigurationNumber != 0);
-
-#if defined(USE_SINGLE_DEVICE_CONFIGURATION)
-	if ((uint8_t)USB_ControlRequest.wValue > 1)
+#if defined(FIXED_NUM_CONFIGURATIONS)
+	if ((uint8_t)USB_ControlRequest.wValue > FIXED_NUM_CONFIGURATIONS)
+	  return;
 #else
+	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
+	uint8_t MemoryAddressSpace;
+	#endif
+	
 	USB_Descriptor_Device_t* DevDescriptorPtr;
 
-	if ((CALLBACK_USB_GetDescriptor((DTYPE_Device << 8), 0, (void*)&DevDescriptorPtr) == NO_DESCRIPTOR) ||
-	#if defined(USE_RAM_DESCRIPTORS)
-	    ((uint8_t)USB_ControlRequest.wValue > DevDescriptorPtr->NumberOfConfigurations))
-	#elif defined (USE_EEPROM_DESCRIPTORS)
-	    ((uint8_t)USB_ControlRequest.wValue > eeprom_read_byte(&DevDescriptorPtr->NumberOfConfigurations)))
-	#else
-	    ((uint8_t)USB_ControlRequest.wValue > pgm_read_byte(&DevDescriptorPtr->NumberOfConfigurations)))
+	if (CALLBACK_USB_GetDescriptor((DTYPE_Device << 8), 0, (void*)&DevDescriptorPtr
+	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
+	                               , &MemoryAddressSpace
 	#endif
-#endif
+	                               ) == NO_DESCRIPTOR)
 	{
 		return;
 	}
+	
+	#if defined(USE_RAM_DESCRIPTORS)
+	if ((uint8_t)USB_ControlRequest.wValue > DevDescriptorPtr->NumberOfConfigurations)
+	  return;
+	#elif defined (USE_EEPROM_DESCRIPTORS)
+	if ((uint8_t)USB_ControlRequest.wValue > eeprom_read_byte(&DevDescriptorPtr->NumberOfConfigurations))
+	  return;
+	#elif defined (USE_FLASH_DESCRIPTORS)
+	if ((uint8_t)USB_ControlRequest.wValue > pgm_read_byte(&DevDescriptorPtr->NumberOfConfigurations))
+	  return;
+	#else
+	if (MemoryAddressSpace == MEMSPACE_FLASH)
+	{
+		if (((uint8_t)USB_ControlRequest.wValue > pgm_read_byte(&DevDescriptorPtr->NumberOfConfigurations)))
+		  return;
+	}
+	else if (MemoryAddressSpace == MEMSPACE_EEPROM)
+	{
+		if (((uint8_t)USB_ControlRequest.wValue > eeprom_read_byte(&DevDescriptorPtr->NumberOfConfigurations)))
+		  return;
+	}
+	else
+	{
+		if ((uint8_t)USB_ControlRequest.wValue > DevDescriptorPtr->NumberOfConfigurations)
+		  return;
+	}
+	#endif
+#endif
 	
 	Endpoint_ClearSETUP();
 
@@ -156,10 +192,12 @@ static void USB_Device_SetConfiguration(void)
 
 	Endpoint_ClearIN();
 
-	if (!(AlreadyConfigured) && USB_ConfigurationNumber)
-	  EVENT_USB_DeviceEnumerationComplete();
+	if (USB_ConfigurationNumber)
+	  USB_DeviceState = DEVICE_STATE_Configured;
+	else
+	  USB_DeviceState = DEVICE_STATE_Addressed;
 
-	EVENT_USB_ConfigurationChanged();
+	EVENT_USB_Device_ConfigurationChanged();
 }
 
 void USB_Device_GetConfiguration(void)
@@ -170,66 +208,103 @@ void USB_Device_GetConfiguration(void)
 	
 	Endpoint_ClearIN();
 
-	while (!(Endpoint_IsOUTReceived()));
+	while (!(Endpoint_IsOUTReceived()))
+	{
+		if (USB_DeviceState == DEVICE_STATE_Unattached)
+		  return;	
+	}
+
 	Endpoint_ClearOUT();
 }
+
+#if !defined(NO_INTERNAL_SERIAL) && (defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR))
+static char USB_Device_NibbleToASCII(uint8_t Nibble)
+{
+	Nibble = ((Nibble & 0x0F) + '0');
+	return (Nibble > '9') ? (Nibble + ('A' - '9' - 1)) : Nibble;
+}
+
+static void USB_Device_GetInternalSerialDescriptor(void)
+{
+	struct
+	{
+		USB_Descriptor_Header_t Header;
+		int16_t                 UnicodeString[20];
+	} SignatureDescriptor;
+
+	#if defined(USE_NONSTANDARD_DESCRIPTOR_NAMES)
+		SignatureDescriptor.Header.Size            = sizeof(SignatureDescriptor);
+		SignatureDescriptor.Header.Type            = DTYPE_String;
+	#else
+		SignatureDescriptor.Header.bLength         = sizeof(SignatureDescriptor);
+		SignatureDescriptor.Header.bDescriptorType = DTYPE_String;
+	#endif
+
+	uint8_t  SigReadAddress     = 0x0E;
+
+	for (uint8_t SerialCharNum = 0; SerialCharNum < 20; SerialCharNum++)
+	{
+		uint8_t SerialByte = boot_signature_byte_get(SigReadAddress);
+		
+		if (SerialCharNum & 0x01)
+		{
+			SerialByte >>= 4;
+			SigReadAddress++;
+		}
+		
+		SignatureDescriptor.UnicodeString[SerialCharNum] = USB_Device_NibbleToASCII(SerialByte);
+	}
+	
+	Endpoint_ClearSETUP();
+	Endpoint_Write_Control_Stream_LE(&SignatureDescriptor, sizeof(SignatureDescriptor));
+	Endpoint_ClearOUT();
+}
+#endif
 
 static void USB_Device_GetDescriptor(void)
 {
 	void*    DescriptorPointer;
 	uint16_t DescriptorSize;
 	
-	if ((DescriptorSize = CALLBACK_USB_GetDescriptor(USB_ControlRequest.wValue,
-	                                                 USB_ControlRequest.wIndex, &DescriptorPointer)) == NO_DESCRIPTOR)
+	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
+	uint8_t  DescriptorAddressSpace;
+	#endif
+	
+	#if !defined(NO_INTERNAL_SERIAL) && (defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR))
+	if (USB_ControlRequest.wValue == ((DTYPE_String << 8) | USE_INTERNAL_SERIAL))
+	{
+		USB_Device_GetInternalSerialDescriptor();
+		return;
+	}
+	#endif
+	
+	if ((DescriptorSize = CALLBACK_USB_GetDescriptor(USB_ControlRequest.wValue, USB_ControlRequest.wIndex,
+	                                                 &DescriptorPointer
+	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
+	                                                 , &DescriptorAddressSpace
+	#endif
+													 )) == NO_DESCRIPTOR)
 	{
 		return;
 	}
 	
 	Endpoint_ClearSETUP();
-	
+
 	#if defined(USE_RAM_DESCRIPTORS)
 	Endpoint_Write_Control_Stream_LE(DescriptorPointer, DescriptorSize);
+	#elif defined(USE_EEPROM_DESCRIPTORS)
+	Endpoint_Write_Control_EStream_LE(DescriptorPointer, DescriptorSize);
+	#elif defined(USE_FLASH_DESCRIPTORS)
+	Endpoint_Write_Control_PStream_LE(DescriptorPointer, DescriptorSize);	
 	#else
-	bool SendZLP;
-	
-	if (USB_ControlRequest.wLength > DescriptorSize)
-	  USB_ControlRequest.wLength = DescriptorSize;
-	
-	while (USB_ControlRequest.wLength)
-	{
-		while (!(Endpoint_IsINReady()))
-		{
-			if (Endpoint_IsOUTReceived())
-			{
-				Endpoint_ClearOUT();
-				return;
-			}		
-		}
-		
-		while (USB_ControlRequest.wLength && (Endpoint_BytesInEndpoint() < USB_ControlEndpointSize))
-		{
-			#if defined (USE_EEPROM_DESCRIPTORS)
-			Endpoint_Write_Byte(eeprom_read_byte(DescriptorPointer++));			
-			#else
-			Endpoint_Write_Byte(pgm_read_byte(DescriptorPointer++));
-			#endif
-			
-			USB_ControlRequest.wLength--;
-		}
-		
-		SendZLP = (Endpoint_BytesInEndpoint() == USB_ControlEndpointSize);
-		Endpoint_ClearIN();
-	}
-	
-	if (SendZLP)
-	{
-		while (!(Endpoint_IsINReady()));
-		Endpoint_ClearIN();
-	}
-
-	while (!(Endpoint_IsOUTReceived()));
+	if (DescriptorAddressSpace == MEMSPACE_FLASH)
+	  Endpoint_Write_Control_PStream_LE(DescriptorPointer, DescriptorSize);	
+	else if (DescriptorAddressSpace == MEMSPACE_EEPROM)
+	  Endpoint_Write_Control_EStream_LE(DescriptorPointer, DescriptorSize);
+	else
+	  Endpoint_Write_Control_Stream_LE(DescriptorPointer, DescriptorSize);	
 	#endif
-	
+
 	Endpoint_ClearOUT();
 }
 
@@ -265,7 +340,12 @@ static void USB_Device_GetStatus(void)
 
 	Endpoint_ClearIN();
 	
-	while (!(Endpoint_IsOUTReceived()));
+	while (!(Endpoint_IsOUTReceived()))
+	{
+		if (USB_DeviceState == DEVICE_STATE_Unattached)
+		  return;	
+	}
+	
 	Endpoint_ClearOUT();
 }
 

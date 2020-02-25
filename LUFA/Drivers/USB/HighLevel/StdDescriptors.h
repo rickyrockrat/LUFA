@@ -74,9 +74,24 @@
 			 *  descriptor does not exist.
 			 */
 			#define NO_DESCRIPTOR                     0
+
+			#if (!defined(NO_INTERNAL_SERIAL) && (defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR))) || defined(__DOXYGEN__)
+				/** String descriptor index for the device's unique serial number string descriptor within the device.
+				 *  This unique serial number is used by the host to associate resources to the device (such as drivers or COM port
+				 *  number allocations) to a device regardless of the port it is plugged in to on the host. Some USB AVRs contain
+				 *  a unique serial number internally, and setting the device descriptors serial number string index to this value
+				 *  will cause it to use the internal serial number.
+				 *
+				 *  On unsupported devices, this will evaluate to NO_DESCRIPTOR and so will force the host to create a pseduo-serial
+				 *  number for the device.
+				 */
+				#define USE_INTERNAL_SERIAL           0xDC
+			#else
+				#define USE_INTERNAL_SERIAL           NO_DESCRIPTOR
+			#endif
 			
 			/** Macro to calculate the power value for the device descriptor, from a given number of milliamps. */
-			#define USB_CONFIG_POWER_MA(mA)            (mA >> 1)
+			#define USB_CONFIG_POWER_MA(mA)           (mA >> 1)
 
 			/** Macro to calculate the Unicode length of a string with a given number of Unicode characters.
 			 *  Should be used in string descriptor's headers for giving the string descriptor's byte length.
@@ -244,6 +259,13 @@
 				                                          */
 				uint8_t                 SerialNumStrIndex; /**< String index for the product's globally unique hexadecimal
 				                                            *   serial number, in uppercase Unicode ASCII.
+				                                            *
+				                                            *  \note On some AVR models, there is an embedded serial number
+				                                            *        in the chip which can be used for the device serial number.
+				                                            *        To use this serial number, set this to USE_INTERNAL_SERIAL.
+				                                            *        On unsupported devices, this will evaluate to 0 and will cause
+				                                            *        the host to generate a pseudo-unique value for the device upon
+				                                            *        insertion.
 				                                            *
 				                                            *  \see ManufacturerStrIndex structure entry.
 				                                            */

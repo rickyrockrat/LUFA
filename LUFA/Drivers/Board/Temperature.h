@@ -41,7 +41,10 @@
  *    - LUFA/Drivers/Board/Temperature.c
  *
  *  \section Module Description
- *  Functions, macros, variables, enums and types related to the control of board temperature sensors.
+ *  Temperature sensor driver. This provides an easy to use interface for the hardware temperature sensor located
+ *  on many boards. It provides an interface to configure the sensor and appropriate ADC channel, plus read out the
+ *  current temperature in degrees C. It is designed for and will only work with the temperature sensor located on the
+ *  official Atmel USB AVR boards, as each sensor has different characteristics.
  *
  *  @{
  */
@@ -62,7 +65,7 @@
 	
 		#if !defined(BOARD)
 			#error BOARD must be set in makefile to a value specified in BoardTypes.h.	
-		#elif (BOARD != BOARD_USBKEY) && (BOARD != BOARD_STK525) && (BOARD != BOARD_STK526)
+		#elif (BOARD != BOARD_USBKEY) && (BOARD != BOARD_STK525) && (BOARD != BOARD_STK526) && (BOARD != BOARD_USER)
 			#error The selected board does not contain a temperature sensor.
 		#endif
 

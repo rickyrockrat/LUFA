@@ -41,7 +41,8 @@
  *    - None
  *
  *  \section Module Description
- *  Functions, macros, variables, enums and types related to the setup of a the SPI port.
+ *  Driver for the hardware SPI port avaliable on most AVR models. This module provides
+ *  an easy to use driver for the setup of and transfer of data over the AVR's SPI port.
  *
  *  @{
  */
@@ -90,8 +91,8 @@
 			/** Initializes the SPI subsystem, ready for transfers. Must be called before calling any other
 			 *  SPI routines.
 			 *
-			 *  \param PrescalerMask  Prescaler mask to set the SPI clock speed
-			 *  \param Master         If true, sets the SPI system to use master mode, slave if false
+			 *  \param[in] PrescalerMask  Prescaler mask to set the SPI clock speed
+			 *  \param[in] Master         If true, sets the SPI system to use master mode, slave if false
 			 */
 			static inline void SPI_Init(const uint8_t PrescalerMask, const bool Master)
 			{
@@ -109,7 +110,7 @@
 			
 			/** Sends and receives a byte through the SPI interface, blocking until the transfer is complete.
 			 *
-			 *  \param Byte  Byte to send through the SPI interface
+			 *  \param[in] Byte  Byte to send through the SPI interface
 			 *
 			 *  \return Response byte from the attached SPI device
 			 */
@@ -124,7 +125,7 @@
 			/** Sends a byte through the SPI interface, blocking until the transfer is complete. The response
 			 *  byte sent to from the attached SPI device is ignored.
 			 *
-			 *  \param Byte Byte to send through the SPI interface
+			 *  \param[in] Byte Byte to send through the SPI interface
 			 */
 			static inline void SPI_SendByte(const uint8_t Byte) ATTR_ALWAYS_INLINE;
 			static inline void SPI_SendByte(const uint8_t Byte)

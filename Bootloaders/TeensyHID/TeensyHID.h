@@ -47,11 +47,10 @@
 
 		#include "Descriptors.h"
 
-		#include <LUFA/Version.h>                    // Library Version Information
-		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
+		#include <LUFA/Drivers/USB/USB.h>
 		
 	/* Preprocessor Checks: */
-		#if !defined(__AVR_AT90USB162__)
+		#if !defined(__AVR_AT90USB162__) && !defined(__AVR_AT90USB646__)
 			#error This bootloader is not compatible with the selected AVR model.
 		#endif
 
@@ -59,10 +58,13 @@
 		/** HID Class specific request to send the next HID report to the device. */
 		#define REQ_SetReport             0x09
 		
+		/** Teensy Bootloader special address to start the user application */
 		#define TEENSY_STARTAPPLICATION   0xFFFF
 		
 	/* Function Prototypes: */
-		void EVENT_USB_ConfigurationChanged(void);
-		void EVENT_USB_UnhandledControlPacket(void);
+		void SetupHardware(void);
+
+		void EVENT_USB_Device_ConfigurationChanged(void);
+		void EVENT_USB_Device_UnhandledControlRequest(void);
 		
 #endif
