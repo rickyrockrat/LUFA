@@ -44,10 +44,14 @@ USB_ClassInfo_Audio_Device_t Speaker_Audio_Interface =
 	{
 		.Config =
 			{
+				.ControlInterfaceNumber   = 0,
 				.StreamingInterfaceNumber = 1,
-
-				.DataOUTEndpointNumber    = AUDIO_STREAM_EPNUM,
-				.DataOUTEndpointSize      = AUDIO_STREAM_EPSIZE,
+				.DataOUTEndpoint          =
+					{
+						.Address          = AUDIO_STREAM_EPADDR,
+						.Size             = AUDIO_STREAM_EPSIZE,
+						.Banks            = 2,
+					},
 			},
 	};
 
@@ -208,7 +212,7 @@ void EVENT_USB_Device_ControlRequest(void)
  *
  *  When the DataLength parameter is NULL, this callback should only indicate whether the specified operation is valid for
  *  the given endpoint index, and should return as fast as possible. When non-NULL, this value may be altered for GET operations
- *  to indicate the size of the retreived data.
+ *  to indicate the size of the retrieved data.
  *
  *  \note The length of the retrieved data stored into the Data buffer on GET operations should not exceed the initial value
  *        of the \c DataLength parameter.
@@ -233,7 +237,7 @@ bool CALLBACK_Audio_Device_GetSetEndpointProperty(USB_ClassInfo_Audio_Device_t* 
                                                   uint8_t* Data)
 {
 	/* Check the requested endpoint to see if a supported endpoint is being manipulated */
-	if (EndpointAddress == (ENDPOINT_DIR_OUT | Speaker_Audio_Interface.Config.DataOUTEndpointNumber))
+	if (EndpointAddress == Speaker_Audio_Interface.Config.DataOUTEndpoint.Address)
 	{
 		/* Check the requested control to see if a supported control is being manipulated */
 		if (EndpointControl == AUDIO_EPCONTROL_SamplingFreq)
@@ -276,13 +280,13 @@ bool CALLBACK_Audio_Device_GetSetEndpointProperty(USB_ClassInfo_Audio_Device_t* 
  *
  *  When the DataLength parameter is NULL, this callback should only indicate whether the specified operation is valid for
  *  the given entity and should return as fast as possible. When non-NULL, this value may be altered for GET operations
- *  to indicate the size of the retreived data.
+ *  to indicate the size of the retrieved data.
  *
  *  \note The length of the retrieved data stored into the Data buffer on GET operations should not exceed the initial value
  *        of the \c DataLength parameter.
  *
  *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
- *  \param[in]     Property            Property of the interface to get or set, a value from \ref Audio_ClassRequests_t.
+ *  \param[in]     Property            Property of the interface to get or set, a value from Audio_ClassRequests_t.
  *  \param[in]     EntityAddress       Address of the audio entity whose property is being referenced.
  *  \param[in]     Parameter           Parameter of the entity to get or set, specific to each type of entity (see USB Audio specification).
  *  \param[in,out] DataLength          For SET operations, the length of the parameter data to set. For GET operations, the maximum

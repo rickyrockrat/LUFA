@@ -52,11 +52,12 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
 	    HID_RI_COLLECTION(8, 0x00), /* Physical */
 	        HID_RI_USAGE(8, 0x30), /* Usage X */
 	        HID_RI_USAGE(8, 0x31), /* Usage Y */
+	        HID_RI_USAGE(8, 0x32), /* Usage Z */
 	        HID_RI_LOGICAL_MINIMUM(8, -100),
 	        HID_RI_LOGICAL_MAXIMUM(8, 100),
 	        HID_RI_PHYSICAL_MINIMUM(8, -1),
 	        HID_RI_PHYSICAL_MAXIMUM(8, 1),
-	        HID_RI_REPORT_COUNT(8, 0x02),
+	        HID_RI_REPORT_COUNT(8, 0x03),
 	        HID_RI_REPORT_SIZE(8, 0x08),
 	        HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 	    HID_RI_END_COLLECTION(0),
@@ -154,10 +155,10 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = (ENDPOINT_DIR_IN | JOYSTICK_EPNUM),
+			.EndpointAddress        = JOYSTICK_EPADDR,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = JOYSTICK_EPSIZE,
-			.PollingIntervalMS      = 0x01
+			.PollingIntervalMS      = 0x05
 		}
 };
 

@@ -61,18 +61,17 @@
 			USB_Descriptor_Interface_t            HID2_MouseInterface;
 			USB_HID_Descriptor_HID_t              HID2_MouseHID;
 			USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
-			USB_Descriptor_Endpoint_t             HID2_ReportOUTEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Macros: */
-		/** Endpoint number of the Keyboard HID reporting IN endpoint. */
-		#define KEYBOARD_IN_EPNUM         1
+		/** Endpoint address of the Keyboard HID reporting IN endpoint. */
+		#define KEYBOARD_IN_EPADDR        (ENDPOINT_DIR_IN  | 1)
 
-		/** Endpoint number of the Keyboard HID reporting OUT endpoint. */
-		#define KEYBOARD_OUT_EPNUM        2
+		/** Endpoint address of the Keyboard HID reporting OUT endpoint. */
+		#define KEYBOARD_OUT_EPADDR       (ENDPOINT_DIR_OUT | 2)
 
-		/** Endpoint number of the Mouse HID reporting IN endpoint. */
-		#define MOUSE_IN_EPNUM            3
+		/** Endpoint address of the Mouse HID reporting IN endpoint. */
+		#define MOUSE_IN_EPADDR           (ENDPOINT_DIR_IN  | 3)
 
 		/** Size in bytes of each of the HID reporting IN and OUT endpoints. */
 		#define HID_EPSIZE                8

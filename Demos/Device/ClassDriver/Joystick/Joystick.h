@@ -45,7 +45,6 @@
 
 		#include "Descriptors.h"
 
-		#include <LUFA/Version.h>
 		#include <LUFA/Drivers/Board/Joystick.h>
 		#include <LUFA/Drivers/Board/LEDs.h>
 		#include <LUFA/Drivers/Board/Buttons.h>
@@ -59,6 +58,7 @@
 		{
 			int8_t  X; /**< Current absolute joystick X position, as a signed 8-bit integer */
 			int8_t  Y; /**< Current absolute joystick Y position, as a signed 8-bit integer */
+			int8_t  Z; /**< Current absolute joystick Z position, as a signed 8-bit integer */
 			uint8_t Button; /**< Bit mask of the currently pressed joystick buttons */
 		} USB_JoystickReport_Data_t;
 

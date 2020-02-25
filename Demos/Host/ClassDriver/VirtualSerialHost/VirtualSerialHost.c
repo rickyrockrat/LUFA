@@ -44,14 +44,21 @@ USB_ClassInfo_CDC_Host_t VirtualSerial_CDC_Interface =
 	{
 		.Config =
 			{
-				.DataINPipeNumber           = 1,
-				.DataINPipeDoubleBank       = false,
-
-				.DataOUTPipeNumber          = 2,
-				.DataOUTPipeDoubleBank      = false,
-
-				.NotificationPipeNumber     = 3,
-				.NotificationPipeDoubleBank = false,
+				.DataINPipe             =
+					{
+						.Address        = (PIPE_DIR_IN  | 1),
+						.Banks          = 1,
+					},
+				.DataOUTPipe            =
+					{
+						.Address        = (PIPE_DIR_OUT | 2),
+						.Banks          = 1,
+					},
+				.NotificationPipe       =
+					{
+						.Address        = (PIPE_DIR_IN  | 3),
+						.Banks          = 1,
+					},
 			},
 	};
 
@@ -162,6 +169,18 @@ void EVENT_USB_Host_DeviceEnumerationComplete(void)
 		puts_P(PSTR("Error Setting Device Configuration.\r\n"));
 		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 		return;
+	}
+	
+	VirtualSerial_CDC_Interface.State.LineEncoding.BaudRateBPS = 9600;
+	VirtualSerial_CDC_Interface.State.LineEncoding.CharFormat  = CDC_LINEENCODING_OneStopBit;
+	VirtualSerial_CDC_Interface.State.LineEncoding.ParityType  = CDC_PARITY_None;
+	VirtualSerial_CDC_Interface.State.LineEncoding.DataBits    = 8;
+	
+	if (CDC_Host_SetLineEncoding(&VirtualSerial_CDC_Interface))
+	{
+		puts_P(PSTR("Error Setting Device Line Encoding.\r\n"));
+		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+		return;	
 	}
 
 	puts_P(PSTR("CDC Device Enumerated.\r\n"));

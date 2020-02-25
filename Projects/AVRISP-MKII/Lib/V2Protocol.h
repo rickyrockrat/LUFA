@@ -43,12 +43,13 @@
 
 		#include <LUFA/Drivers/USB/USB.h>
 
-		#include "../Descriptors.h"
+		#include "../AVRISPDescriptors.h"
 		#include "V2ProtocolConstants.h"
 		#include "V2ProtocolParams.h"
 		#include "ISP/ISPProtocol.h"
 		#include "XPROG/XPROGProtocol.h"
-
+		#include "Config/AppConfig.h"
+		
 	/* Preprocessor Checks: */
 		#if ((BOARD == BOARD_XPLAIN) || (BOARD == BOARD_XPLAIN_REV1))
 			#undef ENABLE_ISP_PROTOCOL
@@ -78,8 +79,8 @@
 		/** Timeout period for each issued command from the host before it is aborted (in 10ms ticks). */
 		#define COMMAND_TIMEOUT_TICKS      100
 
-		/** Command timeout expiration flag, GPIOR for speed. */
-		#define TimeoutExpired             GPIOR1
+		/** Command timeout ticks remaining counter, GPIOR for speed. */
+		#define TimeoutTicksRemaining      GPIOR1
 
 		/** MUX mask for the VTARGET ADC channel number. */
 		#define VTARGET_ADC_CHANNEL_MASK   ADC_GET_CHANNEL_MASK(VTARGET_ADC_CHANNEL)

@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2011.
+#     Copyright (C) Dean Camera, 2012.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
@@ -11,10 +11,14 @@
 # not intended to be modified or compiled by non-developers.
 
 all:
-	$(MAKE) -C ModuleTest all
-	$(MAKE) -C SingleUSBModeTest all
 
 %:
+	@echo Executing \"make $@\" on all LUFA build tests.
+	@echo
+	$(MAKE) -C BoardDriverTest $@
+	$(MAKE) -C BootloaderTest $@
 	$(MAKE) -C ModuleTest $@
 	$(MAKE) -C SingleUSBModeTest $@
-
+	$(MAKE) -C StaticAnalysisTest $@
+	@echo
+	@echo LUFA build test \"make $@\" operation complete.

@@ -44,20 +44,24 @@ USB_ClassInfo_AOA_Host_t AndroidDevice_AOA_Interface =
 	{
 		.Config =
 			{
-				.DataINPipeNumber           = 1,
-				.DataINPipeDoubleBank       = false,
-
-				.DataOUTPipeNumber          = 2,
-				.DataOUTPipeDoubleBank      = false,
-				
+				.DataINPipe             =
+					{
+						.Address        = (PIPE_DIR_IN  | 1),
+						.Banks          = 1,
+					},
+				.DataOUTPipe            =
+					{
+						.Address        = (PIPE_DIR_OUT | 2),
+						.Banks          = 1,
+					},				
 				.PropertyStrings =
 					{
-						.Manufacturer       = "Dean Camera",
-						.Model              = "LUFA Android Demo",
-						.Description        = "LUFA Android Demo",
-						.Version            = "1.0",
-						.URI                = "http://www.lufa-lib.org",
-						.Serial             = "0000000012345678",
+						[AOA_STRING_Manufacturer] = "Dean Camera",
+						[AOA_STRING_Model]        = "LUFA Android Demo",
+						[AOA_STRING_Description]  = "LUFA Android Demo",
+						[AOA_STRING_Version]      = "1.0",
+						[AOA_STRING_URI]          = "http://www.lufa-lib.org",
+						[AOA_STRING_Serial]       = "0000000012345678",
 					},
 			},
 	};

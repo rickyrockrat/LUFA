@@ -42,6 +42,8 @@
 
 		#include <LUFA/Drivers/USB/USB.h>
 
+		#include "Config/AppConfig.h"
+
 	/* Type Defines: */
 		/** Type define for the device configuration descriptor structure. This must be defined in the
 		 *  application code, as the configuration descriptor contains several sub-descriptors which
@@ -58,8 +60,8 @@
 		} USB_Descriptor_Configuration_t;
 
 	/* Macros: */
-		/** Endpoint number of the keyboard key press reporting endpoint. */
-		#define KEYBOARD_EPNUM               1
+		/** Endpoint address of the keyboard key press reporting endpoint. */
+		#define KEYBOARD_EPADDR              (ENDPOINT_DIR_IN | 1)
 
 		/** Size of the keyboard report endpoints, in bytes. */
 		#define KEYBOARD_EPSIZE              8

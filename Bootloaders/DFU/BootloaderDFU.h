@@ -49,23 +49,20 @@
 
 		#include "Descriptors.h"
 		#include "BootloaderAPI.h"
+		#include "Config/AppConfig.h"
 
 		#include <LUFA/Drivers/USB/USB.h>
 		#include <LUFA/Drivers/Board/LEDs.h>
 
 	/* Macros: */
-		/** Configuration define. Define this token to true to case the bootloader to reject all memory commands
-		 *  until a memory erase has been performed. When used in conjunction with the lockbits of the AVR, this
-		 *  can protect the AVR's firmware from being dumped from a secured AVR. When false, memory operations are
-		 *  allowed at any time.
-		 */
-		#define SECURE_MODE              false
-
 		/** Major bootloader version number. */
 		#define BOOTLOADER_VERSION_MINOR 2
 
 		/** Minor bootloader version number. */
 		#define BOOTLOADER_VERSION_REV   0
+		
+		/** Magic bootloader key to unlock forced application start mode. */
+		#define MAGIC_BOOT_KEY            0xDC42
 
 		/** Complete bootloader version number expressed as a packed byte, constructed from the
 		 *  two individual bootloader version macros.
@@ -206,6 +203,8 @@
 			static void ProcessWriteCommand(void);
 			static void ProcessReadCommand(void);
 		#endif
+		
+		void Application_Jump_Check(void) ATTR_INIT_SECTION(3);
 
 #endif
 

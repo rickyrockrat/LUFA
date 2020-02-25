@@ -167,6 +167,7 @@ void MIDIHost_Task(void)
 	  return;
 
 	Pipe_SelectPipe(MIDI_DATA_IN_PIPE);
+	Pipe_Unfreeze();
 
 	if (Pipe_IsINReceived())
 	{
@@ -177,8 +178,8 @@ void MIDIHost_Task(void)
 		if (!(Pipe_BytesInPipe()))
 		  Pipe_ClearIN();
 
-		bool NoteOnEvent  = ((MIDIEvent.Command & 0x0F) == (MIDI_COMMAND_NOTE_ON  >> 4));
-		bool NoteOffEvent = ((MIDIEvent.Command & 0x0F) == (MIDI_COMMAND_NOTE_OFF >> 4));
+		bool NoteOnEvent  = (MIDIEvent.Event == MIDI_EVENT(0, MIDI_COMMAND_NOTE_ON));
+		bool NoteOffEvent = (MIDIEvent.Event == MIDI_EVENT(0, MIDI_COMMAND_NOTE_OFF));
 
 		if (NoteOnEvent || NoteOffEvent)
 		{
@@ -187,8 +188,11 @@ void MIDIHost_Task(void)
 																				   MIDIEvent.Data2, MIDIEvent.Data3);
 		}
 	}
+	
+	Pipe_Freeze();
 
 	Pipe_SelectPipe(MIDI_DATA_OUT_PIPE);
+	Pipe_Unfreeze();
 
 	if (Pipe_IsOUTReady())
 	{
@@ -237,8 +241,7 @@ void MIDIHost_Task(void)
 		{
 			MIDI_EventPacket_t MIDIEvent = (MIDI_EventPacket_t)
 				{
-					.CableNumber = 0,
-					.Command     = (MIDICommand >> 4),
+					.Event       = MIDI_EVENT(0, MIDICommand),
 
 					.Data1       = MIDICommand | Channel,
 					.Data2       = MIDIPitch,
@@ -251,6 +254,8 @@ void MIDIHost_Task(void)
 			/* Send the data in the pipe to the device */
 			Pipe_ClearOUT();
 		}
+
+		Pipe_Freeze();
 
 		/* Save previous joystick value for next joystick change detection */
 		PrevJoystickStatus = JoystickStatus;

@@ -45,15 +45,18 @@ USB_ClassInfo_MS_Device_t Disk_MS_Interface =
 		.Config =
 			{
 				.InterfaceNumber           = 0,
-
-				.DataINEndpointNumber      = MASS_STORAGE_IN_EPNUM,
-				.DataINEndpointSize        = MASS_STORAGE_IO_EPSIZE,
-				.DataINEndpointDoubleBank  = false,
-
-				.DataOUTEndpointNumber     = MASS_STORAGE_OUT_EPNUM,
-				.DataOUTEndpointSize       = MASS_STORAGE_IO_EPSIZE,
-				.DataOUTEndpointDoubleBank = false,
-
+				.DataINEndpoint            =
+					{
+						.Address           = MASS_STORAGE_IN_EPADDR,
+						.Size              = MASS_STORAGE_IO_EPSIZE,
+						.Banks             = 1,
+					},
+				.DataOUTEndpoint           =
+					{
+						.Address           = MASS_STORAGE_OUT_EPADDR,
+						.Size              = MASS_STORAGE_IO_EPSIZE,
+						.Banks             = 1,
+					},
 				.TotalLUNs                 = TOTAL_LUNS,
 			},
 	};
@@ -91,6 +94,13 @@ void SetupHardware(void)
 	SPI_Init(SPI_SPEED_FCPU_DIV_2 | SPI_ORDER_MSB_FIRST | SPI_SCK_LEAD_FALLING | SPI_SAMPLE_TRAILING | SPI_MODE_MASTER);
 	Dataflash_Init();
 	USB_Init();
+
+	/* Check if the Dataflash is working, abort if not */
+	if (!(DataflashManager_CheckDataflashOperation()))
+	{
+		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+		for(;;);
+	}
 
 	/* Clear Dataflash sector protections, if enabled */
 	DataflashManager_ResetDataflashProtections();

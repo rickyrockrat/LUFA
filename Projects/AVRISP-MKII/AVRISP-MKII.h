@@ -42,7 +42,6 @@
 		#include <avr/interrupt.h>
 		#include <avr/power.h>
 
-		#include <LUFA/Version.h>
 		#include <LUFA/Drivers/Board/LEDs.h>
 		#include <LUFA/Drivers/USB/USB.h>
 
@@ -50,8 +49,9 @@
 			#include <LUFA/Drivers/Peripheral/ADC.h>
 		#endif
 
-		#include "Descriptors.h"
+		#include "AVRISPDescriptors.h"
 		#include "Lib/V2Protocol.h"
+		#include "Config/AppConfig.h"
 
 	/* Macros: */
 		/** LED mask for the library LED driver, to indicate that the USB interface is not ready. */
@@ -79,6 +79,12 @@
 		void EVENT_USB_Device_Connect(void);
 		void EVENT_USB_Device_Disconnect(void);
 		void EVENT_USB_Device_ConfigurationChanged(void);
+		
+		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
+		                                    const uint8_t wIndex,
+		                                    const void** const DescriptorAddress,
+		                                    uint8_t* const DescriptorMemorySpace)
+		                                    ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3) ATTR_NON_NULL_PTR_ARG(4);		
 
 #endif
 

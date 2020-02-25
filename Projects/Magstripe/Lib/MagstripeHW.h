@@ -65,6 +65,7 @@
 		#include <avr/io.h>
 
 		#include <LUFA/Common/Common.h>
+		#include "Config/AppConfig.h"
 
 	/* Private Interface - For use in library only: */
 		/* Macros: */
@@ -76,7 +77,7 @@
 
 	/* Public Interface - May be used in end-application: */
 		/* Inline Functions: */
-			/** Initialises the magnetic stripe card reader ports and pins so that the card reader
+			/** Initializes the magnetic stripe card reader ports and pins so that the card reader
 			 *  device can be controlled and read by the card reader driver. This must be called before
 			 *  trying to read any of the card reader's status lines.
 			 */

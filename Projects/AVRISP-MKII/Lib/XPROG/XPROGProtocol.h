@@ -46,12 +46,13 @@
 		#include "../V2Protocol.h"
 		#include "XMEGANVM.h"
 		#include "TINYNVM.h"
-
+		#include "Config/AppConfig.h"
+		
 	/* Preprocessor Checks: */
 		#if ((BOARD == BOARD_XPLAIN) || (BOARD == BOARD_XPLAIN_REV1))
 			/* On the XPLAIN board, we only need PDI programming
 			   for the ATXMEGA128A1 - disable ISP to prevent hardware
-			   damage.
+			   damage and force-enable XPROG.
 			 */
 			#undef ENABLE_ISP_PROTOCOL
 
