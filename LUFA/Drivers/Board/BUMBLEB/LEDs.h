@@ -29,9 +29,12 @@
 */
 
 /** \file
+ *  \brief Board specific LED driver header for the BUMBLEB.
  *
- *  Board specific LED driver header for the BUMBLEB. The BUMBLEB third-party board does not include any on-board
- *  peripherals, but does have an officially recommended external peripheral layout for buttons, LEDs and a Joystick.
+ *  Board specific LED driver header for the BUMBLEB (http://fletchtronics.net/bumble-b).
+ *
+ *  The BUMBLEB third-party board does not include any on-board peripherals, but does have an officially recommended
+ *  external peripheral layout for buttons, LEDs and a Joystick.
  *
  *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver
  *        dispatch header located in LUFA/Drivers/Board/LEDs.h.
@@ -40,8 +43,9 @@
 /** \ingroup Group_LEDs
  *  @defgroup Group_LEDs_BUMBLEB BUMBLEB
  *
- *  Board specific LED driver header for the BUMBLEB. The BUMBLEB third-party board does not include any on-board
- *  peripherals, but does have an officially recommended external peripheral layout for buttons, LEDs and a Joystick.
+ *  Board specific LED driver header for the BUMBLEB (http://fletchtronics.net/bumble-b). The BUMBLEB third-party board
+ *  does not include any on-board peripherals, but does have an officially recommended external peripheral layout for
+ *  buttons, LEDs and a Joystick.
  *
  *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver
  *        dispatch header located in LUFA/Drivers/Board/LEDs.h.

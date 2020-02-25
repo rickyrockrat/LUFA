@@ -147,10 +147,10 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/HostChapter9.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/LowLevel.c           \
  	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Pipe.c               \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/USBInterrupt.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/Device/MassStorage.c    \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/Host/MassStorage.c      \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/Device/RNDIS.c          \
@@ -201,6 +201,7 @@ CSTANDARD = -std=gnu99
 # Place -D or -U options here for C sources
 CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD) $(LUFA_OPTS)
 CDEFS += -DENABLE_DHCP_CLIENT
+CDEFS += -DENABLE_TELNET_SERVER
 CDEFS += -DMAX_URI_LENGTH=50
 
 CDEFS += -DUIP_CONF_UDP="defined(ENABLE_DHCP_CLIENT)" -DUIP_CONF_TCP=1 -DUIP_CONF_UDP_CONNS=1 -DUIP_CONF_MAX_CONNECTIONS=3
@@ -523,7 +524,7 @@ sizeafter:
 	2>/dev/null; echo; fi
 
 $(LUFA_PATH)/LUFA/LUFA_Events.lst:
-	@make -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
+	@$(MAKE) -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
 
 checkinvalidevents: $(LUFA_PATH)/LUFA/LUFA_Events.lst
 	@echo

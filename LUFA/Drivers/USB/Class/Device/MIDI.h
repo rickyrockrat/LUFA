@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief Device mode driver for the library USB MIDI Class driver.
+ *
+ *  Device mode driver for the library USB MIDI Class driver.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the class driver
+ *        dispatch header located in LUFA/Drivers/USB/Class/MIDI.h.
+ */
+
 /** \ingroup Group_USBClassMIDI
  *  @defgroup Group_USBClassMIDIDevice MIDI Class Device Mode Driver
  *
@@ -62,7 +71,9 @@
 
 	/* Public Interface - May be used in end-application: */
 		/* Type Define: */
-			/** Class state structure. An instance of this structure should be made for each MIDI interface
+			/** \brief MIDI Class Device Mode Configuration and State Structure.
+			 *
+			 *  Class state structure. An instance of this structure should be made for each MIDI interface
 			 *  within the user application, and passed to each of the MIDI class driver functions as the
 			 *  MIDIInterfaceInfo parameter. This stores each MIDI interface's configuration and state information.
 			 */
@@ -101,13 +112,6 @@
 			 */
 			bool MIDI_Device_ConfigureEndpoints(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			
-			/** Processes incoming control requests from the host, that are directed to the given MIDI class interface. This should be
-			 *  linked to the library \ref EVENT_USB_Device_UnhandledControlRequest() event.
-			 *
-			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state
-			 */		
-			void MIDI_Device_ProcessControlRequest(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-
 			/** Sends a MIDI event packet to the host. If no host is connected, the event packet is discarded. Events are queued into the
 			 *  endpoint bank until either the endpoint bank is full, or \ref MIDI_Device_Flush() is called. This allows for multiple
 			 *  MIDI events to be packed into a single endpoint packet, increasing data throughput.
@@ -157,7 +161,18 @@
 			static inline void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo)
 			{
 				(void)MIDIInterfaceInfo;
-			}		
+			}
+			
+			/** Processes incoming control requests from the host, that are directed to the given MIDI class interface. This should be
+			 *  linked to the library \ref EVENT_USB_Device_UnhandledControlRequest() event.
+			 *
+			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state
+			 */		
+			static inline void MIDI_Device_ProcessControlRequest(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+			static inline void MIDI_Device_ProcessControlRequest(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo)
+			{
+				(void)MIDIInterfaceInfo;
+			}
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

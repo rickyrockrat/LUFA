@@ -70,6 +70,7 @@ int main(void)
 	puts_P(PSTR(ESC_FG_CYAN "RNDIS Host Demo running.\r\n" ESC_FG_WHITE));
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 
 	for (;;)
 	{
@@ -84,7 +85,7 @@ int main(void)
 				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
 				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
-					printf("Error Retrieving Configuration Descriptor.\r\n");
+					puts_P(PSTR("Error Retrieving Configuration Descriptor.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -93,7 +94,7 @@ int main(void)
 				if (RNDIS_Host_ConfigurePipes(&Ethernet_RNDIS_Interface,
 				                              ConfigDescriptorSize, ConfigDescriptorData) != RNDIS_ENUMERROR_NoError)
 				{
-					printf("Attached Device Not a Valid RNDIS Class Device.\r\n");
+					puts_P(PSTR("Attached Device Not a Valid RNDIS Class Device.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -101,7 +102,7 @@ int main(void)
 				
 				if (USB_Host_SetDeviceConfiguration(1) != HOST_SENDCONTROL_Successful)
 				{
-					printf("Error Setting Device Configuration.\r\n");
+					puts_P(PSTR("Error Setting Device Configuration.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -109,20 +110,20 @@ int main(void)
 				
 				if (RNDIS_Host_InitializeDevice(&Ethernet_RNDIS_Interface) != HOST_SENDCONTROL_Successful)
 				{
-					printf("Error Initializing Device.\r\n");
+					puts_P(PSTR("Error Initializing Device.\r\n"));
 
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;			
 				}
 				
-				printf("Device Max Transfer Size: %lu bytes.\r\n", Ethernet_RNDIS_Interface.State.DeviceMaxPacketSize);
+				printf_P(PSTR("Device Max Transfer Size: %lu bytes.\r\n"), Ethernet_RNDIS_Interface.State.DeviceMaxPacketSize);
 				
 				uint32_t PacketFilter = (REMOTE_NDIS_PACKET_DIRECTED | REMOTE_NDIS_PACKET_BROADCAST | REMOTE_NDIS_PACKET_ALL_MULTICAST);
 				if (RNDIS_Host_SetRNDISProperty(&Ethernet_RNDIS_Interface, OID_GEN_CURRENT_PACKET_FILTER,
 				                                &PacketFilter, sizeof(PacketFilter)) != HOST_SENDCONTROL_Successful)
 				{
-					printf("Error Setting Device Packet Filter.\r\n");
+					puts_P(PSTR("Error Setting Device Packet Filter.\r\n"));
 
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
@@ -133,16 +134,17 @@ int main(void)
 				if (RNDIS_Host_QueryRNDISProperty(&Ethernet_RNDIS_Interface, OID_GEN_VENDOR_ID,
 				                                  &VendorID, sizeof(VendorID)) != HOST_SENDCONTROL_Successful)
 				{
-					printf("Error Getting Vendor ID.\r\n");
+					puts_P(PSTR("Error Getting Vendor ID.\r\n"));
 
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
 				}
 				
-				printf("Device Vendor ID: 0x%08lX\r\n", VendorID);
+				printf_P(PSTR("Device Vendor ID: 0x%08lX\r\n"), VendorID);
 
-				printf("RNDIS Device Enumerated.\r\n");
+				puts_P(PSTR("RNDIS Device Enumerated.\r\n"));
+				LEDs_SetAllLEDs(LEDMASK_USB_READY);
 				USB_HostState = HOST_STATE_Configured;
 				break;
 			case HOST_STATE_Configured:
@@ -166,12 +168,12 @@ void PrintIncomingPackets(void)
 		uint16_t PacketLength;
 		RNDIS_Host_ReadPacket(&Ethernet_RNDIS_Interface, &PacketBuffer, &PacketLength);
 	
-		printf("***PACKET (Size %d)***\r\n", PacketLength);
+		printf_P(PSTR("***PACKET (Size %d)***\r\n"), PacketLength);
 	
 		for (uint16_t i = 0; i < PacketLength; i++)
 		  printf("%02x ", PacketBuffer[i]);
 
-		printf("\r\n\r\n");
+		printf_P(PSTR("\r\n\r\n"));
 		
 		LEDs_SetAllLEDs(LEDMASK_USB_READY);
 	}

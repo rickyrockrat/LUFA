@@ -137,15 +137,16 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK)
  */
 int main(void)
 {
+	SetupHardware();
+
 	/* Fetch logging interval from EEPROM */
 	LoggingInterval500MS_SRAM = eeprom_read_byte(&LoggingInterval500MS_EEPROM);
 
-	SetupHardware();
-
-	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
-
 	/* Mount and open the log file on the dataflash FAT partition */
 	OpenLogFile();
+
+	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 
 	/* Discard the first sample from the temperature sensor, as it is generally incorrect */
 	volatile uint8_t Dummy = Temperature_GetTemperature();
@@ -252,7 +253,7 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
  *
  *  \param[in] MSInterfaceInfo  Pointer to the Mass Storage class interface configuration structure being referenced
  */
-bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* MSInterfaceInfo)
+bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* const MSInterfaceInfo)
 {
 	bool CommandSuccess;
 	
@@ -291,17 +292,14 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
  *
  *  \param[in] HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
  *  \param[in] ReportID  Report ID of the received report from the host
+ *  \param[in] ReportType  The type of report that the host has sent, either REPORT_ITEM_TYPE_Out or REPORT_ITEM_TYPE_Feature
  *  \param[in] ReportData  Pointer to a buffer where the created report has been stored
  *  \param[in] ReportSize  Size in bytes of the received HID report
  */
 void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, const uint8_t ReportID,
-                                          const void* ReportData, const uint16_t ReportSize)
+                                          const uint8_t ReportType, const void* ReportData, const uint16_t ReportSize)
 {
 	Device_Report_t* ReportParams = (Device_Report_t*)ReportData;
-	
-	GPIOR0 = ReportParams->Day;
-	GPIOR1 = ReportParams->Month;
-	GPIOR2 = ReportParams->Year;
 	
 	DS1307_SetDate(ReportParams->Day,  ReportParams->Month,  ReportParams->Year);
 	DS1307_SetTime(ReportParams->Hour, ReportParams->Minute, ReportParams->Second);

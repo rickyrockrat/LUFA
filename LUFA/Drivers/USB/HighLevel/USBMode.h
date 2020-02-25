@@ -28,6 +28,17 @@
   this software.
 */
 
+/** \file
+ *  \brief USB mode and capability macros.
+ *
+ *  This file defines macros indicating the type of USB controller the library is being compiled for, and its
+ *  capabilities. These macros may then be referenced in the user application to selectively enable or disable
+ *  code sections depending on if they are defined or not.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+
 /** \ingroup Group_USB
  *  @defgroup Group_USBMode USB Mode Tokens
  *
@@ -45,7 +56,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */

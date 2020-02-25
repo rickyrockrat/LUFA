@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific joystick driver header for the USBKEY.
  *
  *  Board specific joystick driver header for the USBKEY.
  *

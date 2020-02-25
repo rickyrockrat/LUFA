@@ -66,7 +66,7 @@ MCU = atmega32u2
 # Target board (see library "Board Types" documentation, NONE for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called 
 # "Board" inside the application directory.
-BOARD  = USER
+BOARD  = BENITO
 
 
 # Processor frequency.
@@ -80,7 +80,7 @@ BOARD  = USER
 #     does not *change* the processor frequency - it should merely be updated to
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
-F_CPU = 16000000
+F_CPU = 8000000
 
 
 # Input clock frequency.
@@ -133,10 +133,10 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/HostChapter9.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/LowLevel.c           \
  	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Pipe.c               \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/USBInterrupt.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/Device/CDC.c            \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/Host/CDC.c              \
 
@@ -506,7 +506,7 @@ sizeafter:
 	2>/dev/null; echo; fi
 
 $(LUFA_PATH)/LUFA/LUFA_Events.lst:
-	@make -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
+	@$(MAKE) -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
 
 checkinvalidevents: $(LUFA_PATH)/LUFA/LUFA_Events.lst
 	@echo

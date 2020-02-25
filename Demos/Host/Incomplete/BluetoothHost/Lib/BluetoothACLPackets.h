@@ -35,54 +35,77 @@
 		#include <avr/io.h>
 		#include <string.h>
 		#include <stdbool.h>
+		#include <stdio.h>
 
 		#include <LUFA/Drivers/USB/USB.h>
+		#include <LUFA/Drivers/Peripheral/SerialStream.h>
 		
 		#include "BluetoothStack.h"
 		
 	/* Macros: */
-		#define BLUETOOTH_CHANNEL_SIGNALING              0x0001
-		#define BLUETOOTH_CHANNEL_CONNECTIONLESS         0x0002
-		
-		#define BLUETOOTH_SIGNAL_CONNECTION_REQUEST      0x02
-		#define BLUETOOTH_SIGNAL_CONNECTION_RESPONSE     0x03
-		#define BLUETOOTH_SIGNAL_CONFIGURATION_REQUEST   0x04
-		#define BLUETOOTH_SIGNAL_CONFIGURATION_RESPONSE  0x05
-		#define BLUETOOTH_SIGNAL_INFORMATION_REQUEST     0x0A
-		
-		#define BLUETOOTH_CONNECTION_SUCCESSFUL          0x0000
-		#define BLUETOOTH_CONNECTION_REFUSED_RESOURCES   0x0004
-		
-		#define BLUETOOTH_CONFIGURATION_SUCCESSFUL       0x0000
-		#define BLUETOOTH_CONFIGURATION_REJECTED         0x0002
-		#define BLUETOOTH_CONFIGURATION_UNKNOWNOPTIONS   0x0003
+		#define BT_ACL_DEBUG(l, s, ...)           do { if (ACL_DEBUG_LEVEL >= l) printf_P(PSTR("(ACL) " s "\r\n"), ##__VA_ARGS__); } while (0)
+		#define ACL_DEBUG_LEVEL                   0
 
+		#define BT_CHANNELNUMBER_BASEOFFSET       0x0040
+
+		#define BT_CHANNEL_SIGNALING              0x0001
+		#define BT_CHANNEL_CONNECTIONLESS         0x0002
+		
+		#define BT_SIGNAL_COMMAND_REJECT          0x01
+		#define BT_SIGNAL_CONNECTION_REQUEST      0x02
+		#define BT_SIGNAL_CONNECTION_RESPONSE     0x03
+		#define BT_SIGNAL_CONFIGURATION_REQUEST   0x04
+		#define BT_SIGNAL_CONFIGURATION_RESPONSE  0x05
+		#define BT_SIGNAL_DISCONNECTION_REQUEST   0x06
+		#define BT_SIGNAL_DISCONNECTION_RESPONSE  0x07
+		#define BT_SIGNAL_ECHO_REQUEST            0x08
+		#define BT_SIGNAL_ECHO_RESPONSE           0x09
+		#define BT_SIGNAL_INFORMATION_REQUEST     0x0A
+		#define BT_SIGNAL_INFORMATION_RESPONSE    0x0B
+		
+		#define BT_INFOREQ_MTU                    0x0001
+		#define BT_INFOREQ_EXTENDEDFEATURES       0x0002
+		
+		#define BT_INFORMATION_SUCCESSFUL         0x0000
+		#define BT_INFORMATION_NOTSUPPORTED       0x0001
+		
+		#define BT_CONNECTION_SUCCESSFUL          0x0000
+		#define BT_CONNECTION_REFUSED_PSM         0x0002
+		#define BT_CONNECTION_REFUSED_RESOURCES   0x0004
+		
+		#define BT_CONFIGURATION_SUCCESSFUL       0x0000
+		#define BT_CONFIGURATION_REJECTED         0x0002
+		#define BT_CONFIGURATION_UNKNOWNOPTIONS   0x0003
+		
+		#define BT_CONFIG_OPTION_MTU              1
+		
+		#define BT_ACL_FIRST_AUTOFLUSH            (1 << 13)
 		
 	/* Type Defines: */
 		typedef struct
 		{
 			uint16_t ConnectionHandle;
 			uint16_t DataLength;
-		} Bluetooth_ACL_Header_t;
+		} BT_ACL_Header_t;
 
 		typedef struct
 		{
 			uint16_t PayloadLength;
 			uint16_t DestinationChannel;
-		} Bluetooth_DataPacket_Header_t;
+		} BT_DataPacket_Header_t;
 		
 		typedef struct
 		{
 			uint8_t  Code;
 			uint8_t  Identifier;
 			uint16_t Length;
-		} Bluetooth_SignalCommand_Header_t;
+		} BT_Signal_Header_t;
 		
 		typedef struct
 		{
 			uint16_t PSM;
 			uint16_t SourceChannel;
-		} Bluetooth_SignalCommand_ConnectionRequest_t;
+		} BT_Signal_ConnectionReq_t;
 
 		typedef struct
 		{
@@ -90,33 +113,64 @@
 			uint16_t SourceChannel;
 			uint16_t Result;
 			uint16_t Status;
-		} Bluetooth_SignalCommand_ConnectionResponse_t;
+		} BT_Signal_ConnectionResp_t;
+
+		typedef struct
+		{
+			uint16_t DestinationChannel;
+			uint16_t SourceChannel;
+		} BT_Signal_DisconnectionReq_t;
 		
 		typedef struct
 		{
 			uint16_t DestinationChannel;
+			uint16_t SourceChannel;
+		} BT_Signal_DisconnectionResp_t;		
+
+		typedef struct
+		{
+			uint16_t DestinationChannel;
 			uint16_t Flags;
-			uint8_t  Options[];
-		} Bluetooth_SignalCommand_ConfigurationRequest_t;
+		} BT_Signal_ConfigurationReq_t;
 
 		typedef struct
 		{
 			uint16_t SourceChannel;
 			uint16_t Flags;
 			uint16_t Result;
-			uint8_t  Config;
-		} Bluetooth_SignalCommand_ConfigurationResponse_t;
-		
-	/* Function Prototypes: */
-		void Bluetooth_ProcessACLPackets(void);
+		} BT_Signal_ConfigurationResp_t;
 
+		typedef struct
+		{
+			uint16_t InfoType;
+		} BT_Signal_InformationReq_t;
+		
+		typedef struct
+		{
+			uint16_t InfoType;
+			uint16_t Result;
+		} BT_Signal_InformationResp_t;
+		
+		typedef struct
+		{
+			uint8_t Type;
+			uint8_t Length;
+		} BT_Config_Option_Header_t;
+
+	/* Function Prototypes: */
+		void    Bluetooth_ACLTask(void);
+		
 		#if defined(INCLUDE_FROM_BLUETOOTH_ACLPACKETS_C)
-			static inline void Bluetooth_ProcessSignalPacket_ConnectionRequest(Bluetooth_ACL_Header_t* ACLPacketHeader,
-                                                                   Bluetooth_DataPacket_Header_t* DataHeader,
-                                                                   Bluetooth_SignalCommand_Header_t* SignalCommandHeader);
-			static inline void Bluetooth_ProcessSignalPacket_ConfigurationRequest(Bluetooth_ACL_Header_t* ACLPacketHeader,
-                                                                   Bluetooth_DataPacket_Header_t* DataHeader,
-                                                                   Bluetooth_SignalCommand_Header_t* SignalCommandHeader);
+			static void Bluetooth_ProcessIncommingACLPackets(void);
+
+			static inline void Bluetooth_Signal_ConnectionReq(const BT_Signal_Header_t* const SignalCommandHeader);
+			static inline void Bluetooth_Signal_ConnectionResp(const BT_Signal_Header_t* const SignalCommandHeader);
+			static inline void Bluetooth_Signal_ConfigurationReq(const BT_Signal_Header_t* const SignalCommandHeader);
+			static inline void Bluetooth_Signal_ConfigurationResp(const BT_Signal_Header_t* const SignalCommandHeader);
+			static inline void Bluetooth_Signal_DisconnectionReq(const BT_Signal_Header_t* const SignalCommandHeader);
+			static inline void Bluetooth_Signal_DisconnectionResp(const BT_Signal_Header_t* const SignalCommandHeader);
+			static inline void Bluetooth_Signal_EchoReq(const BT_Signal_Header_t* const SignalCommandHeader);
+			static inline void Bluetooth_Signal_InformationReq(const BT_Signal_Header_t* const SignalCommandHeader);
 		#endif
 		
 #endif

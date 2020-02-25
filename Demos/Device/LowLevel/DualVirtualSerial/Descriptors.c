@@ -98,7 +98,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
 		
-	.IAD1 = 
+	.CDC1_IAD = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_Association_t), .Type = DTYPE_InterfaceAssociation},
 
@@ -134,14 +134,6 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.SubType                = 0x00,
 			
 			.Data                   = {0x01, 0x10}
-		},
-
-	.CDC1_Functional_CallManagement = 
-		{
-			.Header                 = {.Size = sizeof(CDC_FUNCTIONAL_DESCRIPTOR(2)), .Type = 0x24},
-			.SubType                = 0x01,
-			
-			.Data                   = {0x03, 0x01}
 		},
 
 	.CDC1_Functional_AbstractControlManagement = 
@@ -206,7 +198,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.PollingIntervalMS      = 0x00
 		},
 
-	.IAD2 = 
+	.CDC2_IAD = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_Association_t), .Type = DTYPE_InterfaceAssociation},
 
@@ -242,14 +234,6 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.SubType                = 0x00,
 			
 			.Data                   = {0x01, 0x10}
-		},
-
-	.CDC2_Functional_CallManagement = 
-		{
-			.Header                 = {.Size = sizeof(CDC_FUNCTIONAL_DESCRIPTOR(2)), .Type = 0x24},
-			.SubType                = 0x01,
-			
-			.Data                   = {0x03, 0x03}
 		},
 
 	.CDC2_Functional_AbstractControlManagement = 

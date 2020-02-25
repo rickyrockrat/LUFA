@@ -27,7 +27,16 @@
   arising out of or in connection with the use or performance of
   this software.
 */
- 
+
+/** \file
+ *  \brief USB device mode definitions.
+ *
+ *  This file contains structures, function prototypes and macros related to USB device mode.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+
 /** \ingroup Group_USB
  *  @defgroup Group_Device Device Management
  *
@@ -54,7 +63,7 @@
 		#endif
 
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 			
 	/* Public Interface - May be used in end-application: */
@@ -64,6 +73,7 @@
 				 *  USB interface should be initialized in low speed (1.5Mb/s) mode.
 				 *
 				 *  \note Low Speed mode is not available on all USB AVR models.
+				 *        \n\n
 				 *
 				 *  \note Restrictions apply on the number, size and type of endpoints which can be used
 				 *        when running in low speed mode -- refer to the USB 2.0 standard.

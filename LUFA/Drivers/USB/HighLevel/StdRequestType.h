@@ -28,11 +28,20 @@
   this software.
 */
 
+/** \file
+ *  \brief USB control endpoint request definitions.
+ *
+ *  This file contains structures and macros for the easy creation and parsing of standard USB control requests.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+ 
 /** \ingroup Group_USB
  *  @defgroup Group_StdRequest Standard USB Requests
  *
  *  This module contains definitions for the various control request parameters, so that the request
- *   details (such as data direction, request recipient, etc.) can be extracted via masking.
+ *  details (such as data direction, request recipient, etc.) can be extracted via masking.
  *
  *  @{
  */
@@ -42,7 +51,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */
@@ -141,7 +150,9 @@
 			#define FEATURE_REMOTE_WAKEUP           0x01
 
 		/* Type Defines: */
-			/** Type define for a standard USB control request.
+			/** \brief Standard USB Control Request
+			 *
+			 *  Type define for a standard USB control request.
 			 *
 			 *  \see The USB 2.0 specification for more information on standard control requests.
 			 */

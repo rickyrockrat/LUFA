@@ -7,8 +7,7 @@
 */
 
 /*
-  Copyright 2010  Denver Gingerich (denver [at] ossguy [dot] com)
-      Based on code by Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010 Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this 
   software and its documentation for any purpose is hereby granted
@@ -67,6 +66,7 @@ int main(void)
 	SetupHardware();
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 	
 	for (;;)
 	{
@@ -146,9 +146,7 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 	uint8_t ButtonStatus_LCL = Buttons_GetStatus();
 
 	uint8_t UsedKeyCodes = 0;
-	
-	KeyboardReport->Modifier = HID_KEYBOARD_MODIFER_LEFTSHIFT;
-	
+		
 	if (JoyStatus_LCL & JOY_UP)
 	  KeyboardReport->KeyCode[UsedKeyCodes++] = 0x04; // A
 	else if (JoyStatus_LCL & JOY_DOWN)
@@ -165,6 +163,9 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 	if (ButtonStatus_LCL & BUTTONS_BUTTON1)
 	  KeyboardReport->KeyCode[UsedKeyCodes++] = 0x09; // F
 
+	if (UsedKeyCodes)
+	  KeyboardReport->Modifier = HID_KEYBOARD_MODIFER_LEFTSHIFT;
+
 	*ReportSize = sizeof(USB_KeyboardReport_Data_t);
 	return false;
 }
@@ -172,12 +173,13 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 /** HID class driver callback function for the processing of HID reports from the host.
  *
  *  \param[in] HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
- *  \param[in] ReportID  Report ID of the received report from the host
+ *  \param[in] ReportID    Report ID of the received report from the host
+ *  \param[in] ReportType  The type of report that the host has sent, either REPORT_ITEM_TYPE_Out or REPORT_ITEM_TYPE_Feature
  *  \param[in] ReportData  Pointer to a buffer where the created report has been stored
  *  \param[in] ReportSize  Size in bytes of the received HID report
  */
 void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, const uint8_t ReportID,
-                                          const void* ReportData, const uint16_t ReportSize)
+                                          const uint8_t ReportType, const void* ReportData, const uint16_t ReportSize)
 {
 	uint8_t  LEDMask   = LEDS_NO_LEDS;
 	uint8_t* LEDReport = (uint8_t*)ReportData;

@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief Master include file for the library USB Still Image Class driver.
+ *
+ *  Master include file for the library USB Still Image Class driver, for both host and device modes, where available.
+ *
+ *  This file should be included in all user projects making use of this optional class driver, instead of
+ *  including any headers in the USB/ClassDriver/Device, USB/ClassDriver/Host or USB/ClassDriver/Common subdirectories.
+ */
+
 /** \ingroup Group_USBClassDrivers
  *  @defgroup Group_USBClassSI Still Image Class Driver - LUFA/Drivers/Class/StillImage.h
  *

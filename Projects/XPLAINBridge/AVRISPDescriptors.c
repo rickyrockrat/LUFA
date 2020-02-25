@@ -86,7 +86,7 @@ AVRISP_USB_Descriptor_Configuration_t PROGMEM AVRISP_ConfigurationDescriptor =
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
 
-	.AVRISPInterface = 
+	.AVRISP_Interface = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
 
@@ -102,21 +102,21 @@ AVRISP_USB_Descriptor_Configuration_t PROGMEM AVRISP_ConfigurationDescriptor =
 			.InterfaceStrIndex      = NO_DESCRIPTOR
 		},
 
-	.DataInEndpoint = 
+	.AVRISP_DataInEndpoint = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 			
-			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_IN | AVRISP_DATA_EPNUM),
+			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_IN | AVRISP_DATA_IN_EPNUM),
 			.Attributes             = (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = AVRISP_DATA_EPSIZE,
 			.PollingIntervalMS      = 0x00
 		},
 
-	.DataOutEndpoint =
+	.AVRISP_DataOutEndpoint =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 			
-			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_OUT | AVRISP_DATA_EPNUM),
+			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_OUT | AVRISP_DATA_OUT_EPNUM),
 			.Attributes             = (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = AVRISP_DATA_EPSIZE,
 			.PollingIntervalMS      = 0x00

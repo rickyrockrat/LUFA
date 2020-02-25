@@ -42,6 +42,7 @@
 		#include <avr/boot.h>
 		#include <avr/eeprom.h>
 		#include <avr/power.h>
+		#include <avr/interrupt.h>
 		#include <stdbool.h>
 
 		#include "Descriptors.h"
@@ -116,7 +117,6 @@
 	/* Function Prototypes: */
 		void CDC_Task(void);
 		void SetupHardware(void);
-		void ResetHardware(void);
 
 		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_UnhandledControlRequest(void);

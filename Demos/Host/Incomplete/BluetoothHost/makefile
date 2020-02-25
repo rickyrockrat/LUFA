@@ -60,7 +60,7 @@
 
 
 # MCU name
-MCU = at90usb1287
+MCU = at90usb647
 
 
 # Target board (see library "Board Types" documentation, NONE for projects not requiring
@@ -135,6 +135,7 @@ SRC = $(TARGET).c                                                 \
 	  Lib/BluetoothStack.c                                        \
 	  Lib/BluetoothHCICommands.c                                  \
 	  Lib/BluetoothACLPackets.c                                   \
+	  Lib/ServiceDiscoveryProtocol.c                              \
 	  $(LUFA_PATH)/LUFA/Drivers/Peripheral/SerialStream.c         \
 	  $(LUFA_PATH)/LUFA/Drivers/Peripheral/Serial.c               \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/DevChapter9.c        \
@@ -143,10 +144,10 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/HostChapter9.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/LowLevel.c           \
  	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Pipe.c               \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/USBInterrupt.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -509,7 +510,7 @@ sizeafter:
 	2>/dev/null; echo; fi
 
 $(LUFA_PATH)/LUFA/LUFA_Events.lst:
-	@make -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
+	@$(MAKE) -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
 
 checkinvalidevents: $(LUFA_PATH)/LUFA/LUFA_Events.lst
 	@echo

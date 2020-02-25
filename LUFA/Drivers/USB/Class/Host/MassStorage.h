@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief Host mode driver for the library USB Mass Storage Class driver.
+ *
+ *  Host mode driver for the library USB Mass Storage Class driver.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the class driver
+ *        dispatch header located in LUFA/Drivers/USB/Class/MassStorage.h.
+ */
+
 /** \ingroup Group_USBClassMS
  *  @defgroup Group_USBClassMassStorageHost Mass Storage Class Host Mode Driver
  *
@@ -64,7 +73,9 @@
 			#define MS_ERROR_LOGICAL_CMD_FAILED              0x80
 	
 		/* Type Defines: */
-			/** Class state structure. An instance of this structure should be made within the user application,
+			/** \brief Mass Storage Class Host Mode Configuration and State Structure.
+			 *
+			 *  Class state structure. An instance of this structure should be made within the user application,
 			 *  and passed to each of the Mass Storage class driver functions as the MSInterfaceInfo parameter. This
 			 *  stores each Mass Storage interface's configuration and state information.
 			 */
@@ -98,7 +109,9 @@
 						  */
 			} USB_ClassInfo_MS_Host_t;
 			
-			/** SCSI capacity structure, to hold the total capacity of the device in both the number
+			/** \brief SCSI Device LUN Capacity Structure.
+			 *
+			 *  SCSI capacity structure, to hold the total capacity of the device in both the number
 			 *  of blocks in the current LUN, and the size of each block. This structure is filled by
 			 *  the device when the MassStore_ReadCapacity() function is called.
 			 */
@@ -264,7 +277,7 @@
 			 */
 			uint8_t MS_Host_WriteDeviceBlocks(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, const uint8_t LUNIndex,
 			                                  const uint32_t BlockAddress, const uint8_t Blocks, const uint16_t BlockSize,
-			                                  void* BlockBuffer) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(6);
+			                                  const void* BlockBuffer) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(6);
 
 		/* Inline Functions: */
 			/** General management task for a given Mass Storage host class interface, required for the correct operation of
@@ -302,12 +315,12 @@
 			
 		/* Function Prototypes: */
 			#if defined(__INCLUDE_FROM_MS_CLASS_HOST_C)		
-				static uint8_t DComp_NextMSInterface(void* const CurrentDescriptor);
-				static uint8_t DComp_NextMSInterfaceEndpoint(void* const CurrentDescriptor);
+				static uint8_t DCOMP_MS_NextMSInterface(void* const CurrentDescriptor);
+				static uint8_t DCOMP_MS_NextMSInterfaceEndpoint(void* const CurrentDescriptor);
 				
 				static uint8_t MS_Host_SendCommand(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo,
 				                                   MS_CommandBlockWrapper_t* const SCSICommandBlock,
-				                                   void* BufferPtr);
+				                                   const void* const BufferPtr);
 				static uint8_t MS_Host_WaitForDataReceived(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo);
 				static uint8_t MS_Host_SendReceiveData(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, 
                                                        MS_CommandBlockWrapper_t* const SCSICommandBlock, void* BufferPtr);

@@ -28,6 +28,16 @@
   this software.
 */
 
+/** \file
+ *  \brief USB device standard request management.
+ *
+ *  This file contains the function prototypes neccesary for the processing of incomming standard control requests
+ *  when the library is in USB device mode.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+
 #ifndef __DEVCHAPTER9_H__
 #define __DEVCHAPTER9_H__
 
@@ -36,6 +46,7 @@
 		#include <avr/pgmspace.h>
 		#include <avr/eeprom.h>
 		#include <avr/boot.h>
+		#include <util/atomic.h>
 		
 		#include "../HighLevel/StdDescriptors.h"
 		#include "../HighLevel/Events.h"
@@ -50,7 +61,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */
@@ -93,6 +104,7 @@
 				 *
 				 *  \note This variable should be treated as read-only in the user application, and never manually
 				 *        changed in value.
+				 *        \n\n
 				 *
 				 *  \note To reduce FLASH usage of the compiled applications where Remote Wakeup is not supported,
 				 *        this global and the underlying management code can be disabled by defining the 

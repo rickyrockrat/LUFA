@@ -136,8 +136,7 @@ static void USB_Device_SetAddress(void)
 		  return;
 	}
 
-	if (DeviceAddress)
-	  USB_DeviceState = DEVICE_STATE_Addressed;
+	USB_DeviceState = (DeviceAddress) ? DEVICE_STATE_Addressed : DEVICE_STATE_Default;
 
 	UDADDR = ((1 << ADDEN) | DeviceAddress);
 
@@ -150,8 +149,14 @@ static void USB_Device_SetConfiguration(void)
 	if ((uint8_t)USB_ControlRequest.wValue > FIXED_NUM_CONFIGURATIONS)
 	  return;
 #else
-	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
-	uint8_t MemoryAddressSpace;
+	#if defined(USE_FLASH_DESCRIPTORS)
+		#define MemoryAddressSpace  MEMSPACE_FLASH
+	#elif defined(USE_EEPROM_DESCRIPTORS)
+		#define MemoryAddressSpace  MEMSPACE_EEPROM
+	#elif defined(USE_SRAM_DESCRIPTORS)
+		#define MemoryAddressSpace  MEMSPACE_SRAM
+	#else
+		uint8_t MemoryAddressSpace;
 	#endif
 	
 	USB_Descriptor_Device_t* DevDescriptorPtr;
@@ -165,16 +170,6 @@ static void USB_Device_SetConfiguration(void)
 		return;
 	}
 	
-	#if defined(USE_RAM_DESCRIPTORS)
-	if ((uint8_t)USB_ControlRequest.wValue > DevDescriptorPtr->NumberOfConfigurations)
-	  return;
-	#elif defined (USE_EEPROM_DESCRIPTORS)
-	if ((uint8_t)USB_ControlRequest.wValue > eeprom_read_byte(&DevDescriptorPtr->NumberOfConfigurations))
-	  return;
-	#elif defined (USE_FLASH_DESCRIPTORS)
-	if ((uint8_t)USB_ControlRequest.wValue > pgm_read_byte(&DevDescriptorPtr->NumberOfConfigurations))
-	  return;
-	#else
 	if (MemoryAddressSpace == MEMSPACE_FLASH)
 	{
 		if (((uint8_t)USB_ControlRequest.wValue > pgm_read_byte(&DevDescriptorPtr->NumberOfConfigurations)))
@@ -190,7 +185,6 @@ static void USB_Device_SetConfiguration(void)
 		if ((uint8_t)USB_ControlRequest.wValue > DevDescriptorPtr->NumberOfConfigurations)
 		  return;
 	}
-	#endif
 #endif
 	
 	Endpoint_ClearSETUP();
@@ -234,17 +228,20 @@ static void USB_Device_GetInternalSerialDescriptor(void)
 	
 	uint8_t SigReadAddress = 0x0E;
 
-	for (uint8_t SerialCharNum = 0; SerialCharNum < 20; SerialCharNum++)
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 	{
-		uint8_t SerialByte = boot_signature_byte_get(SigReadAddress);
-		
-		if (SerialCharNum & 0x01)
+		for (uint8_t SerialCharNum = 0; SerialCharNum < 20; SerialCharNum++)
 		{
-			SerialByte >>= 4;
-			SigReadAddress++;
+			uint8_t SerialByte = boot_signature_byte_get(SigReadAddress);
+			
+			if (SerialCharNum & 0x01)
+			{
+				SerialByte >>= 4;
+				SigReadAddress++;
+			}
+			
+			SignatureDescriptor.UnicodeString[SerialCharNum] = USB_Device_NibbleToASCII(SerialByte);
 		}
-		
-		SignatureDescriptor.UnicodeString[SerialCharNum] = USB_Device_NibbleToASCII(SerialByte);
 	}
 	
 	Endpoint_ClearSETUP();
@@ -323,7 +320,7 @@ static void USB_Device_GetStatus(void)
 #endif
 #if !defined(CONTROL_ONLY_DEVICE)
 		case (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_ENDPOINT):
-			Endpoint_SelectEndpoint(USB_ControlRequest.wIndex & 0xFF);
+			Endpoint_SelectEndpoint((uint8_t)USB_ControlRequest.wIndex & ENDPOINT_EPNUM_MASK);
 
 			CurrentStatus = Endpoint_IsStalled();
 
@@ -344,7 +341,7 @@ static void USB_Device_GetStatus(void)
 }
 
 static void USB_Device_ClearSetFeature(void)
-{	
+{
 	switch (USB_ControlRequest.bmRequestType & CONTROL_REQTYPE_RECIPIENT)
 	{
 #if !defined(NO_DEVICE_REMOTE_WAKEUP)			
@@ -367,18 +364,18 @@ static void USB_Device_ClearSetFeature(void)
 
 				Endpoint_SelectEndpoint(EndpointIndex);
 
-				if (Endpoint_IsEnabled())
-				{				
-					if (USB_ControlRequest.bRequest == REQ_SetFeature)
-					{
-						Endpoint_StallTransaction();
-					}
-					else
-					{
-						Endpoint_ClearStall();
-						Endpoint_ResetFIFO(EndpointIndex);
-						Endpoint_ResetDataToggle();
-					}					
+				if (!(Endpoint_IsEnabled()))
+				  return;
+
+				if (USB_ControlRequest.bRequest == REQ_SetFeature)
+				{
+					Endpoint_StallTransaction();
+				}
+				else
+				{
+					Endpoint_ClearStall();
+					Endpoint_ResetFIFO(EndpointIndex);
+					Endpoint_ResetDataToggle();
 				}
 			}
 			

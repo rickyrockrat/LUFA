@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief Device mode driver for the library USB CDC Class driver.
+ *
+ *  Device mode driver for the library USB CDC Class driver.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the class driver
+ *        dispatch header located in LUFA/Drivers/USB/Class/CDC.h.
+ */
+
 /** \ingroup Group_USBClassCDC
  *  @defgroup Group_USBClassCDCDevice CDC Class Device Mode Driver
  *
@@ -80,7 +89,9 @@
 		
 	/* Public Interface - May be used in end-application: */
 		/* Type Defines: */
-			/** Class state structure. An instance of this structure should be made for each CDC interface
+			/** \brief CDC Class Device Mode Configuration and State Structure.
+			 *
+			 *  Class state structure. An instance of this structure should be made for each CDC interface
 			 *  within the user application, and passed to each of the CDC class driver functions as the
 			 *  CDCInterfaceInfo parameter. This stores each CDC interface's configuration and state information.
 			 */
@@ -178,6 +189,14 @@
 			 *  \param[in,out] CDCInterfaceInfo  Pointer to a structure containing a CDC Class configuration and state
 			 */
 			void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+
+			/** CDC class driver event for a send break request sent to the device from the host. This is generally used to seperate
+			 *  data or to indicate a special condition to the receiving device.
+			 *
+			 *  \param[in,out] CDCInterfaceInfo  Pointer to a structure containing a CDC Class configuration and state
+			 *  \param[in]     Duration          Duration of the break that has been sent by the host, in milliseconds
+			 */
+			void EVENT_CDC_Device_BreakSent(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo, uint8_t Duration) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Sends a given string to the attached USB host, if connected. If a host is not connected when the function is called, the
 			 *  string is discarded. Bytes will be queued for transmission to the host until either the endpoint bank becomes full, or the
@@ -296,6 +315,8 @@
 														  ATTR_WEAK ATTR_NON_NULL_PTR_ARG(1) ATTR_ALIAS(CDC_Device_Event_Stub);
 				void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo)
 															 ATTR_WEAK ATTR_NON_NULL_PTR_ARG(1) ATTR_ALIAS(CDC_Device_Event_Stub);
+				void EVENT_CDC_Device_BreakSent(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo, uint8_t Duration)
+				                                ATTR_WEAK ATTR_NON_NULL_PTR_ARG(1) ATTR_ALIAS(CDC_Device_Event_Stub);
 			#endif
 
 	#endif

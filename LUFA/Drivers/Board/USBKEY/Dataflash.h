@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Dataflash driver header for the USBKEY.
  *
  *  Board specific Dataflash driver header for the USBKEY.
  *

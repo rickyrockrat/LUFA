@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific LED driver header for the STK526.
  *
  *  Board specific LED driver header for the STK526.
  *

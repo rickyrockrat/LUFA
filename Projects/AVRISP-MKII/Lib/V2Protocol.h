@@ -37,14 +37,16 @@
 #define _V2_PROTOCOL_
 
 	/* Includes: */
-		#include <LUFA/Drivers/USB/USB.h>
-		#include <LUFA/Drivers/Peripheral/SPI.h>
-		
-		#include "../Descriptors.h"
-		#include "V2ProtocolConstants.h"
-		#include "V2ProtocolParams.h"
-		#include "ISP/ISPProtocol.h"
-		#include "XPROG/XPROGProtocol.h"
+		#if !defined(__ASSEMBLER__)
+			#include <LUFA/Drivers/USB/USB.h>
+			#include <LUFA/Drivers/Peripheral/SPI.h>
+			
+			#include "../Descriptors.h"
+			#include "V2ProtocolConstants.h"
+			#include "V2ProtocolParams.h"
+			#include "ISP/ISPProtocol.h"
+			#include "XPROG/XPROGProtocol.h"
+		#endif
 
 	/* Preprocessor Checks: */
 		#if ((BOARD == BOARD_XPLAIN) || (BOARD == BOARD_XPLAIN_REV1))
@@ -69,24 +71,34 @@
 		
 		/** Command timeout counter register, GPIOR for speed */
 		#define TimeoutMSRemaining         GPIOR0
-		
+
 		/** MUX mask for the VTARGET ADC channel number */
 		#define VTARGET_ADC_CHANNEL_MASK   _GETADCMUXMASK(ADC_CHANNEL, VTARGET_ADC_CHANNEL)
+		
+		#if !defined(WIN_AVRDUDE_COMPAT)
+			#define SELECT_DATA_OUT_ENDPOINT() Endpoint_SetEndpointDirection(ENDPOINT_DIR_OUT);
+		#else
+			#define SELECT_DATA_OUT_ENDPOINT() Endpoint_SelectEndpoint();
+		#endif
 
 	/* External Variables: */
-		extern uint32_t CurrentAddress;
-		extern bool     MustSetAddress;
+		#if !defined(__ASSEMBLER__)
+			extern uint32_t CurrentAddress;
+			extern bool     MustSetAddress;
+		#endif
 
 	/* Function Prototypes: */
-		void V2Protocol_Init(void);
-		void V2Protocol_ProcessCommand(void);
-		
-		#if defined(INCLUDE_FROM_V2PROTOCOL_C)
-			static void V2Protocol_UnknownCommand(const uint8_t V2Command);
-			static void V2Protocol_SignOn(void);
-			static void V2Protocol_GetSetParam(const uint8_t V2Command);
-			static void V2Protocol_ResetProtection(void);
-			static void V2Protocol_LoadAddress(void);
+		#if !defined(__ASSEMBLER__)
+			void V2Protocol_Init(void);
+			void V2Protocol_ProcessCommand(void);
+			
+			#if defined(INCLUDE_FROM_V2PROTOCOL_C)
+				static void V2Protocol_UnknownCommand(const uint8_t V2Command);
+				static void V2Protocol_SignOn(void);
+				static void V2Protocol_GetSetParam(const uint8_t V2Command);
+				static void V2Protocol_ResetProtection(void);
+				static void V2Protocol_LoadAddress(void);
+			#endif
 		#endif
 
 #endif

@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief USB standard descriptor definitions.
+ *
+ *  This file contains structures and macros for the easy creation of standard USB descriptors in USB device projects.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+
 /** \ingroup Group_USB
  *  @defgroup Group_Descriptors USB Descriptors
  *
@@ -60,7 +69,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */
@@ -86,7 +95,7 @@
 				#define USE_INTERNAL_SERIAL           NO_DESCRIPTOR
 			#endif
 			
-			/** Macro to calculate the power value for the device descriptor, from a given number of milliamps. */
+			/** Macro to calculate the power value for the configuration descriptor, from a given number of milliamps. */
 			#define USB_CONFIG_POWER_MA(mA)           ((mA) >> 1)
 
 			/** Macro to calculate the Unicode length of a string with a given number of Unicode characters.
@@ -124,7 +133,6 @@
 			 */
 			#define USB_CONFIG_ATTR_BUSPOWERED        0x80
 
-			
 			/** Can be masked with other configuration descriptor attributes for a \ref USB_Descriptor_Configuration_Header_t
 			 *  descriptor's ConfigAttributes value to indicate that the specified configuration can draw its power
 			 *  from the device's own power source.
@@ -203,7 +211,9 @@
 			};
 
 		/* Type Defines: */
-			/** Type define for all descriptors standard header, indicating the descriptor's length and type. This structure
+			/** \brief Standard USB Descriptor Header (LUFA naming conventions).
+			 *
+             *  Type define for all descriptors' standard header, indicating the descriptor's length and type. This structure
 			 *  uses LUFA-specific element names to make each element's purpose clearer.
 			 *
 			 *  \see \ref USB_StdDescriptor_Header_t for the version of this define with standard element names
@@ -216,7 +226,9 @@
 				                   */
 			} USB_Descriptor_Header_t;
 			
-			/** Type define for all descriptors standard header, indicating the descriptor's length and type. This structure
+			/** \brief Standard USB Descriptor Header (USB-IF naming conventions).
+			 *
+			 *  Type define for all descriptors' standard header, indicating the descriptor's length and type. This structure
 			 *  uses the relevant standard's given element names to ensure compatibility with the standard.
 			 *
 			 *  \see \ref USB_Descriptor_Header_t for the version of this define with non-standard LUFA specific element names
@@ -229,7 +241,9 @@
 				                              */
 			} USB_StdDescriptor_Header_t;
 			
-			/** Type define for a standard Device Descriptor. This structure uses LUFA-specific element names to make each
+			/** \brief Standard USB Device Descriptor (LUFA naming conventions).
+			 *
+			 *  Type define for a standard Device Descriptor. This structure uses LUFA-specific element names to make each
 			 *  element's purpose clearer.
 			 *
 			 *  \see \ref USB_StdDescriptor_Device_t for the version of this define with standard element names
@@ -276,7 +290,9 @@
 				                                     */
 			} USB_Descriptor_Device_t;
 
-			/** Type define for a standard Device Descriptor. This structure uses the relevant standard's given element names
+			/** \brief Standard USB Device Descriptor (USB-IF naming conventions).
+			 *
+			 *  Type define for a standard Device Descriptor. This structure uses the relevant standard's given element names
 			 *  to ensure compatibility with the standard.
 			 *
 			 *  \see \ref USB_Descriptor_Device_t for the version of this define with non-standard LUFA specific element names
@@ -322,7 +338,9 @@
 				                                 */
 			} USB_StdDescriptor_Device_t;
 
-			/** Type define for a standard Configuration Descriptor header. This structure uses LUFA-specific element names
+			/** \brief Standard USB Configuration Descriptor (LUFA naming conventions).
+			 *
+			 *  Type define for a standard Configuration Descriptor header. This structure uses LUFA-specific element names
 			 *  to make each element's purpose clearer.
 			 *
 			 *  \see \ref USB_StdDescriptor_Configuration_Header_t for the version of this define with standard element names
@@ -349,7 +367,9 @@
 				                                  */
 			} USB_Descriptor_Configuration_Header_t;
 			
-			/** Type define for a standard Configuration Descriptor header. This structure uses the relevant standard's given element names
+			/** \brief Standard USB Configuration Descriptor (USB-IF naming conventions).
+			 *
+			 *  Type define for a standard Configuration Descriptor header. This structure uses the relevant standard's given element names
 			 *  to ensure compatibility with the standard.
 			 *
 			 *  \see \ref USB_Descriptor_Device_t for the version of this define with non-standard LUFA specific element names
@@ -375,7 +395,9 @@
 				                        */
 			} USB_StdDescriptor_Configuration_Header_t;
 
-			/** Type define for a standard Interface Descriptor. This structure uses LUFA-specific element names
+			/** \brief Standard USB Interface Descriptor (LUFA naming conventions).
+			 *
+			 *  Type define for a standard Interface Descriptor. This structure uses LUFA-specific element names
 			 *  to make each element's purpose clearer.
 			 *
 			 *  \see \ref USB_StdDescriptor_Interface_t for the version of this define with standard element names
@@ -401,7 +423,9 @@
 				                                */
 			} USB_Descriptor_Interface_t;
 			
-			/** Type define for a standard Interface Descriptor. This structure uses the relevant standard's given element names
+			/** \brief Standard USB Interface Descriptor (USB-IF naming conventions).
+			 *
+			 *  Type define for a standard Interface Descriptor. This structure uses the relevant standard's given element names
 			 *  to ensure compatibility with the standard.
 			 *
 			 *  \see \ref USB_Descriptor_Interface_t for the version of this define with non-standard LUFA specific element names
@@ -427,7 +451,9 @@
 				                         */
 			} USB_StdDescriptor_Interface_t;
 
-			/** Type define for a standard Interface Association Descriptor. This structure uses LUFA-specific element names
+			/** \brief Standard USB Interface Association Descriptor (LUFA naming conventions).
+			 *
+			 *  Type define for a standard Interface Association Descriptor. This structure uses LUFA-specific element names
 			 *  to make each element's purpose clearer.
 			 *
 			 *  This descriptor has been added as a supplement to the USB2.0 standard, in the ECN located at
@@ -454,7 +480,9 @@
 				                          */
 			} USB_Descriptor_Interface_Association_t;
 				
-			/** Type define for a standard Interface Association Descriptor. This structure uses the relevant standard's given
+			/** \brief Standard USB Interface Association Descriptor (USB-IF naming conventions).
+			 *
+			 *  Type define for a standard Interface Association Descriptor. This structure uses the relevant standard's given
 			 *  element names to ensure compatibility with the standard.
 			 *
 			 *  This descriptor has been added as a supplement to the USB2.0 standard, in the ECN located at
@@ -482,7 +510,9 @@
 				                        */
 			} USB_StdDescriptor_Interface_Association_t;
 
-			/** Type define for a standard Endpoint Descriptor. This structure uses LUFA-specific element names
+			/** \brief Standard USB Endpoint Descriptor (LUFA naming conventions).
+			 *
+			 *  Type define for a standard Endpoint Descriptor. This structure uses LUFA-specific element names
 			 *  to make each element's purpose clearer.
 			 *
 			 *  \see \ref USB_StdDescriptor_Endpoint_t for the version of this define with standard element names
@@ -508,7 +538,9 @@
 				                                */
 			} USB_Descriptor_Endpoint_t;
 				
-			/** Type define for a standard Endpoint Descriptor. This structure uses the relevant standard's given
+			/** \brief Standard USB Endpoint Descriptor (USB-IF naming conventions).
+			 *
+			 *  Type define for a standard Endpoint Descriptor. This structure uses the relevant standard's given
 			 *  element names to ensure compatibility with the standard.
 			 *
 			 *  \see \ref USB_Descriptor_Endpoint_t for the version of this define with non-standard LUFA specific
@@ -536,7 +568,9 @@
 				                        */
 			} USB_StdDescriptor_Endpoint_t;
 
-			/** Type define for a standard string descriptor. Unlike other standard descriptors, the length
+			/** \brief Standard USB String Descriptor (LUFA naming conventions).
+			 *
+			 *  Type define for a standard string descriptor. Unlike other standard descriptors, the length
 			 *  of the descriptor for placement in the descriptor header must be determined by the \ref USB_STRING_LEN()
 			 *  macro rather than by the size of the descriptor structure, as the length is not fixed.
 			 *
@@ -564,7 +598,9 @@
 				                           */
 			} USB_Descriptor_String_t;
 
-			/** Type define for a standard string descriptor. Unlike other standard descriptors, the length
+			/** \brief Standard USB String Descriptor (USB-IF naming conventions).
+			 *
+			 *  Type define for a standard string descriptor. Unlike other standard descriptors, the length
 			 *  of the descriptor for placement in the descriptor header must be determined by the \ref USB_STRING_LEN()
 			 *  macro rather than by the size of the descriptor structure, as the length is not fixed.
 			 *

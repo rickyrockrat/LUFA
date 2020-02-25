@@ -46,6 +46,7 @@ int main(void)
 	puts_P(PSTR(ESC_FG_CYAN "MIDI Host Demo running.\r\n" ESC_FG_WHITE));
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 
 	for (;;)
 	{
@@ -186,9 +187,9 @@ void MIDI_Host_Task(void)
 				
 				if (NoteOnEvent || NoteOffEvent)
 				{
-					printf_P(PSTR("MIDI Note %s - Channel %d, Pitch %d, Velocity %d"), NoteOnEvent ? "On" : "Off",
-				                                                                       ((MIDIEvent.Data1 & 0x0F) + 1),
-				                                                                       MIDIEvent.Data2, MIDIEvent.Data3);
+					printf_P(PSTR("MIDI Note %s - Channel %d, Pitch %d, Velocity %d\r\n"), NoteOnEvent ? "On" : "Off",
+				                                                                           ((MIDIEvent.Data1 & 0x0F) + 1),
+				                                                                           MIDIEvent.Data2, MIDIEvent.Data3);
 				}
 
 				Pipe_ClearIN();

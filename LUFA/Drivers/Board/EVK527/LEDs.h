@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific LED driver header for the EVK527.
  *
  *  Board specific LED driver header for the EVK527.
  *

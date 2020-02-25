@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Dataflash driver header for the EVK527.
  *
  *  Board specific Dataflash driver header for the EVK527.
  *

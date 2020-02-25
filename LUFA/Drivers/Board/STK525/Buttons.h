@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Buttons driver header for the STK525.
  *
  *  Board specific Buttons driver header for the STK525.
  *

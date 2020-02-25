@@ -10,6 +10,37 @@
  *  to the next version released. It does not indicate all new additions to the library in each version change, only
  *  areas relevant to making older projects compatible with the API changes of each new release.
  *
+ * \section Sec_Migration100513 Migrating from 100512 to 100513
+ *  This release was made shortly after the 100512 release, to fix a critical device-mode error. No specific migration
+ *  information applies to this release - see \ref Sec_Migration100512 for migration information of the previous release.
+ *
+ * \section Sec_Migration100512 Migrating from 100219 to 100512
+ *
+ *  <b>Non-USB Library Components</b>
+ *    - The \ref TWI_StartTransmission() function now takes in a timeout period, expressed in milliseconds, within which the addressed
+ *      device must respond or the function will abort.
+ *
+ *  <b>Device Mode</b>
+ *    - The \ref USB_Init() function no longer calls sei() to enable global interrupts, as the user application may need
+ *      to perform other initialization before it is ready to handle global interrupts. The user application is now responsible
+ *      for enabling global interrupts before or shortly after calling \ref USB_Init() to ensure that the enumeration process
+ *      functions correctly.
+ *    - The USBInterrupt.c USB driver source file has been relocated from LUFA/Drivers/USB/HighLevel/ to LUFA/Drivers/USB/LowLevel.
+ *      Projects must update their makefile SRC values accordingly.
+ *    - The HID Device Class driver's function signature for the CALLBACK_HID_Device_ProcessHIDReport() function has been changed, to
+ *      allow for a new ReportType parameter. This new parameter must be added in all user applications using the Device mode HID Class
+ *      Driver, but may be ingnored unless Host-to-Device FEATURE HID reports are used.
+ *
+ *  <b>Host Mode</b>
+ *    - The \ref USB_Init() function no longer calls sei() to enable global interrupts, as the user application may need
+ *      to perform other initialization before it is ready to handle global interrupts. The user application is now responsible
+ *      for enabling global interrupts before or shortly after calling \ref USB_Init() to ensure that the enumeration process
+ *      functions correctly.
+ *    - The USBInterrupt.c USB driver source file has been relocated from LUFA/Drivers/USB/HighLevel/ to LUFA/Drivers/USB/LowLevel.
+ *      Projects must update their makefile SRC values accordingly.
+ *    - The HID Host Class driver's function signature for the HID_Host_SendReportByID() function has been changed, to allow for a new
+ *      ReportType parameter. Existing calls to this function should substitute REPORT_ITEM_TYPE_Out as this parameter's value.
+ *
  * \section Sec_Migration100219 Migrating from 091223 to 100219
  *
  *  <b>Non-USB Library Components</b>

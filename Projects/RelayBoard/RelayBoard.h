@@ -1,21 +1,22 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
+  Copyright 2010  OBinou (obconseil [at] gmail [dot] com)
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
-	  
-  Permission to use, copy, modify, distribute, and sell this 
+
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -30,34 +31,34 @@
 
 /** \file
  *
- *  Header file for TeensyHID.c.
+ *  Header file for RelayBoard.c.
  */
- 
-#ifndef _TEENSYHID_H_
-#define _TEENSYHID_H_
+
+#ifndef _RELAYBOARD_H_
+#define _RELAYBOARD_H_
 
 	/* Includes: */
 		#include <avr/io.h>
 		#include <avr/wdt.h>
-		#include <avr/boot.h>
 		#include <avr/power.h>
-		#include <stdbool.h>
+		#include <avr/interrupt.h>
 
 		#include "Descriptors.h"
 
+		#include <LUFA/Version.h>
+		#include <LUFA/Drivers/Board/LEDs.h>
 		#include <LUFA/Drivers/USB/USB.h>
-		
+
 	/* Macros: */
-		/** HID Class specific request to send the next HID report to the device. */
-		#define REQ_SetReport             0x09
-		
-		/** Teensy Bootloader special address to start the user application */
-		#define TEENSY_STARTAPPLICATION   0xFFFF
-		
+		#define RELAY1      (1 << 7)
+		#define RELAY2      (1 << 6)
+		#define RELAY3      (1 << 5)
+		#define RELAY4      (1 << 4)
+		#define ALL_RELAYS  (RELAY1|RELAY2|RELAY3|RELAY4)
+
 	/* Function Prototypes: */
 		void SetupHardware(void);
 
-		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_UnhandledControlRequest(void);
-		
+
 #endif

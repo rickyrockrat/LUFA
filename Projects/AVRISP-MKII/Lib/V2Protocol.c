@@ -43,8 +43,8 @@ uint32_t CurrentAddress;
 bool MustSetAddress;
 
 
-/** ISR for the management of the command execution timeout counter */
-ISR(TIMER0_COMPA_vect, ISR_BLOCK)
+/** ISR to manage timeouts whilst processing a V2Protocol command */
+ISR(TIMER0_COMPA_vect, ISR_NOBLOCK)
 {
 	if (TimeoutMSRemaining)
 	  TimeoutMSRemaining--;
@@ -63,7 +63,7 @@ void V2Protocol_Init(void)
 	/* Millisecond timer initialization for managing the command timeout counter */
 	OCR0A  = ((F_CPU / 64) / 1000);
 	TCCR0A = (1 << WGM01);
-	TCCR0B = ((1 << CS01) | (1 << CS00));
+	TIMSK0 = (1 << OCIE0A);
 	
 	V2Params_LoadNonVolatileParamValues();
 }
@@ -76,10 +76,10 @@ void V2Protocol_ProcessCommand(void)
 {
 	uint8_t V2Command = Endpoint_Read_Byte();
 	
-	/* Set total command processing timeout value, enable timeout management interrupt */
+	/* Start the timeout management timer */
 	TimeoutMSRemaining = COMMAND_TIMEOUT_MS;
-	TIMSK0 |= (1 << OCIE0A);
-
+	TCCR0B = ((1 << CS01) | (1 << CS00));
+	
 	switch (V2Command)
 	{
 		case CMD_SIGN_ON:
@@ -139,11 +139,12 @@ void V2Protocol_ProcessCommand(void)
 			V2Protocol_UnknownCommand(V2Command);
 			break;
 	}
-		
-	/* Disable timeout management interrupt once processing has completed */
-	TIMSK0 &= ~(1 << OCIE0A);
+	
+	/* Disable the timeout management timer */
+	TCCR0B = 0;
 
 	Endpoint_WaitUntilReady();
+	Endpoint_SelectEndpoint(AVRISP_DATA_OUT_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_OUT);
 }
 
@@ -162,6 +163,7 @@ static void V2Protocol_UnknownCommand(const uint8_t V2Command)
 	}
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	Endpoint_Write_Byte(V2Command);
@@ -173,6 +175,7 @@ static void V2Protocol_UnknownCommand(const uint8_t V2Command)
 static void V2Protocol_SignOn(void)
 {
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	Endpoint_Write_Byte(CMD_SIGN_ON);
@@ -188,6 +191,7 @@ static void V2Protocol_SignOn(void)
 static void V2Protocol_ResetProtection(void)
 {
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	Endpoint_Write_Byte(CMD_RESET_PROTECTION);
@@ -210,6 +214,7 @@ static void V2Protocol_GetSetParam(const uint8_t V2Command)
 	  ParamValue = Endpoint_Read_Byte();
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	Endpoint_Write_Byte(V2Command);
@@ -243,6 +248,7 @@ static void V2Protocol_LoadAddress(void)
 	Endpoint_Read_Stream_BE(&CurrentAddress, sizeof(CurrentAddress), NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	MustSetAddress = true;

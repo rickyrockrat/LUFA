@@ -28,8 +28,23 @@
   this software.
 */
 
+/** \file
+ *
+ *  USB Device Configuration Descriptor processing routines, to determine the correct pipe configurations
+ *  needed to communication with an attached USB device. Descriptors are special  computer-readable structures
+ *  which the host requests upon device enumeration, to determine the device's capabilities and functions.
+ */
+
 #include "ConfigDescriptor.h"
 
+/** Reads and processes an attached device's descriptors, to determine compatibility and pipe configurations. This
+ *  routine will read in the entire configuration descriptor, and configure the hosts pipes to correctly communicate
+ *  with compatible devices.
+ *
+ *  This routine searches for a BT interface descriptor containing bulk IN and OUT data endpoints.
+ *
+ *  \return An error code from the \ref BluetoothHost_GetConfigDescriptorDataCodes_t enum.
+ */
 uint8_t ProcessConfigurationDescriptor(void)
 {
 	uint8_t  ConfigDescriptorData[512];
@@ -47,7 +62,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 		case HOST_GETCONFIG_BuffOverflow:
 			return DescriptorTooLarge;
 		default:
-			return ControlErrorDuringConfigRead;
+			return ControlError;
 	}
 	
 	/* The bluetooth USB transport addendum mandates that the data (not streaming voice) endpoints
@@ -56,7 +71,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 	
 	/* Ensure that an interface was found, and the end of the descriptor was not reached */
 	if (!(CurrConfigBytesRem))
-	  return NoInterfaceFound;
+	  return NoBTInterfaceFound;
 
 	/* Get the data IN, data OUT and event notification endpoints for the bluetooth interface */
 	while (FoundEndpoints != ((1 << BLUETOOTH_DATA_IN_PIPE) | (1 << BLUETOOTH_DATA_OUT_PIPE) |
@@ -64,7 +79,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 	{
 		/* Fetch the next endpoint from the current bluetooth interface */
 		if (USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation,
-		                              NextInterfaceBluetoothDataEndpoint))
+		                              DComp_NextInterfaceBluetoothDataEndpoint))
 		{
 			/* Descriptor not found, error out */
 			return NoEndpointFound;
@@ -118,15 +133,30 @@ uint8_t ProcessConfigurationDescriptor(void)
 	return SuccessfulConfigRead;
 }
 
-uint8_t NextInterfaceBluetoothDataEndpoint(void* CurrentDescriptor)
+/** Descriptor comparator function. This comparator function is can be called while processing an attached USB device's
+ *  configuration descriptor, to search for a specific sub descriptor. It can also be used to abort the configuration
+ *  descriptor processing if an incompatible descriptor configuration is found.
+ *
+ *  This comparator searches for the next Endpoint descriptor inside the current interface descriptor, aborting the 
+ *  search if another interface descriptor is found before the required endpoint.
+ *
+ *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
+ */
+uint8_t DComp_NextInterfaceBluetoothDataEndpoint(void* CurrentDescriptor)
 {
-	/* PURPOSE: Find next interface endpoint descriptor before next interface descriptor */
-
+	/* Determine the type of the current descriptor */
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Endpoint)
-	  return DESCRIPTOR_SEARCH_Found;
+	{
+		/* Indicate that the descriptor being searched for has been found */
+		return DESCRIPTOR_SEARCH_Found;
+	}
 	else if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
-	  return DESCRIPTOR_SEARCH_Fail;
+	{
+		/* Indicate that the search has failed prematurely and should be aborted */
+		return DESCRIPTOR_SEARCH_Fail;
+	}
 
+	/* Current descriptor does not match what this comparator is looking for */
 	return DESCRIPTOR_SEARCH_NotFound;
 }
 

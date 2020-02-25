@@ -37,6 +37,30 @@
 
 #if defined(ENABLE_ISP_PROTOCOL) || defined(__DOXYGEN__)
 
+/** List of SPI prescaler masks for possible AVRStudio ISP programming speeds. */
+static uint8_t SPIMaskFromSCKDuration[] PROGMEM =
+{
+#if (F_CPU == 8000000)
+	SPI_SPEED_FCPU_DIV_2,    // AVRStudio =   8MHz SPI, Actual =   4MHz SPI
+	SPI_SPEED_FCPU_DIV_2,    // AVRStudio =   4MHz SPI, Actual =   4MHz SPI
+	SPI_SPEED_FCPU_DIV_4,    // AVRStudio =   2MHz SPI, Actual =   2MHz SPI
+	SPI_SPEED_FCPU_DIV_8,    // AVRStudio =   1MHz SPI, Actual =   1MHz SPI
+	SPI_SPEED_FCPU_DIV_16,   // AVRStudio = 500KHz SPI, Actual = 500KHz SPI
+	SPI_SPEED_FCPU_DIV_32,   // AVRStudio = 250KHz SPI, Actual = 250KHz SPI
+	SPI_SPEED_FCPU_DIV_64,   // AVRStudio = 125KHz SPI, Actual = 125KHz SPI
+#elif (F_CPU == 16000000)
+	SPI_SPEED_FCPU_DIV_2,    // AVRStudio =   8MHz SPI, Actual =   8MHz SPI
+	SPI_SPEED_FCPU_DIV_4,    // AVRStudio =   4MHz SPI, Actual =   4MHz SPI
+	SPI_SPEED_FCPU_DIV_8,    // AVRStudio =   2MHz SPI, Actual =   2MHz SPI
+	SPI_SPEED_FCPU_DIV_16,   // AVRStudio =   1MHz SPI, Actual =   1MHz SPI
+	SPI_SPEED_FCPU_DIV_32,   // AVRStudio = 500KHz SPI, Actual = 500KHz SPI
+	SPI_SPEED_FCPU_DIV_64,   // AVRStudio = 250KHz SPI, Actual = 250KHz SPI
+	SPI_SPEED_FCPU_DIV_128   // AVRStudio = 125KHz SPI, Actual = 125KHz SPI
+#else
+	#error No SPI prescaler masks for chosen F_CPU speed.
+#endif
+};
+
 /** Converts the given AVR Studio SCK duration parameter (set by a SET PARAM command from the host) to the nearest
  *  possible SPI clock prescaler mask for passing to the SPI_Init() routine.
  *
@@ -44,35 +68,12 @@
  */
 uint8_t ISPTarget_GetSPIPrescalerMask(void)
 {
-	static const uint8_t SPIMaskFromSCKDuration[] =
-	{
-	#if (F_CPU == 8000000)
-		SPI_SPEED_FCPU_DIV_2,    // AVRStudio =   8MHz SPI, Actual =   4MHz SPI
-		SPI_SPEED_FCPU_DIV_2,    // AVRStudio =   4MHz SPI, Actual =   4MHz SPI
-		SPI_SPEED_FCPU_DIV_4,    // AVRStudio =   2MHz SPI, Actual =   2MHz SPI
-		SPI_SPEED_FCPU_DIV_8,    // AVRStudio =   1MHz SPI, Actual =   1MHz SPI
-		SPI_SPEED_FCPU_DIV_16,   // AVRStudio = 500KHz SPI, Actual = 500KHz SPI
-		SPI_SPEED_FCPU_DIV_32,   // AVRStudio = 250KHz SPI, Actual = 250KHz SPI
-		SPI_SPEED_FCPU_DIV_64,   // AVRStudio = 125KHz SPI, Actual = 125KHz SPI
-	#elif (F_CPU == 16000000)
-		SPI_SPEED_FCPU_DIV_2,    // AVRStudio =   8MHz SPI, Actual =   8MHz SPI
-		SPI_SPEED_FCPU_DIV_4,    // AVRStudio =   4MHz SPI, Actual =   4MHz SPI
-		SPI_SPEED_FCPU_DIV_8,    // AVRStudio =   2MHz SPI, Actual =   2MHz SPI
-		SPI_SPEED_FCPU_DIV_16,   // AVRStudio =   1MHz SPI, Actual =   1MHz SPI
-		SPI_SPEED_FCPU_DIV_32,   // AVRStudio = 500KHz SPI, Actual = 500KHz SPI
-		SPI_SPEED_FCPU_DIV_64,   // AVRStudio = 250KHz SPI, Actual = 250KHz SPI
-		SPI_SPEED_FCPU_DIV_128   // AVRStudio = 125KHz SPI, Actual = 125KHz SPI
-	#else
-		#error No SPI prescaler masks for chosen F_CPU speed.
-	#endif
-	};
-
 	uint8_t SCKDuration = V2Params_GetParameterValue(PARAM_SCK_DURATION);
 
 	if (SCKDuration >= sizeof(SPIMaskFromSCKDuration))
 	  SCKDuration = (sizeof(SPIMaskFromSCKDuration) - 1);
 	  
-	return SPIMaskFromSCKDuration[SCKDuration];
+	return pgm_read_byte(&SPIMaskFromSCKDuration[SCKDuration]);
 }
 
 /** Asserts or deasserts the target's reset line, using the correct polarity as set by the host using a SET PARAM command.
@@ -111,7 +112,7 @@ void ISPTarget_ChangeTargetResetLine(const bool ResetTarget)
 uint8_t ISPTarget_WaitForProgComplete(const uint8_t ProgrammingMode, const uint16_t PollAddress, const uint8_t PollValue,
                                       const uint8_t DelayMS, const uint8_t ReadMemCommand)
 {
-	uint8_t ProgrammingStatus = STATUS_CMD_OK;
+	uint8_t ProgrammingStatus  = STATUS_CMD_OK;
 
 	/* Determine method of Programming Complete check */
 	switch (ProgrammingMode & ~(PROG_MODE_PAGED_WRITES_MASK | PROG_MODE_COMMIT_PAGE_MASK))
@@ -139,7 +140,7 @@ uint8_t ISPTarget_WaitForProgComplete(const uint8_t ProgrammingMode, const uint1
 			ProgrammingStatus = ISPTarget_WaitWhileTargetBusy();
 			break;
 	}
-	
+
 	if (ProgrammingStatus == STATUS_CMD_OK)
 	  TimeoutMSRemaining = COMMAND_TIMEOUT_MS;
 
@@ -157,12 +158,19 @@ uint8_t ISPTarget_WaitWhileTargetBusy(void)
 	{
 		SPI_SendByte(0xF0);
 		SPI_SendByte(0x00);
-
 		SPI_SendByte(0x00);
 	}
 	while ((SPI_ReceiveByte() & 0x01) && TimeoutMSRemaining);
 
-	return ((TimeoutMSRemaining) ? STATUS_CMD_OK : STATUS_RDY_BSY_TOUT);
+	if (TimeoutMSRemaining)
+	{
+		TimeoutMSRemaining = COMMAND_TIMEOUT_MS;
+		return STATUS_CMD_OK;
+	}
+	else
+	{
+		return STATUS_RDY_BSY_TOUT;
+	}
 }
 
 /** Sends a low-level LOAD EXTENDED ADDRESS command to the target, for addressing of memory beyond the

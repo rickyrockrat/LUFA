@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Dataflash commands header for the AT45DB642D as mounted on the USBKEY.
  *
  *  Board specific Dataflash commands header for the AT45DB642D as mounted on the USBKEY.
  *

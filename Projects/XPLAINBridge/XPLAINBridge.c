@@ -51,11 +51,11 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
 
 				.DataINEndpointNumber           = CDC_TX_EPNUM,
 				.DataINEndpointSize             = CDC_TXRX_EPSIZE,
-				.DataINEndpointDoubleBank       = false,
+				.DataINEndpointDoubleBank       = true,
 
 				.DataOUTEndpointNumber          = CDC_RX_EPNUM,
 				.DataOUTEndpointSize            = CDC_TXRX_EPSIZE,
-				.DataOUTEndpointDoubleBank      = false,
+				.DataOUTEndpointDoubleBank      = true,
 
 				.NotificationEndpointNumber     = CDC_NOTIFICATION_EPNUM,
 				.NotificationEndpointSize       = CDC_NOTIFICATION_EPSIZE,
@@ -81,6 +81,7 @@ int main(void)
 	Buffer_Initialize(&UARTtoUSB_Buffer);
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 
 	for (;;)
 	{
@@ -99,7 +100,7 @@ void AVRISP_Task(void)
 	if (USB_DeviceState != DEVICE_STATE_Configured)
 	  return;
 
-	Endpoint_SelectEndpoint(AVRISP_DATA_EPNUM);
+	Endpoint_SelectEndpoint(AVRISP_DATA_OUT_EPNUM);
 	
 	/* Check to see if a V2 Protocol command has been received */
 	if (Endpoint_IsOUTReceived())
@@ -169,23 +170,33 @@ void SetupHardware(void)
 
 	/* Select the firmware mode based on the JTD pin's value */
 	CurrentFirmwareMode = (PINF & (1 << 7)) ? MODE_USART_BRIDGE : MODE_PDI_PROGRAMMER;
+
+	/* Re-enable JTAG debugging */
+	MCUCR &= ~(1 << JTD);
+	MCUCR &= ~(1 << JTD);
 }
 
 /** Event handler for the library USB Configuration Changed event. */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
-	bool EndpointConfigSuccess;
+	bool EndpointConfigSuccess = true;
 
 	/* Configure the device endpoints according to the selected mode */
 	if (CurrentFirmwareMode == MODE_USART_BRIDGE)
 	{
-		EndpointConfigSuccess = CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC_Interface);
+		EndpointConfigSuccess &= CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC_Interface);
 	}
 	else
 	{
-		EndpointConfigSuccess = Endpoint_ConfigureEndpoint(AVRISP_DATA_EPNUM, EP_TYPE_BULK,
-										                   ENDPOINT_DIR_OUT, AVRISP_DATA_EPSIZE,
-										                   ENDPOINT_BANK_SINGLE);
+		EndpointConfigSuccess &= Endpoint_ConfigureEndpoint(AVRISP_DATA_OUT_EPNUM, EP_TYPE_BULK,
+										                    ENDPOINT_DIR_OUT, AVRISP_DATA_EPSIZE,
+										                    ENDPOINT_BANK_SINGLE);
+
+		#if defined(LIBUSB_DRIVER_COMPAT)
+		EndpointConfigSuccess &= Endpoint_ConfigureEndpoint(AVRISP_DATA_IN_EPNUM, EP_TYPE_BULK,
+		                                                    ENDPOINT_DIR_IN, AVRISP_DATA_EPSIZE,
+		                                                    ENDPOINT_BANK_SINGLE);
+		#endif
 	}
 
 	if (EndpointConfigSuccess)

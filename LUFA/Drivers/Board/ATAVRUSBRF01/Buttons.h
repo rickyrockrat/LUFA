@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Buttons driver header for the ATAVRUSBRF01.
  *
  *  Board specific Buttons driver header for the ATAVRUSBRF01.
  *

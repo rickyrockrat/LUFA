@@ -42,11 +42,22 @@
 		#include <LUFA/Drivers/USB/USB.h>
 
 	/* Macros: */
-		/** Endpoint number of the AVRISP bidirectional data endpoint. */
-		#define AVRISP_DATA_EPNUM              2
+		#if !defined(LIBUSB_DRIVER_COMPAT)
+			/** Endpoint number of the AVRISP data OUT endpoint. */
+			#define AVRISP_DATA_OUT_EPNUM      2
+
+			/** Endpoint number of the AVRISP data IN endpoint. */
+			#define AVRISP_DATA_IN_EPNUM       2
+		#else
+			/** Endpoint number of the AVRISP data OUT endpoint. */
+			#define AVRISP_DATA_OUT_EPNUM      2
+
+			/** Endpoint number of the AVRISP data IN endpoint. */
+			#define AVRISP_DATA_IN_EPNUM       3
+		#endif
 
 		/** Size in bytes of the AVRISP data endpoint. */
-		#define AVRISP_DATA_EPSIZE             64	
+		#define AVRISP_DATA_EPSIZE             64
 
 	/* Type Defines: */
 		/** Type define for the device configuration descriptor structure. This must be defined in the
@@ -56,9 +67,9 @@
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t    Config;
-			USB_Descriptor_Interface_t               AVRISPInterface;
-			USB_Descriptor_Endpoint_t                DataInEndpoint;
-			USB_Descriptor_Endpoint_t                DataOutEndpoint;
+			USB_Descriptor_Interface_t               AVRISP_Interface;
+			USB_Descriptor_Endpoint_t                AVRISP_DataInEndpoint;
+			USB_Descriptor_Endpoint_t                AVRISP_DataOutEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Function Prototypes: */

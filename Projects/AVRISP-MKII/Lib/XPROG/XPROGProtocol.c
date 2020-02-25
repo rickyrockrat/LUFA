@@ -65,6 +65,7 @@ void XPROGProtocol_SetMode(void)
 	Endpoint_Read_Stream_LE(&SetMode_XPROG_Params, sizeof(SetMode_XPROG_Params), NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	XPROG_SelectedProtocol = SetMode_XPROG_Params.Protocol;
@@ -111,6 +112,7 @@ void XPROGProtocol_Command(void)
 static void XPROGProtocol_EnterXPROGMode(void)
 {
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	bool NVMBusEnabled;
@@ -119,14 +121,14 @@ static void XPROGProtocol_EnterXPROGMode(void)
 	{
 		/* Enable PDI programming mode with the attached target */
 		XPROGTarget_EnableTargetPDI();
-		
+
 		/* Store the RESET key into the RESET PDI register to keep the XMEGA in reset */
 		XPROGTarget_SendByte(PDI_CMD_STCS | PDI_RESET_REG);	
 		XPROGTarget_SendByte(PDI_RESET_KEY);
 
-		/* Lower direction change guard time to 8 USART bits */
+		/* Lower direction change guard time to 0 USART bits */
 		XPROGTarget_SendByte(PDI_CMD_STCS | PDI_CTRL_REG);	
-		XPROGTarget_SendByte(0x04);
+		XPROGTarget_SendByte(0x07);
 
 		/* Enable access to the XPROG NVM bus by sending the documented NVM access key to the device */
 		XPROGTarget_SendByte(PDI_CMD_KEY);	
@@ -141,9 +143,9 @@ static void XPROGProtocol_EnterXPROGMode(void)
 		/* Enable TPI programming mode with the attached target */
 		XPROGTarget_EnableTargetTPI();
 		
-		/* Lower direction change guard time to 8 USART bits */
+		/* Lower direction change guard time to 0 USART bits */
 		XPROGTarget_SendByte(TPI_CMD_SSTCS | TPI_CTRL_REG);
-		XPROGTarget_SendByte(0x04);
+		XPROGTarget_SendByte(0x07);
 		
 		/* Enable access to the XPROG NVM bus by sending the documented NVM access key to the device */
 		XPROGTarget_SendByte(TPI_CMD_SKEY);	
@@ -166,11 +168,18 @@ static void XPROGProtocol_EnterXPROGMode(void)
 static void XPROGProtocol_LeaveXPROGMode(void)
 {
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	if (XPROG_SelectedProtocol == XPRG_PROTOCOL_PDI)
 	{
+		XMEGANVM_WaitWhileNVMBusBusy();
+
 		/* Clear the RESET key in the RESET PDI register to allow the XMEGA to run */
+		XPROGTarget_SendByte(PDI_CMD_STCS | PDI_RESET_REG);	
+		XPROGTarget_SendByte(0x00);
+
+		/* Do it twice to make sure it takes affect (silicon bug?) */
 		XPROGTarget_SendByte(PDI_CMD_STCS | PDI_RESET_REG);	
 		XPROGTarget_SendByte(0x00);
 
@@ -178,6 +187,8 @@ static void XPROGProtocol_LeaveXPROGMode(void)
 	}
 	else
 	{
+		TINYNVM_WaitWhileNVMBusBusy();
+
 		/* Clear the NVMEN bit in the TPI CONTROL register to disable TPI mode */
 		XPROGTarget_SendByte(TPI_CMD_SSTCS | TPI_CTRL_REG);	
 		XPROGTarget_SendByte(0x00);
@@ -206,6 +217,7 @@ static void XPROGProtocol_Erase(void)
 	Erase_XPROG_Params.Address = SwapEndian_32(Erase_XPROG_Params.Address);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	uint8_t EraseCommand;
@@ -287,6 +299,7 @@ static void XPROGProtocol_WriteMemory(void)
 	Endpoint_Read_Stream_LE(&WriteMemory_XPROG_Params.ProgData, WriteMemory_XPROG_Params.Length, NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	if (XPROG_SelectedProtocol == XPRG_PROTOCOL_PDI)
@@ -370,6 +383,7 @@ static void XPROGProtocol_ReadMemory(void)
 	ReadMemory_XPROG_Params.Length  = SwapEndian_16(ReadMemory_XPROG_Params.Length);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	uint8_t ReadBuffer[256];
@@ -412,6 +426,7 @@ static void XPROGProtocol_ReadCRC(void)
 	Endpoint_Read_Stream_LE(&ReadCRC_XPROG_Params, sizeof(ReadCRC_XPROG_Params), NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	uint32_t MemoryCRC;
@@ -487,6 +502,7 @@ static void XPROGProtocol_SetParam(void)
 	}
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 		  
 	Endpoint_Write_Byte(CMD_XPROG);

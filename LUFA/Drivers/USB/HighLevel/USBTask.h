@@ -27,7 +27,17 @@
   arising out of or in connection with the use or performance of
   this software.
 */
- 
+
+/** \file
+ *  \brief Main USB service task management.
+ *
+ *  This file contains the function definitions required for the main USB service task, which must be called
+ *  from the user application to ensure that the USB connection to or from a connected USB device is maintained.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+
 #ifndef __USBTASK_H__
 #define __USBTASK_H__
 
@@ -57,7 +67,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */
@@ -125,6 +135,7 @@
 					 *  implicitly via the library APIs.
 					 *
 					 *  \note This global is only present if the user application can be a USB device.
+					 *        \n\n
 					 *
 					 *  \note This variable should be treated as read-only in the user application, and never manually
 					 *        changed in value except in the circumstances outlined above.

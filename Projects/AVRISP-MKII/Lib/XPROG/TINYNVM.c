@@ -65,7 +65,7 @@ static void TINYNVM_SendReadNVMRegister(const uint8_t Address)
  */
 static void TINYNVM_SendWriteNVMRegister(const uint8_t Address)
 {
-	/* The TPI command for writing to the I/O space uses weird addressing, where the I/O address's upper
+	/* The TPI command for reading from the I/O space uses strange addressing, where the I/O address's upper
 	 * two bits of the 6-bit address are shifted left once */
 	XPROGTarget_SendByte(TPI_CMD_SOUT | ((Address & 0x30) << 1) | (Address & 0x0F));
 }
@@ -81,7 +81,15 @@ bool TINYNVM_WaitWhileNVMBusBusy(void)
 	{
 		/* Send the SLDCS command to read the TPI STATUS register to see the NVM bus is active */
 		XPROGTarget_SendByte(TPI_CMD_SLDCS | TPI_STATUS_REG);
-		if (XPROGTarget_ReceiveByte() & TPI_STATUS_NVM)
+
+		uint8_t StatusRegister = XPROGTarget_ReceiveByte();
+
+		/* We might have timed out waiting for the status register read response, check here */
+		if (!(TimeoutMSRemaining))
+		  return false;
+
+		/* Check the status register read response to see if the NVM bus is enabled */
+		if (StatusRegister & TPI_STATUS_NVM)
 		{
 			TimeoutMSRemaining = COMMAND_TIMEOUT_MS;
 			return true;
@@ -104,8 +112,14 @@ bool TINYNVM_WaitWhileNVMControllerBusy(void)
 		/* Send the SIN command to read the TPI STATUS register to see the NVM bus is busy */
 		TINYNVM_SendReadNVMRegister(XPROG_Param_NVMCSRRegAddr);
 
+		uint8_t StatusRegister = XPROGTarget_ReceiveByte();
+
+		/* We might have timed out waiting for the status register read response, check here */
+		if (!(TimeoutMSRemaining))
+		  return false;
+
 		/* Check to see if the BUSY flag is still set */
-		if (!(XPROGTarget_ReceiveByte() & (1 << 7)))
+		if (!(StatusRegister & (1 << 7)))
 		{
 			TimeoutMSRemaining = COMMAND_TIMEOUT_MS;
 			return true;
@@ -136,14 +150,14 @@ bool TINYNVM_ReadMemory(const uint16_t ReadAddress, uint8_t* ReadBuffer, uint16_
 	/* Send the address of the location to read from */
 	TINYNVM_SendPointerAddress(ReadAddress);
 	
-	while (ReadSize--)
+	while (ReadSize-- && TimeoutMSRemaining)
 	{
 		/* Read the byte of data from the target */
 		XPROGTarget_SendByte(TPI_CMD_SLD | TPI_POINTER_INDIRECT_PI);
 		*(ReadBuffer++) = XPROGTarget_ReceiveByte();
 	}
 	
-	return true;
+	return (TimeoutMSRemaining != 0);
 }
 
 /** Writes word addressed memory to the target's memory spaces.

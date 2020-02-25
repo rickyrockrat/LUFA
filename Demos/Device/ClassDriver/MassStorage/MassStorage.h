@@ -40,6 +40,8 @@
 		#include <avr/io.h>
 		#include <avr/wdt.h>
 		#include <avr/power.h>
+		#include <avr/interrupt.h>
+		#include <string.h>
 
 		#include "Descriptors.h"
 
@@ -81,6 +83,6 @@
 		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_UnhandledControlRequest(void);
 
-		bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* MSInterfaceInfo);
+		bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* const MSInterfaceInfo);
 
 #endif

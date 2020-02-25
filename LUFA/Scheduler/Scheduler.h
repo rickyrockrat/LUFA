@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Simple round-robbin pseudo-task scheduler.
  *
  *  Simple round-robbin cooperative scheduler for use in basic projects where non real-time tasks need
  *  to be executed. Each task is executed in sequence, and can be enabled or disabled individually or as a group.
@@ -164,7 +165,10 @@
 			 */
 			typedef uint16_t SchedulerDelayCounter_t;
 			
-			/** Structure for holding a single task's information in the scheduler task list. */
+			/** \brief Scheduler Task List Entry Structure.
+			 *
+			 *  Structure for holding a single task's information in the scheduler task list.
+			 */
 			typedef struct
 			{
 				TaskPtr_t Task;       /**< Pointer to the task to execute. */

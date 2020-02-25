@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Master include file for the board LEDs driver.
  *
  *  This file is the master dispatch header file for the board-specific LED driver, for boards containing user
  *  controllable LEDs.
@@ -52,7 +53,8 @@
  *  provides an interface to configure, test and change the status of all the board LEDs.
  *
  *  If the BOARD value is set to BOARD_USER, this will include the /Board/Dataflash.h file in the user project
- *  directory. Otherwise, it will include the appropriate built in board driver header file.
+ *  directory. Otherwise, it will include the appropriate built in board driver header file. If the BOARD value
+ *  is set to BOARD_NONE, this driver is silently disabled.
  *
  *  \note To make code as compatible as possible, it is assumed that all boards carry a minimum of four LEDs. If
  *        a board contains less than four LEDs, the remaining LED masks are defined to 0 so as to have no effect.
@@ -95,14 +97,20 @@
 		#include "RZUSBSTICK/LEDs.h"
 	#elif (BOARD == BOARD_ATAVRUSBRF01)
 		#include "ATAVRUSBRF01/LEDs.h"
-	#elif (BOARD == BOARD_XPLAIN)
-		#include "XPLAIN/LEDs.h"
-	#elif (BOARD == BOARD_XPLAIN_REV1)
+	#elif ((BOARD == BOARD_XPLAIN) || (BOARD == BOARD_XPLAIN_REV1))
 		#include "XPLAIN/LEDs.h"
 	#elif (BOARD == BOARD_BUMBLEB)
 		#include "BUMBLEB/LEDs.h"
 	#elif (BOARD == BOARD_EVK527)
-		#include "EVK527/LEDs.h"		
+		#include "EVK527/LEDs.h"
+	#elif (BOARD == BOARD_TEENSY)
+		#include "TEENSY/LEDs.h"
+	#elif (BOARD == BOARD_USBTINYMKII)
+		#include "USBTINYMKII/LEDs.h"
+	#elif (BOARD == BOARD_BENITO)
+		#include "BENITO/LEDs.h"
+	#elif (BOARD == BOARD_JMDBU2)
+		#include "JMDBU2/LEDs.h"
 	#elif (BOARD == BOARD_USER)
 		#include "Board/LEDs.h"
 	#endif

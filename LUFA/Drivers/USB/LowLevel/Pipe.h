@@ -28,6 +28,16 @@
   this software.
 */
  
+/** \file
+ *  \brief USB host pipe management definitions.
+ *
+ *  This file contains structures, function prototypes and macros related to the management of the device's
+ *  data pipes when the library is initialized in USB host mode.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */ 
+
 /** \ingroup Group_USB
  *  @defgroup Group_PipeManagement Pipe Management
  *
@@ -93,7 +103,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */
@@ -483,14 +493,11 @@
 
 				#define Pipe_IsSETUPSent()             ((UPINTX & (1 << TXSTPI)) ? true : false)
 
-				#define Pipe_ClearIN()                 MACROS{ uint8_t Temp = UPINTX; UPINTX = (Temp & ~(1 << RXINI)); \
-				                                               UPINTX = (Temp & ~(1 << FIFOCON)); }MACROE
+				#define Pipe_ClearIN()                 MACROS{ UPINTX &= ~((1 << RXINI) | (1 << FIFOCON)); }MACROE
 
-				#define Pipe_ClearOUT()                MACROS{ uint8_t Temp = UPINTX; UPINTX = (Temp & ~(1 << TXOUTI)); \
-				                                               UPINTX = (Temp & ~(1 << FIFOCON)); }MACROE
+				#define Pipe_ClearOUT()                MACROS{ UPINTX &= ~((1 << TXOUTI) | (1 << FIFOCON)); }MACROE
 				
-				#define Pipe_ClearSETUP()              MACROS{ uint8_t Temp = UPINTX; UPINTX = (Temp & ~(1 << TXSTPI)); \
-				                                               UPINTX = (Temp & ~(1 << FIFOCON)); }MACROE
+				#define Pipe_ClearSETUP()              MACROS{ UPINTX &= ~((1 << TXSTPI) | (1 << FIFOCON)); }MACROE
 
 				#define Pipe_IsNAKReceived()           ((UPINTX & (1 << NAKEDI)) ? true : false)
 
@@ -793,7 +800,8 @@
 			 *  \ref Pipe_SetFiniteINRequests().
 			 *
 			 *  \note The default control pipe does not have to be manually configured, as it is automatically
-			 *  configured by the library internally.
+			 *        configured by the library internally.
+			 *        \n\n
 			 *
 			 *  \note This routine will select the specified pipe, and the pipe will remain selected once the
 			 *        routine completes regardless of if the pipe configuration succeeds.

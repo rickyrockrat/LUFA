@@ -98,7 +98,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
 		
-	.CCI_Interface = 
+	.CDC_CCI_Interface = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
 
@@ -122,14 +122,6 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.Data                   = {0x01, 0x10}
 		},
 
-	.CDC_Functional_CallManagement = 
-		{
-			.Header                 = {.Size = sizeof(CDC_FUNCTIONAL_DESCRIPTOR(2)), .Type = 0x24},
-			.SubType                = 0x01,
-			
-			.Data                   = {0x03, 0x01}
-		},
-
 	.CDC_Functional_AbstractControlManagement = 
 		{
 			.Header                 = {.Size = sizeof(CDC_FUNCTIONAL_DESCRIPTOR(1)), .Type = 0x24},
@@ -146,7 +138,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.Data                   = {0x00, 0x01}
 		},
 
-	.ManagementEndpoint = 
+	.CDC_ManagementEndpoint = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 										 
@@ -156,7 +148,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.PollingIntervalMS      = 0xFF
 		},
 
-	.DCI_Interface = 
+	.CDC_DCI_Interface = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
 
@@ -172,7 +164,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.InterfaceStrIndex      = NO_DESCRIPTOR
 		},
 
-	.DataOutEndpoint = 
+	.CDC_DataOutEndpoint = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 										 
@@ -182,7 +174,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.PollingIntervalMS      = 0x00
 		},
 		
-	.DataInEndpoint = 
+	.CDC_DataInEndpoint = 
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 										 

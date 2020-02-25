@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Master include file for the board digital button driver.
  *
  *  This file is the master dispatch header file for the board-specific Buttons driver, for boards containing
  *  physical pushbuttons connected to the AVR's GPIO pins.
@@ -84,6 +85,12 @@
 		#include "BUMBLEB/Buttons.h"
 	#elif (BOARD == BOARD_EVK527)
 		#include "EVK527/Buttons.h"
+	#elif (BOARD == BOARD_USBTINYMKII)
+		#include "USBTINYMKII/Buttons.h"		
+	#elif (BOARD == BOARD_BENITO)
+		#include "BENITO/Buttons.h"
+	#elif (BOARD == BOARD_JMDBU2)
+		#include "JMDBU2/Buttons.h"
 	#elif (BOARD == BOARD_USER)
 		#include "Board/Buttons.h"
 	#else

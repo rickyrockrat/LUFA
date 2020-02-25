@@ -63,6 +63,7 @@ int main(void)
 	puts_P(PSTR(ESC_FG_CYAN "MIDI Host Demo running.\r\n" ESC_FG_WHITE));
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 
 	for (;;)
 	{
@@ -77,7 +78,7 @@ int main(void)
 				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
 				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
-					printf("Error Retrieving Configuration Descriptor.\r\n");
+					puts_P(PSTR("Error Retrieving Configuration Descriptor.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -86,7 +87,7 @@ int main(void)
 				if (MIDI_Host_ConfigurePipes(&Keyboard_MIDI_Interface,
 				                             ConfigDescriptorSize, ConfigDescriptorData) != MIDI_ENUMERROR_NoError)
 				{
-					printf("Attached Device Not a Valid MIDI Class Device.\r\n");
+					puts_P(PSTR("Attached Device Not a Valid MIDI Class Device.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -94,13 +95,14 @@ int main(void)
 				
 				if (USB_Host_SetDeviceConfiguration(1) != HOST_SENDCONTROL_Successful)
 				{
-					printf("Error Setting Device Configuration.\r\n");
+					puts_P(PSTR("Error Setting Device Configuration.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
 				}
 				
-				printf("MIDI Device Enumerated.\r\n");
+				puts_P(PSTR("MIDI Device Enumerated.\r\n"));
+				LEDs_SetAllLEDs(LEDMASK_USB_READY);
 				USB_HostState = HOST_STATE_Configured;
 				break;
 			case HOST_STATE_Configured:
@@ -114,9 +116,9 @@ int main(void)
 					
 					if (NoteOnEvent || NoteOffEvent)
 					{
-						printf_P(PSTR("MIDI Note %s - Channel %d, Pitch %d, Velocity %d"), NoteOnEvent ? "On" : "Off",
-																						   ((MIDIEvent.Data1 & 0x0F) + 1),
-																						   MIDIEvent.Data2, MIDIEvent.Data3);
+						printf_P(PSTR("MIDI Note %s - Channel %d, Pitch %d, Velocity %d\r\n"), NoteOnEvent ? "On" : "Off",
+																						       ((MIDIEvent.Data1 & 0x0F) + 1),
+																						       MIDIEvent.Data2, MIDIEvent.Data3);
 					}
 				}
 		

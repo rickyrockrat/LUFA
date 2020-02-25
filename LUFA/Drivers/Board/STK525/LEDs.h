@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific LED driver header for the STK525.
  *
  *  Board specific LED driver header for the STK525.
  *

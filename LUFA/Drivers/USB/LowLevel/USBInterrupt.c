@@ -36,7 +36,7 @@ void USB_INT_DisableAllInterrupts(void)
 	#if defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR)
 	USBCON &= ~((1 << VBUSTE) | (1 << IDTE));				
 	#elif defined(USB_SERIES_4_AVR)
-	USBCON &= ~(1 << VBUSTE);					
+	USBCON &= ~(1 << VBUSTE);
 	#endif
 	
 	#if defined(USB_CAN_BE_HOST)
@@ -233,12 +233,18 @@ ISR(USB_GEN_vect, ISR_BLOCK)
 #if defined(INTERRUPT_CONTROL_ENDPOINT) && defined(USB_CAN_BE_DEVICE)
 ISR(USB_COM_vect, ISR_BLOCK)
 {
-	uint8_t PrevSelectedEndpoint = Endpoint_GetCurrentEndpoint();
+	uint8_t PrevSelectedEndpoint = Endpoint_GetCurrentEndpoint(); 
 
-	USB_USBTask();
+	Endpoint_SelectEndpoint(ENDPOINT_CONTROLEP);
+	USB_INT_Disable(USB_INT_RXSTPI);
 
-	USB_INT_Clear(USB_INT_RXSTPI);
-	
+	NONATOMIC_BLOCK(NONATOMIC_FORCEOFF)
+	{
+		USB_Device_ProcessControlRequest();
+	}
+
+	Endpoint_SelectEndpoint(ENDPOINT_CONTROLEP);
+	USB_INT_Enable(USB_INT_RXSTPI);
 	Endpoint_SelectEndpoint(PrevSelectedEndpoint);
 }
 #endif

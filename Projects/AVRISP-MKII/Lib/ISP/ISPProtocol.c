@@ -57,6 +57,7 @@ void ISPProtocol_EnterISPMode(void)
 	Endpoint_Read_Stream_LE(&Enter_ISP_Params, sizeof(Enter_ISP_Params), NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	uint8_t ResponseStatus = STATUS_CMD_FAILED;
@@ -75,7 +76,7 @@ void ISPProtocol_EnterISPMode(void)
 
 	/* Continuously attempt to synchronize with the target until either the number of attempts specified
 	 * by the host has exceeded, or the the device sends back the expected response values */
-	while (Enter_ISP_Params.SynchLoops-- && (ResponseStatus == STATUS_CMD_FAILED))
+	while (Enter_ISP_Params.SynchLoops-- && (ResponseStatus == STATUS_CMD_FAILED) && TimeoutMSRemaining)
 	{
 		uint8_t ResponseBytes[4];
 
@@ -117,6 +118,7 @@ void ISPProtocol_LeaveISPMode(void)
 	Endpoint_Read_Stream_LE(&Leave_ISP_Params, sizeof(Leave_ISP_Params), NO_STREAM_CALLBACK);
 	
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	/* Perform pre-exit delay, release the target /RESET, disable the SPI bus and perform the post-exit delay */
@@ -163,6 +165,7 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 	if (Write_Memory_Params.BytesToWrite > sizeof(Write_Memory_Params.ProgData))
 	{
 		Endpoint_ClearOUT();
+		Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 		Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 		Endpoint_Write_Byte(V2Command);
@@ -174,6 +177,7 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 	Endpoint_Read_Stream_LE(&Write_Memory_Params.ProgData, Write_Memory_Params.BytesToWrite, NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	uint8_t  ProgrammingStatus = STATUS_CMD_OK;	
@@ -223,6 +227,7 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 				PollAddress = (CurrentAddress & 0xFFFF);				
 			}		
 
+			/* EEPROM increments the address on each byte, flash needs to increment on each word */
 			if (IsOddByte || (V2Command == CMD_PROGRAM_EEPROM_ISP))
 			  CurrentAddress++;
 		}
@@ -244,6 +249,10 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 
 			ProgrammingStatus = ISPTarget_WaitForProgComplete(Write_Memory_Params.ProgrammingMode, PollAddress, PollValue,
 			                                                  Write_Memory_Params.DelayMS, Write_Memory_Params.ProgrammingCommands[2]);
+
+			/* Check to see if the FLASH address has crossed the extended address boundary */
+			if ((V2Command == CMD_PROGRAM_FLASH_ISP) && !(CurrentAddress & 0xFFFF))
+			  ISPTarget_LoadExtendedAddress();			
 		}
 	}
 	else
@@ -271,15 +280,26 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 				  
 				PollAddress = (CurrentAddress & 0xFFFF);
 			}
-
-			if (IsOddByte || (V2Command == CMD_PROGRAM_EEPROM_ISP))
-			  CurrentAddress++;
 			
 			ProgrammingStatus = ISPTarget_WaitForProgComplete(Write_Memory_Params.ProgrammingMode, PollAddress, PollValue,
 			                                                  Write_Memory_Params.DelayMS, Write_Memory_Params.ProgrammingCommands[2]);
 			  
+			/* Abort the programming loop early if the byte/word programming failed */
 			if (ProgrammingStatus != STATUS_CMD_OK)
 			  break;
+
+			/* EEPROM just increments the address each byte, flash needs to increment on each word and
+			 * also check to ensure that a LOAD EXTENDED ADDRESS command is issued each time the extended
+			 * address boundary has been crossed */
+			if (V2Command == CMD_PROGRAM_EEPROM_ISP)
+			{
+				CurrentAddress++;
+			}
+			else if (IsOddByte)
+			{
+				if (!(++CurrentAddress & 0xFFFF))
+				  ISPTarget_LoadExtendedAddress();			
+			}
 		}
 	}
 
@@ -305,6 +325,7 @@ void ISPProtocol_ReadMemory(uint8_t V2Command)
 	Read_Memory_Params.BytesToRead = SwapEndian_16(Read_Memory_Params.BytesToRead);
 	
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	Endpoint_Write_Byte(V2Command);
@@ -341,11 +362,19 @@ void ISPProtocol_ReadMemory(uint8_t V2Command)
 		 * or low byte at the current word address */
 		if (V2Command == CMD_READ_FLASH_ISP)
 		  Read_Memory_Params.ReadMemoryCommand ^= READ_WRITE_HIGH_BYTE_MASK;
-
-		/* Only increment the current address if we have read both bytes in the current word when in FLASH
-		 * read mode, or for each byte when in EEPROM read mode */		 
-		if (((CurrentByte & 0x01) && (V2Command == CMD_READ_FLASH_ISP)) || (V2Command == CMD_READ_EEPROM_ISP))
-		  CurrentAddress++;
+		 
+		/* EEPROM just increments the address each byte, flash needs to increment on each word and
+		 * also check to ensure that a LOAD EXTENDED ADDRESS command is issued each time the extended
+		 * address boundary has been crossed */
+		if (V2Command == CMD_READ_EEPROM_ISP)
+		{
+			CurrentAddress++;
+		}
+		else if (CurrentByte & 0x01)
+		{
+			if (!(++CurrentAddress & 0xFFFF))
+			  ISPTarget_LoadExtendedAddress();			
+		}
 	}
 
 	Endpoint_Write_Byte(STATUS_CMD_OK);
@@ -375,6 +404,7 @@ void ISPProtocol_ChipErase(void)
 	Endpoint_Read_Stream_LE(&Erase_Chip_Params, sizeof(Erase_Chip_Params), NO_STREAM_CALLBACK);
 	
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	uint8_t ResponseStatus = STATUS_CMD_OK;
@@ -410,6 +440,7 @@ void ISPProtocol_ReadFuseLockSigOSCCAL(uint8_t V2Command)
 	Endpoint_Read_Stream_LE(&Read_FuseLockSigOSCCAL_Params, sizeof(Read_FuseLockSigOSCCAL_Params), NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	uint8_t ResponseBytes[4];
@@ -440,6 +471,7 @@ void ISPProtocol_WriteFuseLock(uint8_t V2Command)
 	Endpoint_Read_Stream_LE(&Write_FuseLockSig_Params, sizeof(Write_FuseLockSig_Params), NO_STREAM_CALLBACK);
 
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 
 	/* Send the Fuse or Lock byte program commands as given by the host to the device */
@@ -467,6 +499,7 @@ void ISPProtocol_SPIMulti(void)
 	Endpoint_Read_Stream_LE(&SPI_Multi_Params.TxData, SPI_Multi_Params.TxBytes, NO_STREAM_CALLBACK);
 	
 	Endpoint_ClearOUT();
+	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
 	
 	Endpoint_Write_Byte(CMD_SPI_MULTI);
@@ -515,6 +548,21 @@ void ISPProtocol_SPIMulti(void)
 		Endpoint_WaitUntilReady();	
 		Endpoint_ClearIN();
 		Endpoint_WaitUntilReady();	
+	}
+}
+
+/** Blocking delay for a given number of milliseconds.
+ *
+ *  \param[in] DelayMS  Number of milliseconds to delay for
+ */
+void ISPProtocol_DelayMS(uint8_t DelayMS)
+{
+	while (DelayMS-- && TimeoutMSRemaining)
+	{
+		if (TimeoutMSRemaining)
+		  TimeoutMSRemaining--;
+		  
+		_delay_ms(1);
 	}
 }
 

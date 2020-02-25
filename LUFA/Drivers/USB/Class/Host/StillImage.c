@@ -47,7 +47,7 @@ uint8_t SImage_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 	  return SI_ENUMERROR_InvalidConfigDescriptor;
 	
 	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &DeviceConfigDescriptor,
-	                              DComp_SI_Host_NextSIInterface) != DESCRIPTOR_SEARCH_COMP_Found)
+	                              DCOMP_SI_Host_NextSIInterface) != DESCRIPTOR_SEARCH_COMP_Found)
 	{
 		return SI_ENUMERROR_NoSIInterfaceFound;
 	}
@@ -55,7 +55,7 @@ uint8_t SImage_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 	while (FoundEndpoints != (SI_FOUND_EVENTS_IN | SI_FOUND_DATAPIPE_IN | SI_FOUND_DATAPIPE_OUT))
 	{
 		if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &DeviceConfigDescriptor,
-		                              DComp_SI_Host_NextSIInterfaceEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
+		                              DCOMP_SI_Host_NextSIInterfaceEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
 		{
 			return SI_ENUMERROR_EndpointsNotFound;
 		}
@@ -103,7 +103,7 @@ uint8_t SImage_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 	return SI_ENUMERROR_NoError;
 }
 
-uint8_t DComp_SI_Host_NextSIInterface(void* const CurrentDescriptor)
+uint8_t DCOMP_SI_Host_NextSIInterface(void* const CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
@@ -121,7 +121,7 @@ uint8_t DComp_SI_Host_NextSIInterface(void* const CurrentDescriptor)
 	return DESCRIPTOR_SEARCH_NotFound;
 }
 
-uint8_t DComp_SI_Host_NextSIInterfaceEndpoint(void* const CurrentDescriptor)
+uint8_t DCOMP_SI_Host_NextSIInterfaceEndpoint(void* const CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Endpoint)
 	{
@@ -151,7 +151,8 @@ uint8_t SImage_Host_SendBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceIn
 	if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
 	  return PIPE_RWSTREAM_DeviceDisconnected;
 
-	PIMAHeader->TransactionID = SIInterfaceInfo->State.TransactionID++;
+	if (SIInterfaceInfo->State.IsSessionOpen)
+	  PIMAHeader->TransactionID = SIInterfaceInfo->State.TransactionID++;
 
 	Pipe_SelectPipe(SIInterfaceInfo->Config.DataOUTPipeNumber);
 	Pipe_Unfreeze();
@@ -315,12 +316,15 @@ uint8_t SImage_Host_OpenSession(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
 
 	uint8_t ErrorCode;
 
+	SIInterfaceInfo->State.TransactionID = 0;
+	SIInterfaceInfo->State.IsSessionOpen = false;
+
 	SI_PIMA_Container_t PIMABlock = (SI_PIMA_Container_t)
 							{
-								.DataLength    = PIMA_COMMAND_SIZE(0),
+								.DataLength    = PIMA_COMMAND_SIZE(1),
 								.Type          = CType_CommandBlock,
 								.Code          = 0x1002,
-								.Params        = {},
+								.Params        = {1},
 							};
 							
 	if ((ErrorCode = SImage_Host_SendBlockHeader(SIInterfaceInfo, &PIMABlock)) != PIPE_RWSTREAM_NoError)
@@ -332,7 +336,6 @@ uint8_t SImage_Host_OpenSession(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
 	if ((PIMABlock.Type != CType_ResponseBlock) || (PIMABlock.Code != 0x2001))
 	  return SI_ERROR_LOGICAL_CMD_FAILED;
 	  
-	SIInterfaceInfo->State.TransactionID = 0;
 	SIInterfaceInfo->State.IsSessionOpen = true;
 
 	return PIPE_RWSTREAM_NoError;
@@ -347,10 +350,10 @@ uint8_t SImage_Host_CloseSession(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
 
 	SI_PIMA_Container_t PIMABlock = (SI_PIMA_Container_t)
 							{
-								.DataLength    = PIMA_COMMAND_SIZE(0),
+								.DataLength    = PIMA_COMMAND_SIZE(1),
 								.Type          = CType_CommandBlock,
 								.Code          = 0x1003,
-								.Params        = {},
+								.Params        = {1},
 							};
 							
 	if ((ErrorCode = SImage_Host_SendBlockHeader(SIInterfaceInfo, &PIMABlock)) != PIPE_RWSTREAM_NoError)

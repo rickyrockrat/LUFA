@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Dataflash commands header for the AT45DB321C as mounted on the STK525.
  *
  *  Board specific Dataflash commands header for the AT45DB321C as mounted on the STK525.
  *

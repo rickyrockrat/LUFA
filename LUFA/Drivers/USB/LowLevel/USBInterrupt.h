@@ -28,17 +28,29 @@
   this software.
 */
 
+/** \file
+ *  \brief USB controller interrupt service routine management.
+ *
+ *  This file contains definitions required for the correct handling of low level USB service routine interrupts
+ *  from the USB controller.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+ 
 #ifndef __USBINTERRUPT_H__
 #define __USBINTERRUPT_H__
 
 	/* Includes: */
 		#include <avr/io.h>
+		#include <avr/interrupt.h>
+		#include <util/atomic.h>
 		#include <stdbool.h>
 		
 		#include "../../../Common/Common.h"
-		#include "../LowLevel/LowLevel.h"
-		#include "USBMode.h"
-		#include "Events.h"
+		#include "../HighLevel/USBMode.h"
+		#include "../HighLevel/Events.h"
+		#include "LowLevel.h"
 		
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -47,7 +59,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Private Interface - For use in library only: */

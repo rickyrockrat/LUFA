@@ -70,6 +70,7 @@ int main(void)
 	puts_P(PSTR(ESC_FG_CYAN "Keyboard Host Demo running.\r\n" ESC_FG_WHITE));
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 
 	for (;;)
 	{
@@ -84,7 +85,7 @@ int main(void)
 				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
 				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
-					printf("Error Retrieving Configuration Descriptor.\r\n");
+					puts_P(PSTR("Error Retrieving Configuration Descriptor.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -93,7 +94,7 @@ int main(void)
 				if (HID_Host_ConfigurePipes(&Keyboard_HID_Interface,
 				                            ConfigDescriptorSize, ConfigDescriptorData) != HID_ENUMERROR_NoError)
 				{
-					printf("Attached Device Not a Valid Keyboard.\r\n");
+					puts_P(PSTR("Attached Device Not a Valid Keyboard.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -101,7 +102,7 @@ int main(void)
 				
 				if (USB_Host_SetDeviceConfiguration(1) != HOST_SENDCONTROL_Successful)
 				{
-					printf("Error Setting Device Configuration.\r\n");
+					puts_P(PSTR("Error Setting Device Configuration.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -109,15 +110,14 @@ int main(void)
 
 				if (HID_Host_SetReportProtocol(&Keyboard_HID_Interface) != 0)
 				{
-					printf("Error Setting Report Protocol Mode or Not a Valid Keyboard.\r\n");
+					puts_P(PSTR("Error Setting Report Protocol Mode or Not a Valid Keyboard.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
 				}
 				
-				LEDs_SetAllLEDs(LEDS_NO_LEDS);
-
-				printf("Keyboard Enumerated.\r\n");
+				puts_P(PSTR("Keyboard Enumerated.\r\n"));
+				LEDs_SetAllLEDs(LEDMASK_USB_READY);
 				USB_HostState = HOST_STATE_Configured;
 				break;
 			case HOST_STATE_Configured:

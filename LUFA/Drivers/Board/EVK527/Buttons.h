@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Buttons driver header for the EVK527.
  *
  *  Board specific Buttons driver header for the EVK527.
  *

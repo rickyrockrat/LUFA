@@ -29,10 +29,14 @@
 */
 
 /** \file
+ *  \brief Configuration descriptor parser API.
  *
- *  Configuration descriptor parser API. This section of the library gives a friendly API which can be used in
- *  host applications to easily parse an attached device's configuration descriptor so that endpoint, interface
- *  and other descriptor data can be extracted and used as needed.
+ *  This section of the library gives a friendly API which can be used in host applications to easily
+ *  parse an attached device's configuration descriptor so that endpoint, interface and other descriptor
+ *  data can be extracted and used as needed.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
  */
 
 /** \ingroup Group_Descriptors
@@ -61,7 +65,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */	

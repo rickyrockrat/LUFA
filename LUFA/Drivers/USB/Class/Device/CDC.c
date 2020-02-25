@@ -65,9 +65,8 @@ void CDC_Device_ProcessControlRequest(USB_ClassInfo_CDC_Device_t* CDCInterfaceIn
 			{
 				Endpoint_ClearSETUP();
 				Endpoint_Read_Control_Stream_LE(&CDCInterfaceInfo->State.LineEncoding, sizeof(CDCInterfaceInfo->State.LineEncoding));
-				Endpoint_ClearIN();
-
 				EVENT_CDC_Device_LineEncodingChanged(CDCInterfaceInfo);
+				Endpoint_ClearIN();
 			}
 	
 			break;
@@ -77,12 +76,22 @@ void CDC_Device_ProcessControlRequest(USB_ClassInfo_CDC_Device_t* CDCInterfaceIn
 				Endpoint_ClearSETUP();
 				
 				CDCInterfaceInfo->State.ControlLineStates.HostToDevice = USB_ControlRequest.wValue;
-				
 				EVENT_CDC_Device_ControLineStateChanged(CDCInterfaceInfo);
 
 				Endpoint_ClearStatusStage();
 			}
 	
+			break;
+		case REQ_SendBreak:
+			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+			{				
+				Endpoint_ClearSETUP();
+				
+				EVENT_CDC_Device_BreakSent(CDCInterfaceInfo, (uint8_t)USB_ControlRequest.wValue);
+
+				Endpoint_ClearStatusStage();
+			}
+
 			break;
 	}
 }
@@ -195,9 +204,14 @@ uint16_t CDC_Device_BytesReceived(USB_ClassInfo_CDC_Device_t* const CDCInterface
 	if (Endpoint_IsOUTReceived())
 	{
 		if (!(Endpoint_BytesInEndpoint()))
-		  Endpoint_ClearOUT();
-
-		return Endpoint_BytesInEndpoint();
+		{
+			Endpoint_ClearOUT();
+			return 0;
+		}
+		else
+		{
+			return Endpoint_BytesInEndpoint();
+		}
 	}
 	else
 	{

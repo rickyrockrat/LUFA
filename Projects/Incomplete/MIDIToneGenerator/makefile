@@ -60,13 +60,13 @@
 
 
 # MCU name
-MCU = atmega32u4
+MCU = at90usb1287
 
 
 # Target board (see library "Board Types" documentation, NONE for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called 
 # "Board" inside the application directory.
-BOARD  = 
+BOARD  = USBKEY
 
 
 # Processor frequency.
@@ -80,7 +80,7 @@ BOARD  =
 #     does not *change* the processor frequency - it should merely be updated to
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
-F_CPU = 16000000
+F_CPU = 8000000
 
 
 # Input clock frequency.
@@ -97,16 +97,12 @@ F_CPU = 16000000
 F_CLOCK = $(F_CPU)
 
 
-# Starting byte address of the bootloader
-BOOT_START = 0x7000
-
-
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = TeensyHID
+TARGET = MIDIToneGenerator
 
 
 # Object files directory
@@ -116,19 +112,15 @@ OBJDIR = .
 
 
 # Path to the LUFA library
-LUFA_PATH = ../..
+LUFA_PATH = ../../..
 
 
 # LUFA library compile-time options
 LUFA_OPTS  = -D USB_DEVICE_ONLY
-LUFA_OPTS += -D DEVICE_STATE_AS_GPIOR=0
-LUFA_OPTS += -D FIXED_CONTROL_ENDPOINT_SIZE=64
+LUFA_OPTS += -D FIXED_CONTROL_ENDPOINT_SIZE=8
 LUFA_OPTS += -D FIXED_NUM_CONFIGURATIONS=1
-LUFA_OPTS += -D USE_RAM_DESCRIPTORS
+LUFA_OPTS += -D USE_FLASH_DESCRIPTORS
 LUFA_OPTS += -D USE_STATIC_OPTIONS="(USB_DEVICE_OPT_FULLSPEED | USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)"
-LUFA_OPTS += -D NO_INTERNAL_SERIAL
-LUFA_OPTS += -D NO_DEVICE_SELF_POWER
-LUFA_OPTS += -D NO_DEVICE_REMOTE_WAKEUP
 
 
 # List C source files here. (C dependencies are automatically generated.)
@@ -140,10 +132,11 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/HostChapter9.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/LowLevel.c           \
  	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Pipe.c               \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/USBInterrupt.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/Device/MIDI.c           \
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -190,7 +183,6 @@ CSTANDARD = -std=gnu99
 
 # Place -D or -U options here for C sources
 CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD) $(LUFA_OPTS)
-CDEFS += -DBOOT_START_ADDR=$(BOOT_START)UL
 
 
 # Place -D or -U options here for ASM sources
@@ -217,9 +209,9 @@ CFLAGS += -O$(OPT)
 CFLAGS += -funsigned-char
 CFLAGS += -funsigned-bitfields
 CFLAGS += -ffunction-sections
+CFLAGS += -fno-inline-small-functions
 CFLAGS += -fpack-struct
 CFLAGS += -fshort-enums
-CFLAGS += -fno-inline-small-functions
 CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wundef
@@ -325,7 +317,6 @@ EXTMEMOPTS =
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
-LDFLAGS += -Wl,--section-start=.text=$(BOOT_START)
 LDFLAGS += -Wl,--relax 
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += $(EXTMEMOPTS)
@@ -508,7 +499,7 @@ sizeafter:
 	2>/dev/null; echo; fi
 
 $(LUFA_PATH)/LUFA/LUFA_Events.lst:
-	@make -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
+	@$(MAKE) -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
 
 checkinvalidevents: $(LUFA_PATH)/LUFA/LUFA_Events.lst
 	@echo
@@ -517,7 +508,7 @@ checkinvalidevents: $(LUFA_PATH)/LUFA/LUFA_Events.lst
 	                 grep -F -v --file=$(LUFA_PATH)/LUFA/LUFA_Events.lst > InvalidEvents.tmp || true
 	@sed -n -e 's/^/  WARNING - INVALID EVENT NAME: /p' InvalidEvents.tmp
 	@if test -s InvalidEvents.tmp; then exit 1; fi
-	
+
 showliboptions:
 	@echo
 	@echo ---- Compile Time Library Options ----

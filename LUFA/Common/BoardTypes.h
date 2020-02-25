@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Supported board hardware defines.
  *
  *  This file contains constants which can be passed to the compiler (via setting the macro BOARD) in the
  *  user project makefile using the -D option to configure the library board-specific drivers.
@@ -94,6 +95,18 @@
 			 *  such as the Joystick driver, where the removal would adversely affect the code's operation is still disallowed. */
 			#define BOARD_NONE          10
 			
+			/** Selects the Teensy (all versions) specific board drivers, including the driver for the board LEDs. */
+			#define BOARD_TEENSY        11
+			
+			/** Selects the USBTINY MKII specific board drivers, including the Button and LEDs drivers. */
+			#define BOARD_USBTINYMKII   12
+			
+			/** Selects the Benito specific board drivers, including the Button and LEDs drivers. */
+			#define BOARD_BENITO        13
+			
+			/** Selects the JM-DB-U2 specific board drivers, including the Button and LEDs drivers. */
+			#define BOARD_JMDBU2        14
+
 			#if !defined(__DOXYGEN__)
 				#define BOARD_          BOARD_NONE
 				

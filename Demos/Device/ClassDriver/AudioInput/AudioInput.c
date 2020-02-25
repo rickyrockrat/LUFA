@@ -59,6 +59,7 @@ int main(void)
 	SetupHardware();
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	sei();
 	
 	for (;;)
 	{
@@ -104,7 +105,7 @@ void ProcessNextSample(void)
 		
 		#if defined(MICROPHONE_BIASED_TO_HALF_RAIL)
 		/* Microphone is biased to half rail voltage, subtract the bias from the sample value */
-		AudioSample -= (SAMPLE_MAX_RANGE / 2));
+		AudioSample -= (SAMPLE_MAX_RANGE / 2);
 		#endif
 
 		Audio_Device_WriteSample16(&Microphone_Audio_Interface, AudioSample);

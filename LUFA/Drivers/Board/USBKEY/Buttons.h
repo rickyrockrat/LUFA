@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Buttons driver header for the USBKEY.
  *
  *  Board specific Buttons driver header for the USBKEY.
  *

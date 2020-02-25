@@ -39,30 +39,20 @@
 	/* Includes: */
 		#include <avr/io.h>
 		#include <avr/wdt.h>
-		#include <avr/boot.h>
 		#include <avr/power.h>
+		#include <avr/pgmspace.h>
+		#include <avr/interrupt.h>
 		#include <stdbool.h>
 
 		#include "Descriptors.h"
 				
 		#include <LUFA/Version.h>
 		#include <LUFA/Drivers/Board/LEDs.h>
+		#include <LUFA/Drivers/Peripheral/ADC.h>
 		#include <LUFA/Drivers/USB/USB.h>
+		#include <LUFA/Drivers/USB/Class/MIDI.h>
 
-   /* Macros: */
-		/** MIDI command for a note on (activation) event */
-		#define MIDI_COMMAND_NOTE_ON      0x90
-
-		/** MIDI command for a note off (deactivation) event */
-		#define MIDI_COMMAND_NOTE_OFF     0x80
-
-		#define MIDI_CONTROL_CHANNEL      9
-		#define MIDI_DATA_CHANNEL         0
-		#define CONTROL_DEVICE_READY      0xD1
-		#define CONTROL_ENTER_PROG_MODE   0xDC
-		#define CONTROL_LEAVE_PROG_MODE   0xDF
-		#define CONTROL_GET_PAGE_SIZE     0x01
-	
+	/* Macros: */
 		/** LED mask for the library LED driver, to indicate that the USB interface is not ready. */
 		#define LEDMASK_USB_NOTREADY      LEDS_LED1
 
@@ -74,25 +64,15 @@
 
 		/** LED mask for the library LED driver, to indicate that an error has occurred in the USB interface. */
 		#define LEDMASK_USB_ERROR        (LEDS_LED1 | LEDS_LED3)
-
-	/* Type Defines: */
-		/** Type define for a USB MIDI event packet, used to encapsulate sent and received MIDI messages from a USB MIDI interface. */
-		typedef struct
-		{
-			unsigned char Command     : 4; /**< MIDI command being sent or received in the event packet */
-			unsigned char CableNumber : 4; /**< Virtual cable number of the event being sent or received in the given MIDI interface */
-			
-			uint8_t Data1; /**< First byte of data in the MIDI event */
-			uint8_t Data2; /**< Second byte of data in the MIDI event */
-			uint8_t Data3; /**< Third byte of data in the MIDI event */		
-		} USB_MIDI_EventPacket_t;
 		
-   /* Function Prototypes: */
+		#define AUDIO_SAMPLE_FREQUENCY    24000
+		
+	/* Function Prototypes: */
 		void SetupHardware(void);
-		void MIDI_Task(void);
-   
+		
 		void EVENT_USB_Device_Connect(void);
 		void EVENT_USB_Device_Disconnect(void);
 		void EVENT_USB_Device_ConfigurationChanged(void);
+		void EVENT_USB_Device_UnhandledControlRequest(void);
 		
 #endif

@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief Host mode driver for the library USB MIDI Class driver.
+ *
+ *  Host mode driver for the library USB MIDI Class driver.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the class driver
+ *        dispatch header located in LUFA/Drivers/USB/Class/MIDI.h.
+ */
+
 /** \ingroup Group_USBClassMIDI
  *  @defgroup Group_USBClassMIDIHost MIDI Class Host Mode Driver
  *
@@ -60,7 +69,9 @@
 		
 	/* Public Interface - May be used in end-application: */
 		/* Type Defines: */
-			/** Class state structure. An instance of this structure should be made within the user application,
+			/** \brief MIDI Class Host Mode Configuration and State Structure.
+			 *
+			 *  Class state structure. An instance of this structure should be made within the user application,
 			 *  and passed to each of the MIDI class driver functions as the MIDIInterfaceInfo parameter. This
 			 *  stores each MIDI interface's configuration and state information.
 			 */
@@ -178,8 +189,8 @@
 
 		/* Function Prototypes: */
 			#if defined(__INCLUDE_FROM_MIDI_CLASS_HOST_C)
-				static uint8_t DComp_MIDI_Host_NextMIDIStreamingInterface(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
-				static uint8_t DComp_MIDI_Host_NextMIDIStreamingDataEndpoint(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
+				static uint8_t DCOMP_MIDI_Host_NextMIDIStreamingInterface(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
+				static uint8_t DCOMP_MIDI_Host_NextMIDIStreamingDataEndpoint(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
 			#endif	
 	#endif
 				

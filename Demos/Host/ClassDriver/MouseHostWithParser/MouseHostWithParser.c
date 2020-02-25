@@ -68,6 +68,7 @@ int main(void)
 	SetupHardware();
 
 	puts_P(PSTR(ESC_FG_CYAN "Mouse Host Demo running.\r\n" ESC_FG_WHITE));
+	sei();
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 
@@ -84,7 +85,7 @@ int main(void)
 				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
 				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
-					printf("Error Retrieving Configuration Descriptor.\r\n");
+					puts_P(PSTR("Error Retrieving Configuration Descriptor.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -93,7 +94,7 @@ int main(void)
 				if (HID_Host_ConfigurePipes(&Mouse_HID_Interface,
 				                            ConfigDescriptorSize, ConfigDescriptorData) != HID_ENUMERROR_NoError)
 				{
-					printf("Attached Device Not a Valid Mouse.\r\n");
+					puts_P(PSTR("Attached Device Not a Valid Mouse.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -101,7 +102,7 @@ int main(void)
 				
 				if (USB_Host_SetDeviceConfiguration(1) != HOST_SENDCONTROL_Successful)
 				{
-					printf("Error Setting Device Configuration.\r\n");
+					puts_P(PSTR("Error Setting Device Configuration.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
@@ -109,15 +110,14 @@ int main(void)
 
 				if (HID_Host_SetReportProtocol(&Mouse_HID_Interface) != 0)
 				{
-					printf("Error Setting Report Protocol Mode or Not a Valid Mouse.\r\n");
+					puts_P(PSTR("Error Setting Report Protocol Mode or Not a Valid Mouse.\r\n"));
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;
 				}
 				
-				LEDs_SetAllLEDs(LEDS_NO_LEDS);
-				
-				printf("Mouse Enumerated.\r\n");
+				puts_P(PSTR("Mouse Enumerated.\r\n"));
+				LEDs_SetAllLEDs(LEDMASK_USB_READY);
 				USB_HostState = HOST_STATE_Configured;
 				break;
 			case HOST_STATE_Configured:
@@ -147,7 +147,7 @@ int main(void)
 								 (ReportItem->Attributes.Usage.Usage  == USAGE_SCROLL_WHEEL)       &&
 								 (ReportItem->ItemType                == REPORT_ITEM_TYPE_In))
 						{
-							int16_t WheelDelta = (int16_t)(ReportItem->Value << (16 - ReportItem->Attributes.BitSize));
+							int16_t WheelDelta = HID_ALIGN_DATA(ReportItem, int16_t);
 							
 							if (WheelDelta)
 							  LEDMask = (LEDS_LED1 | LEDS_LED2 | ((WheelDelta > 0) ? LEDS_LED3 : LEDS_LED4));
@@ -157,7 +157,7 @@ int main(void)
 								  (ReportItem->Attributes.Usage.Usage == USAGE_Y))                 &&
 								 (ReportItem->ItemType                == REPORT_ITEM_TYPE_In))
 						{
-							int16_t DeltaMovement = (int16_t)(ReportItem->Value << (16 - ReportItem->Attributes.BitSize));
+							int16_t DeltaMovement = HID_ALIGN_DATA(ReportItem, int16_t);
 							
 							if (ReportItem->Attributes.Usage.Usage == USAGE_X)
 							{

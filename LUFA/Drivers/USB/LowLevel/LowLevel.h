@@ -28,6 +28,16 @@
   this software.
 */
 
+/** \file
+ *  \brief USB low level USB controller definitions.
+ *
+ *  This file contains structures, function prototypes and macros related to the low level configutation of the
+ *  USB controller, to start, stop and reset the USB library core.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+ 
 /** \ingroup Group_USB
  *  @defgroup Group_USBManagement USB Interface Management
  *
@@ -50,7 +60,7 @@
 		#include "../HighLevel/USBMode.h"
 		#include "../HighLevel/Events.h"
 		#include "../HighLevel/USBTask.h"
-		#include "../HighLevel/USBInterrupt.h"
+		#include "USBInterrupt.h"
 		
 		#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
 			#include "Host.h"
@@ -71,7 +81,7 @@
 
 	/* Preprocessor Checks and Defines: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 
 		#if !defined(F_CLOCK)
@@ -226,8 +236,12 @@
 			 *  allow for device connection to a host when in device mode, or for device enumeration while in
 			 *  host mode.
 			 *
-			 *  As the USB library relies on USB interrupts for some of its functionality, this routine will
-			 *  enable global interrupts.
+			 *  As the USB library relies on interrupts for the device and host mode enumeration processes,
+			 *  the user must enable global interrupts before or shortly after this function is called. In
+			 *  device mode, interrupts must be enabled within 500ms of this function being called to ensure
+			 *  that the host does not time out whilst enumerating the device. In host mode, interrupts may be
+			 *  enabled at the application's leisure however enumeration will not begin of an attached device
+			 *  until after this has occurred.
 			 *
 			 *  Calling this function when the USB interface is already initialized will cause a complete USB
 			 *  interface reset and re-enumeration.
@@ -242,16 +256,18 @@
 			 *                      mode speed.
 			 *
 			 *  \note To reduce the FLASH requirements of the library if only device or host mode is required, 
-			 *        this can be statically set via defining the token USB_DEVICE_ONLY for device mode or 
-			 *        USB_HOST_ONLY for host mode in the use project makefile, passing the token to the compiler 
+			 *        the mode can be statically set in the project makefile by defining the token USB_DEVICE_ONLY
+			 *        (for device mode) or USB_HOST_ONLY (for host mode), passing the token to the compiler 
 			 *        via the -D switch. If the mode is statically set, this parameter does not exist in the
 			 *        function prototype.
+			 *        \n\n
 			 *
 			 *  \note To reduce the FLASH requirements of the library if only fixed settings are are required,
 			 *        the options may be set statically in the same manner as the mode (see the Mode parameter of 
 			 *        this function). To statically set the USB options, pass in the USE_STATIC_OPTIONS token,
 			 *        defined to the appropriate options masks. When the options are statically set, this
 			 *        parameter does not exist in the function prototype.
+			 *        \n\n
 			 *        
 			 *  \note The mode parameter does not exist on devices where only one mode is possible, such as USB 
 			 *        AVR models which only implement the USB device mode in hardware.

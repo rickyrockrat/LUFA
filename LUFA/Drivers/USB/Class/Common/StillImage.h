@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief Common definitions and declarations for the library USB Still Image Class driver.
+ *
+ *  Common definitions and declarations for the library USB Still Image Class driver.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the class driver
+ *        dispatch header located in LUFA/Drivers/USB/Class/StillImage.h.
+ */
+
 /** \ingroup Group_USBClassSI
  *  @defgroup Group_USBClassSICommon  Common Class Definitions
  *
@@ -63,23 +72,23 @@
 		 *
 		 *  \return Number of bytes of the given unicode string
 		 */
-		#define UNICODE_STRING_LENGTH(chars)   (chars << 1)
+		#define UNICODE_STRING_LENGTH(chars)   ((chars) << 1)
 		
 		/** Used in the DataLength field of a PIMA container, to give the total container size in bytes for
 		 *  a command container.
 		 *
 		 *  \param[in] params  Number of parameters which are to be sent in the Param field of the container
 		 */
-		#define PIMA_COMMAND_SIZE(params)      ((sizeof(SI_PIMA_Container_t) - sizeof(((SI_PIMA_Container_t*)NULL)->Params)) + \
-		                                        (params * sizeof(uint32_t)))
+		#define PIMA_COMMAND_SIZE(params)      ((sizeof(SI_PIMA_Container_t) - 12) + \
+		                                        ((params) * sizeof(uint32_t)))
 
 		/** Used in the DataLength field of a PIMA container, to give the total container size in bytes for
 		 *  a data container.
 		 *
 		 *  \param[in] datalen  Length in bytes of the data in the container
 		 */
-		#define PIMA_DATA_SIZE(datalen)        ((sizeof(SI_PIMA_Container_t) - sizeof(((SI_PIMA_Container_t*)NULL)->Params)) + \
-		                                        datalen)
+		#define PIMA_DATA_SIZE(datalen)        ((sizeof(SI_PIMA_Container_t) - 12) + \
+		                                        (datalen))
 
 	/* Enums: */
 		/** Enum for the possible PIMA contains types. */
@@ -113,7 +122,9 @@
 		};
 	
 	/* Type Defines: */
-		/** Type define for a PIMA container, use to send commands and receive responses to and from an
+		/** \brief PIMA Still Image Device Command/Response Container.
+		 *
+		 *  Type define for a PIMA container, use to send commands and receive responses to and from an
 		 *  attached Still Image device.
 		 */
 		typedef struct
@@ -122,7 +133,7 @@
 			uint16_t Type; /**< Container type, a value from the PIMA_Container_Types_t enum */
 			uint16_t Code; /**< Command, event or response code of the container */
 			uint32_t TransactionID; /**< Unique container ID to link blocks together */
-			uint32_t Params[5]; /**< Block parameters to be issued along with the block code (command blocks only) */
+			uint32_t Params[3]; /**< Block parameters to be issued along with the block code (command blocks only) */
 		} SI_PIMA_Container_t;
 		
 	/* Disable C linkage for C++ Compilers: */

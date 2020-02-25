@@ -28,6 +28,16 @@
   this software.
 */
 
+/** \file
+ *  \brief USB device endpoint management definitions.
+ *
+ *  This file contains structures, function prototypes and macros related to the management of the device's
+ *  data endpoints when the library is initialized in USB device mode.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+
 /** \ingroup Group_USB
  *  @defgroup Group_EndpointManagement Endpoint Management
  *
@@ -85,7 +95,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */
@@ -395,15 +405,13 @@
 				#define Endpoint_ClearSETUP()                 MACROS{ UEINTX &= ~(1 << RXSTPI); }MACROE
 
 				#if !defined(CONTROL_ONLY_DEVICE)
-					#define Endpoint_ClearIN()                MACROS{ uint8_t Temp = UEINTX; UEINTX = (Temp & ~(1 << TXINI)); \
-					                                                  UEINTX = (Temp & ~(1 << FIFOCON)); }MACROE
+					#define Endpoint_ClearIN()                MACROS{ UEINTX &= ~((1 << TXINI) | (1 << FIFOCON)); }MACROE
 				#else
 					#define Endpoint_ClearIN()                MACROS{ UEINTX &= ~(1 << TXINI); }MACROE
 				#endif
 
 				#if !defined(CONTROL_ONLY_DEVICE)
-					#define Endpoint_ClearOUT()               MACROS{ uint8_t Temp = UEINTX; UEINTX = (Temp & ~(1 << RXOUTI)); \
-					                                                  UEINTX = (Temp & ~(1 << FIFOCON)); }MACROE
+					#define Endpoint_ClearOUT()               MACROS{ UEINTX &= ~((1 << RXOUTI) | (1 << FIFOCON)); }MACROE
 				#else
 					#define Endpoint_ClearOUT()               MACROS{ UEINTX &= ~(1 << RXOUTI); }MACROE			
 				#endif
@@ -434,8 +442,12 @@
 				                                                 */
 				ENDPOINT_READYWAIT_DeviceDisconnected      = 2,	/**< Device was disconnected from the host while
 				                                                 *   waiting for the endpoint to become ready.
-				                                                 */	
-				ENDPOINT_READYWAIT_Timeout                 = 3, /**< The host failed to accept or send the next packet
+				                                                 */
+				ENDPOINT_READYWAIT_BusSuspended            = 3, /**< The USB bus has been suspended by the host and
+				                                                 *   no USB endpoint traffic can occur until the bus
+				                                                 *   has resumed.
+				                                                 */
+				ENDPOINT_READYWAIT_Timeout                 = 4, /**< The host failed to accept or send the next packet
 				                                                 *   within the software timeout period set by the
 				                                                 *   \ref USB_STREAM_TIMEOUT_MS macro.
 				                                                 */
@@ -454,11 +466,15 @@
 				ENDPOINT_RWSTREAM_DeviceDisconnected = 2, /**< Device was disconnected from the host during
 				                                           *   the transfer.
 				                                           */
-				ENDPOINT_RWSTREAM_Timeout            = 3, /**< The host failed to accept or send the next packet
+				ENDPOINT_RWSTREAM_BusSuspended       = 3, /**< The USB bus has been suspended by the host and
+				                                           *   no USB endpoint traffic can occur until the bus
+				                                           *   has resumed.
+				                                           */
+				ENDPOINT_RWSTREAM_Timeout            = 4, /**< The host failed to accept or send the next packet
 				                                           *   within the software timeout period set by the
 				                                           *   \ref USB_STREAM_TIMEOUT_MS macro.
 				                                           */
-				ENDPOINT_RWSTREAM_CallbackAborted    = 4, /**< Indicates that the stream's callback function
+				ENDPOINT_RWSTREAM_CallbackAborted    = 5, /**< Indicates that the stream's callback function
 			                                               *   aborted the transfer early.
 				                                           */
 			};
@@ -473,6 +489,10 @@
 				ENDPOINT_RWCSTREAM_HostAborted        = 1, /**< The aborted the transfer prematurely. */
 				ENDPOINT_RWCSTREAM_DeviceDisconnected = 2, /**< Device was disconnected from the host during
 				                                            *   the transfer.
+				                                            */
+				ENDPOINT_RWCSTREAM_BusSuspended       = 3, /**< The USB bus has been suspended by the host and
+				                                            *   no USB endpoint traffic can occur until the bus
+				                                            *   has resumed.
 				                                            */
 			};
 
@@ -737,7 +757,8 @@
 			 *  The banking mode may be either \ref ENDPOINT_BANK_SINGLE or \ref ENDPOINT_BANK_DOUBLE.
 			 *
 			 *  \note The default control endpoint does not have to be manually configured, as it is automatically
-			 *  configured by the library internally.
+			 *        configured by the library internally.
+			 *        \n\n
 			 *
 			 *  \note This routine will select the specified endpoint, and the endpoint will remain selected
 			 *        once the routine completes regardless of if the endpoint configuration succeeds.
@@ -961,6 +982,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -980,6 +1002,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -999,8 +1022,10 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note The FLASH data must be located in the first 64KB of FLASH for this function to work correctly.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -1023,6 +1048,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -1042,6 +1068,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -1061,8 +1088,10 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note The FLASH data must be located in the first 64KB of FLASH for this function to work correctly.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -1085,6 +1114,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -1104,6 +1134,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -1126,6 +1157,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *
@@ -1145,6 +1177,7 @@
 			 *
 			 *  \note This function automatically clears the control transfer's status stage. Do not manually attempt
 			 *        to clear the status stage when using this routine in a control transaction.
+			 *        \n\n
 			 *
 			 *  \note This routine should only be used on CONTROL type endpoints.
 			 *

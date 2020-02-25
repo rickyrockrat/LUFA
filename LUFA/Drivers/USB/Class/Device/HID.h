@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief Device mode driver for the library USB HID Class driver.
+ *
+ *  Device mode driver for the library USB HID Class driver.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the class driver
+ *        dispatch header located in LUFA/Drivers/USB/Class/HID.h.
+ */
+
 /** \ingroup Group_USBClassHID
  *  @defgroup Group_USBClassHIDDevice HID Class Device Mode Driver
  *
@@ -62,7 +71,9 @@
 
 	/* Public Interface - May be used in end-application: */
 		/* Type Defines: */
-			/** Class state structure. An instance of this structure should be made for each HID interface
+			/** \brief HID Class Device Mode Configuration and State Structure.
+			 *
+			 *  Class state structure. An instance of this structure should be made for each HID interface
 			 *  within the user application, and passed to each of the HID class driver functions as the
 			 *  HIDInterfaceInfo parameter. This stores each HID interface's configuration and state information.
 			 *
@@ -95,7 +106,8 @@
 					uint8_t  PrevReportINBufferSize; /**< Size in bytes of the given input report buffer. This is used to create a
 					                                  *  second buffer of the same size within the driver so that subsequent reports
 					                                  *  can be compared. If the user app is to determine when reports are to be sent
-					                                  *  exclusively (i.e. \ref PrevReportINBuffer is NULL) this value is ignored.
+					                                  *  exclusively (i.e. \ref PrevReportINBuffer is NULL) this value must still be
+													  *  set to the size of the largest report the device can issue to the host.
 					                                  */
 				} Config; /**< Config data for the USB class interface within the device. All elements in this section
 				           *   <b>must</b> be set or the interface will fail to enumerate and operate correctly.
@@ -162,12 +174,13 @@
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class configuration and state
 			 *  \param[in] ReportID  Report ID of the received output report. If multiple reports are not received via the given HID
 			 *                   interface, this parameter should be ignored.
+			 *  \param[in] ReportType  Type of received HID report, either \ref REPORT_ITEM_TYPE_Out or \ref REPORT_ITEM_TYPE_Feature
 			 *  \param[in] ReportData  Pointer to a buffer where the received HID report is stored.
 			 *  \param[in] ReportSize  Size in bytes of the received report from the host.
 			 */
 			void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, const uint8_t ReportID,
-			                                          const void* ReportData, const uint16_t ReportSize) ATTR_NON_NULL_PTR_ARG(1)
-			                                          ATTR_NON_NULL_PTR_ARG(3);
+			                                          const uint8_t ReportType, const void* ReportData, const uint16_t ReportSize) ATTR_NON_NULL_PTR_ARG(1)
+			                                          ATTR_NON_NULL_PTR_ARG(4);
 
 		/* Inline Functions: */
 			/** Indicates that a millisecond of idle time has elapsed on the given HID interface, and the interface's idle count should be

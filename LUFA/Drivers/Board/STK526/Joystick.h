@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific joystick driver header for the STK526.
  *
  *  Board specific joystick driver header for the STK526.
  *

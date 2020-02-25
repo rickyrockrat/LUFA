@@ -107,13 +107,15 @@ int main(void)
 	
 	/* Create a regular blocking character stream for the interface so that it can be used with the stdio.h functions */
 	CDC_Device_CreateBlockingStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
+	
+	sei();
 
 	for (;;)
 	{
 		/* Read in next LED colour command from the host */
 		uint8_t ColorUpdate = fgetc(&USBSerialStream);
 		
-		/* Top 3 bits select the LED, bottom three control the brightness */
+		/* Top 3 bits select the LED, bottom 5 control the brightness */
 		uint8_t Channel = (ColorUpdate & 0b11100000);
 		uint8_t Duty    = (ColorUpdate & 0b00011111);
 		

@@ -28,6 +28,15 @@
   this software.
 */
 
+/** \file
+ *  \brief USB host mode definitions.
+ *
+ *  This file contains structures, function prototypes and macros related to USB host mode.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the USB driver
+ *        dispatch header located in LUFA/Drivers/USB/USB.h.
+ */
+
 /** \ingroup Group_USB
  *  @defgroup Group_Host Host Management
  *
@@ -46,9 +55,9 @@
 		#include <util/delay.h>
 
 		#include "../../../Common/Common.h"
-		#include "../HighLevel/USBInterrupt.h"
 		#include "../HighLevel/StdDescriptors.h"
 		#include "Pipe.h"
+		#include "USBInterrupt.h"
 
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -57,7 +66,7 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
 		
 	/* Public Interface - May be used in end-application: */
@@ -220,7 +229,7 @@
 			 *
 			 *  \return A value from the \ref USB_Host_SendControlErrorCodes_t enum to indicate the result.
 			 */
-			uint8_t USB_Host_GetDeviceStringDescriptor(uint8_t Index, void* const Buffer, uint8_t BufferLength);
+			uint8_t USB_Host_GetDeviceStringDescriptor(const uint8_t Index, void* const Buffer, const uint8_t BufferLength);
 			
 			/** Clears a stall condition on the given pipe, via a ClearFeature request to the attached device.
 			 *
@@ -236,7 +245,9 @@
 			/** Enum for the various states of the USB Host state machine. Only some states are
 			 *  implemented in the LUFA library - other states are left to the user to implement.
 			 *
-			 *  For information on each state, refer to the USB 2.0 specification. Some states have
+			 *  For information on each possible USB host state, refer to the USB 2.0 specification.
+			 *  Several of the USB host states are broken up further into multiple smaller sub-states,
+			 *  so that they can be internally implemented inside the library in an efficient manner.
 			 *
 			 *  \see \ref USB_HostState, which stores the current host state machine state.
 			 */

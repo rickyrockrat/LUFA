@@ -29,6 +29,7 @@
 */
 
 /** \file
+ *  \brief Board specific Dataflash driver header for the XPLAIN.
  *
  *  Board specific Dataflash driver header for the XPLAIN.
  *

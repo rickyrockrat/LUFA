@@ -140,10 +140,10 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/HostChapter9.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/LowLevel.c           \
  	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Pipe.c               \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/USBInterrupt.c       \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -157,7 +157,7 @@ CPPSRC =
 #     Even though the DOS/Win* filesystem matches both .s and .S the same,
 #     it will preserve the spelling of the filenames, and gcc itself does
 #     care about how the name is spelled on its command-line.
-ASRC =
+ASRC = 
 
 
 # Optimization level, can be [0, 1, 2, 3, s]. 
@@ -197,8 +197,8 @@ CDEFS += -DAUX_LINE_MASK="(1 << 4)"
 CDEFS += -DVTARGET_ADC_CHANNEL=2
 CDEFS += -DENABLE_ISP_PROTOCOL
 CDEFS += -DENABLE_XPROG_PROTOCOL
-#CDEFS += -DXPROG_VIA_HARDWARE_USART
 #CDEFS += -DNO_VTARGET_DETECT
+#CDEFS += -DLIBUSB_DRIVER_COMPAT
 
 
 # Place -D or -U options here for ASM sources
@@ -515,7 +515,7 @@ sizeafter:
 	2>/dev/null; echo; fi
 
 $(LUFA_PATH)/LUFA/LUFA_Events.lst:
-	@make -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
+	@$(MAKE) -C $(LUFA_PATH)/LUFA/ LUFA_Events.lst
 
 checkinvalidevents: $(LUFA_PATH)/LUFA/LUFA_Events.lst
 	@echo
