@@ -29,7 +29,7 @@
 */
 
 /** \ingroup Group_USBClassDrivers
- *  @defgroup Group_USBClassCDC CDC Device Class Driver - LUFA/Drivers/Class/CDC.h
+ *  @defgroup Group_USBClassCDC CDC Class Driver - LUFA/Drivers/Class/CDC.h
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
@@ -41,7 +41,7 @@
  *  Ports, for both Device and Host USB modes. User applications can use this class driver instead of implementing the
  *  CDC class manually via the low-level LUFA APIs.
  *
- *  This module is designed to simplify the user code by exposing only the required interface needed to interace with
+ *  This module is designed to simplify the user code by exposing only the required interface needed to interface with
  *  Hosts or Devices using the USB CDC Class.
  *
  *  @{
@@ -52,6 +52,10 @@
 
 	/* Includes: */
 		#include "../HighLevel/USBMode.h"
+
+		#if defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
+		#endif
 
 		#if defined(USB_CAN_BE_DEVICE)
 			#include "Device/CDC.h"

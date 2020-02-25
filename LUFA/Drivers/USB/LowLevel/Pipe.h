@@ -124,7 +124,7 @@
 			 */
 			#define PIPE_TOKEN_IN                   (1 << PTOKEN0)
 
-			/** Token mask for \ref Pipe_ConfigurePipe(). This sets the pipe as a IN token (for non-CONTROL type pipes),
+			/** Token mask for \ref Pipe_ConfigurePipe(). This sets the pipe as a OUT token (for non-CONTROL type pipes),
 			 *  indicating that the pipe data will flow from host to device.
 			 */
 			#define PIPE_TOKEN_OUT                  (2 << PTOKEN0)
@@ -420,9 +420,9 @@
 
 				#define Pipe_GetCurrentPipe()          (UPNUM & PIPE_PIPENUM_MASK)
 
-				#define Pipe_SelectPipe(pipenum)       MACROS{ UPNUM = pipenum; }MACROE
+				#define Pipe_SelectPipe(pipenum)       MACROS{ UPNUM = (pipenum); }MACROE
 				
-				#define Pipe_ResetPipe(pipenum)        MACROS{ UPRST = (1 << pipenum); UPRST = 0; }MACROE
+				#define Pipe_ResetPipe(pipenum)        MACROS{ UPRST = (1 << (pipenum)); UPRST = 0; }MACROE
 
 				#define Pipe_EnablePipe()              MACROS{ UPCONX |= (1 << PEN); }MACROE
 
@@ -432,21 +432,21 @@
 
 				#define Pipe_GetPipeToken()            (UPCFG0X & PIPE_TOKEN_MASK)
 
-				#define Pipe_SetToken(token)           MACROS{ UPCFG0X = ((UPCFG0X & ~PIPE_TOKEN_MASK) | token); }MACROE
+				#define Pipe_SetToken(token)           MACROS{ UPCFG0X = ((UPCFG0X & ~PIPE_TOKEN_MASK) | (token)); }MACROE
 				
 				#define Pipe_SetInfiniteINRequests()   MACROS{ UPCONX |= (1 << INMODE); }MACROE
 
-				#define Pipe_SetFiniteINRequests(n)    MACROS{ UPCONX &= ~(1 << INMODE); UPINRQX = n; }MACROE
+				#define Pipe_SetFiniteINRequests(n)    MACROS{ UPCONX &= ~(1 << INMODE); UPINRQX = (n); }MACROE
 
 				#define Pipe_IsConfigured()            ((UPSTAX  & (1 << CFGOK)) ? true : false)
 
 				#define Pipe_BoundEndpointNumber()     ((UPCFG0X >> PEPNUM0) & PIPE_EPNUM_MASK)
 				
-				#define Pipe_SetInterruptPeriod(ms)    MACROS{ UPCFG2X = ms; }MACROE
+				#define Pipe_SetInterruptPeriod(ms)    MACROS{ UPCFG2X = (ms); }MACROE
 
 				#define Pipe_GetPipeInterrupts()       UPINT
 
-				#define Pipe_HasPipeInterrupted(n)     ((UPINT & (1 << n)) ? true : false)
+				#define Pipe_HasPipeInterrupted(n)     ((UPINT & (1 << (n))) ? true : false)
 
 				#define Pipe_Unfreeze()                MACROS{ UPCONX &= ~(1 << PFREEZE); }MACROE
 
@@ -757,9 +757,9 @@
 
 		/* Function Prototypes: */
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-				#define _CALLBACK_PARAM     , StreamCallbackPtr_t Callback
+				#define __CALLBACK_PARAM     , StreamCallbackPtr_t Callback
 			#else
-				#define _CALLBACK_PARAM			
+				#define __CALLBACK_PARAM			
 			#endif
 
 			/** Configures the specified pipe number with the given pipe type, token, target endpoint number in the
@@ -793,7 +793,7 @@
 			bool Pipe_ConfigurePipe(const uint8_t  Number, const uint8_t Type, const uint8_t Token, const uint8_t EndpointNumber,
 			                        const uint16_t Size, const uint8_t Banks);
 
-			/** Spinloops until the currently selected non-control pipe is ready for the next packed of data to be read 
+			/** Spin-loops until the currently selected non-control pipe is ready for the next packed of data to be read 
 			 *  or written to it, aborting in the case of an error condition (such as a timeout or device disconnect).
 			 *
 			 *  \ingroup Group_PipeRW
@@ -831,7 +831,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Discard_Stream(uint16_t Length _CALLBACK_PARAM);
+			uint8_t Pipe_Discard_Stream(uint16_t Length __CALLBACK_PARAM);
 
 			/** Writes the given number of bytes to the pipe from the given buffer in little endian,
 			 *  sending full packets to the device as needed. The last packet filled is not automatically sent;
@@ -854,7 +854,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Write_Stream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);				
+			uint8_t Pipe_Write_Stream_LE(const void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);				
 
 			/** EEPROM buffer source version of \ref Pipe_Write_Stream_LE().
 			 *
@@ -866,7 +866,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Write_EStream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Write_EStream_LE(const void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 			
 			/** FLASH buffer source version of \ref Pipe_Write_Stream_LE().
 			 *
@@ -880,7 +880,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Write_PStream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Write_PStream_LE(const void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 						
 			/** Writes the given number of bytes to the pipe from the given buffer in big endian,
 			 *  sending full packets to the device as needed. The last packet filled is not automatically sent;
@@ -903,7 +903,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Write_Stream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Write_Stream_BE(const void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** EEPROM buffer source version of \ref Pipe_Write_Stream_BE().
 			 *
@@ -915,7 +915,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Write_EStream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Write_EStream_BE(const void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 			
 			/** FLASH buffer source version of \ref Pipe_Write_Stream_BE().
 			 *
@@ -929,7 +929,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Write_PStream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Write_PStream_BE(const void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Reads the given number of bytes from the pipe into the given buffer in little endian,
 			 *  sending full packets to the device as needed. The last packet filled is not automatically sent;
@@ -952,7 +952,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** EEPROM buffer source version of \ref Pipe_Read_Stream_LE().
 			 *
@@ -964,7 +964,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Read_EStream_LE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Read_EStream_LE(void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Reads the given number of bytes from the pipe into the given buffer in big endian,
 			 *  sending full packets to the device as needed. The last packet filled is not automatically sent;
@@ -987,7 +987,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Read_Stream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Read_Stream_BE(void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 			
 			/** EEPROM buffer source version of \ref Pipe_Read_Stream_BE().
 			 *
@@ -999,7 +999,7 @@
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum.
 			 */
-			uint8_t Pipe_Read_EStream_BE(void* Buffer, uint16_t Length _CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+			uint8_t Pipe_Read_EStream_BE(void* Buffer, uint16_t Length __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
 
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)

@@ -37,7 +37,7 @@
 #include "Joystick.h"
 
 /** Main program entry point. This routine configures the hardware required by the application, then
- *  starts the scheduler to run the application tasks.
+ *  enters a loop to run the application tasks in sequence.
  */
 int main(void)
 {
@@ -156,10 +156,10 @@ bool GetNextReport(USB_JoystickReport_Data_t* ReportData)
 	else if (JoyStatus_LCL & JOY_DOWN)
 	  ReportData->Y =  100;
 
-	if (JoyStatus_LCL & JOY_RIGHT)
-	  ReportData->X =  100;
-	else if (JoyStatus_LCL & JOY_LEFT)
+	if (JoyStatus_LCL & JOY_LEFT)
 	  ReportData->X = -100;
+	else if (JoyStatus_LCL & JOY_RIGHT)
+	  ReportData->X =  100;
 
 	if (JoyStatus_LCL & JOY_PRESS)
 	  ReportData->Button  = (1 << 1);

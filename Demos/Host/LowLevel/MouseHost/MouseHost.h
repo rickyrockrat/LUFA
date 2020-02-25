@@ -79,7 +79,7 @@
 			int8_t  X; /**< Current delta X movement of the mouse */
 			int8_t  Y; /**< Current delta Y movement on the mouse */
 		} USB_MouseReport_Data_t;
-
+		
 	/* Function Prototypes: */
 		void Mouse_HID_Task(void);
 		void SetupHardware(void);

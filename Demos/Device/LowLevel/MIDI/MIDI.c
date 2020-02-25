@@ -37,7 +37,7 @@
 #include "MIDI.h"
 
 /** Main program entry point. This routine configures the hardware required by the application, then
- *  starts the scheduler to run the application tasks.
+ *  enters a loop to run the application tasks in sequence.
  */
 int main(void)
 {
@@ -190,7 +190,26 @@ void MIDI_Task(void)
 	/* Select the MIDI OUT stream */
 	Endpoint_SelectEndpoint(MIDI_STREAM_OUT_EPNUM);
 
-	/* Check if endpoint is ready to be read from, if so discard its (unused) data */
+	/* Check if a MIDI command has been received */
 	if (Endpoint_IsOUTReceived())
-	  Endpoint_ClearOUT();
+	{
+		USB_MIDI_EventPacket_t MIDIEvent;
+			
+		/* Read the MIDI event packet from the endpoint */
+		Endpoint_Read_Stream_LE(&MIDIEvent, sizeof(MIDIEvent));
+	
+		if (MIDIEvent.Command == (MIDI_COMMAND_NOTE_ON >> 4))
+		{
+			/* Change LEDs depending on the pitch of the sent note */
+			LEDs_SetAllLEDs(MIDIEvent.Data2 > 64 ? LEDS_LED1 : LEDS_LED2);
+		}
+		else
+		{
+			/* Turn off all LEDs in response to non-Note On messages */
+			LEDs_SetAllLEDs(LEDS_NO_LEDS);
+		}
+	
+		/* Clear the endpoint ready for new packet */
+		Endpoint_ClearOUT();
+	}
 }

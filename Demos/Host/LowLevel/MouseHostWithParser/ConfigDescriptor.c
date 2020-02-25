@@ -43,16 +43,16 @@
  *
  *  This routine searches for a HID interface descriptor containing at least one Interrupt type IN endpoint and HID descriptor.
  *
- *  \return An error code from the MouseHostWithParser_GetConfigDescriptorDataCodes_t enum.
+ *  \return An error code from the \ref MouseHostWithParser_GetConfigDescriptorDataCodes_t enum.
  */
 uint8_t ProcessConfigurationDescriptor(void)
 {
 	uint8_t  ConfigDescriptorData[512];
-	uint8_t* CurrConfigLocation = ConfigDescriptorData;
+	void*    CurrConfigLocation = ConfigDescriptorData;
 	uint16_t CurrConfigBytesRem;
 
 	/* Retrieve the entire configuration descriptor into the allocated buffer */
-	switch (USB_GetDeviceConfigDescriptor(1, &CurrConfigBytesRem, ConfigDescriptorData, sizeof(ConfigDescriptorData)))
+	switch (USB_Host_GetDeviceConfigDescriptor(1, &CurrConfigBytesRem, ConfigDescriptorData, sizeof(ConfigDescriptorData)))
 	{
 		case HOST_GETCONFIG_Successful:
 			break;
@@ -85,7 +85,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 	
 	/* Get the mouse interface's data endpoint descriptor */
 	if (USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation,
-	                              DComp_NextInterfaceMouseDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
+	                              DComp_NextMouseInterfaceDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
 	{
 		/* Descriptor not found, error out */
 		return NoEndpointFound;
@@ -134,7 +134,7 @@ uint8_t DComp_NextMouseInterface(void* CurrentDescriptor)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-uint8_t DComp_NextInterfaceMouseDataEndpoint(void* CurrentDescriptor)
+uint8_t DComp_NextMouseInterfaceDataEndpoint(void* CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Endpoint)
 	{

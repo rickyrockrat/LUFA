@@ -43,17 +43,17 @@
  *
  *  This routine searches for a SI interface descriptor containing bulk IN and OUT data endpoints.
  *
- *  \return An error code from the StillImageHost_GetConfigDescriptorDataCodes_t enum.
+ *  \return An error code from the \ref StillImageHost_GetConfigDescriptorDataCodes_t enum.
  */
 uint8_t ProcessConfigurationDescriptor(void)
 {
 	uint8_t  ConfigDescriptorData[512];
-	uint8_t* CurrConfigLocation = ConfigDescriptorData;
+	void*    CurrConfigLocation = ConfigDescriptorData;
 	uint16_t CurrConfigBytesRem;
 	uint8_t  FoundEndpoints = 0;
 
 	/* Retrieve the entire configuration descriptor into the allocated buffer */
-	switch (USB_GetDeviceConfigDescriptor(1, &CurrConfigBytesRem, ConfigDescriptorData, sizeof(ConfigDescriptorData)))
+	switch (USB_Host_GetDeviceConfigDescriptor(1, &CurrConfigBytesRem, ConfigDescriptorData, sizeof(ConfigDescriptorData)))
 	{
 		case HOST_GETCONFIG_Successful:
 			break;

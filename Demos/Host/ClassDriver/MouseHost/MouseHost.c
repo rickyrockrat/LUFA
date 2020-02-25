@@ -45,7 +45,10 @@ USB_ClassInfo_HID_Host_t Mouse_HID_Interface =
 		.Config =
 			{
 				.DataINPipeNumber       = 1,
+				.DataINPipeDoubleBank   = false,
+				
 				.DataOUTPipeNumber      = 2,
+				.DataOUTPipeDoubleBank  = false,
 				
 				.HIDInterfaceProtocol   = HID_BOOT_MOUSE_PROTOCOL,
 			},
@@ -53,7 +56,7 @@ USB_ClassInfo_HID_Host_t Mouse_HID_Interface =
 
 	
 /** Main program entry point. This routine configures the hardware required by the application, then
- *  starts the scheduler to run the application tasks.
+ *  enters a loop to run the application tasks in sequence.
  */
 int main(void)
 {
@@ -73,8 +76,8 @@ int main(void)
 				uint16_t ConfigDescriptorSize;
 				uint8_t  ConfigDescriptorData[512];
 
-				if (USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
-				                                  sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
+				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
+				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
 					printf("Error Retrieving Configuration Descriptor.\r\n");
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);

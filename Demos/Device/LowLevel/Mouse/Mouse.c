@@ -36,7 +36,6 @@
  
 #include "Mouse.h"
 
-/* Global Variables */
 /** Indicates what report mode the host has requested, true for normal HID reporting mode, false for special boot
  *  protocol reporting mode.
  */
@@ -55,7 +54,7 @@ uint16_t IdleMSRemaining = 0;
 
 
 /** Main program entry point. This routine configures the hardware required by the application, then
- *  starts the scheduler to run the application tasks.
+ *  enters a loop to run the application tasks in sequence.
  */
 int main(void)
 {
@@ -239,10 +238,10 @@ void CreateMouseReport(USB_MouseReport_Data_t* ReportData)
 	else if (JoyStatus_LCL & JOY_DOWN)
 	  ReportData->Y =  1;
 
-	if (JoyStatus_LCL & JOY_RIGHT)
-	  ReportData->X =  1;
-	else if (JoyStatus_LCL & JOY_LEFT)
+	if (JoyStatus_LCL & JOY_LEFT)
 	  ReportData->X = -1;
+	else if (JoyStatus_LCL & JOY_RIGHT)
+	  ReportData->X = 1;
 
 	if (JoyStatus_LCL & JOY_PRESS)
 	  ReportData->Button  = (1 << 0);
@@ -269,9 +268,6 @@ void SendNextReport(void)
 	if ((MouseReportData.Y != 0) || (MouseReportData.X != 0))
 	  SendReport = true;
 	
-	/* Save the current report data for later comparison to check for changes */
-	PrevMouseReportData = MouseReportData;
-	
 	/* Check if the idle period is set and has elapsed */
 	if ((IdleCount != HID_IDLE_CHANGESONLY) && (!(IdleMSRemaining)))
 	{
@@ -287,7 +283,10 @@ void SendNextReport(void)
 
 	/* Check if Mouse Endpoint Ready for Read/Write and if we should send a new report */
 	if (Endpoint_IsReadWriteAllowed() && SendReport)
-	{
+	{	
+		/* Save the current report data for later comparison to check for changes */
+		PrevMouseReportData = MouseReportData;
+
 		/* Write Mouse Report Data */
 		Endpoint_Write_Stream_LE(&MouseReportData, sizeof(MouseReportData));
 		

@@ -6,6 +6,53 @@
 
  /** \page Page_ChangeLog Project Changelog
   *
+  *  \section Sec_ChangeLog091122 Version 091122
+  *
+  *  <b>New:</b>
+  *  - Added new Dual Role Keyboard/Mouse demo
+  *  - Added new HID_HOST_BOOT_PROTOCOL_ONLY compile time token to reduce the size of the HID Host Class driver when
+  *    Report protocol is not needed
+  *  - Added new MIDI LowLevel and ClassDriver Host demo, add new MIDI Host Class driver
+  *  - Added new CDC/Mouse ClassDriver device demo
+  *  - Added new Joystick Host ClassDriver and LowLevel demos
+  *  - Added new Printer Host mode Class driver
+  *  - Added new Printer Host mode ClassDriver demo
+  *  - Added optional support for double banked endpoints and pipes in the Device and Host mode Class drivers
+  *  - Added new stream creation function to the CDC Class drivers, to easily make standard I/O streams from CDC Class driver instances
+  *
+  *  <b>Changed:</b>
+  *  - Removed mostly useless "TestApp" demo, as it was mainly useful only for checking for sytax errors in the library
+  *  - MIDI device demos now receive MIDI events from the host and display note ON messages via the board LEDs
+  *  - Cleanups to the Device mode Mass Storage demo application SCSI routines
+  *  - Changed Audio Class driver sample read/write functions to be inline, to reduce the number of cycles needed to transfer
+  *    samples to and from the device (allowing more time for sample processing and output)
+  *  - Audio class Device mode demos now work at both 16MHz and 8MHz, rather than just at 8MHz
+  *  - The previous USBtoSerial demo has been moved into the projects directory, as it was just a modified CDC demo
+  *  - The Endpoint/Pipe functions now use the const qualifier on the input buffer
+  *  - Changed the CALLBACK_HIDParser_FilterHIDReportItem() callback to pass a HID_ReportItem_t rather than just the current
+  *    item's attributes, to expose more information on the item (including it's type, collection path, etc.)
+  *  - Changed MouseHostWithParser demos to check that the report items have a Mouse usage collection as a parent at some point,
+  *    to prevent Joysticks from enumerating with the demo
+  *  - Corrected the name of the misnamed USB_GetDeviceConfigDescriptor() function to USB_Host_GetDeviceConfigDescriptor().
+  *  - Keyboard LowLevel/ClassDriver demos now support multiple simultaneous keypresses (up to 6) per report
+  *
+  *  <b>Fixed:</b>
+  *  - Fixed PrinterHost demo returning invalid Device ID data when the attached device does not have a
+  *    device ID (thanks to Andrei Krainev)
+  *  - Changed LUFA_VERSION_INTEGER define to use BCD values, to make comparisons eaiser
+  *  - Fixed issue in the HID Host class driver's HID_Host_SendReportByID() routine using the incorrect mode (control/pipe)
+  *    to send report to the attached device
+  *  - Fixed ClassDriver AudioOutput device demo not selecting an audio output mode
+  *  - Fixed incorrect SampleFrequencyType value in the AudioInput and AudioOutput ClassDriver demos' descriptors
+  *  - Fixed incorrect event name rule in demo/project/bootloader makefiles
+  *  - Fixed HID device class driver not reselecting the correct endpoint once the user callback routines have been called
+  *  - Corrected HID descriptor in the Joystick Device demos - buttons should be placed outside the pointer collection
+  *  - Fixed HID report parser collection paths invalid due to misplaced semicolon in the free path item search loop
+  *  - Fixed HID host Class driver report send/receive report broken when issued through the control pipe
+  *  - Fixed HOST_STATE_AS_GPIOR compile time option being ignored when in host mode (thanks to David Lyons)
+  *  - Fixed LowLevel Keyboard demo not saving the issues report only after it has been sent to the host
+  *  - Fixed Endpoint_Write_Control_Stream_* functions not sending a terminating IN when given data Length is zero
+  *
   *  \section Sec_ChangeLog090924 Version 090924
   *
   *  <b>New:</b>

@@ -29,7 +29,7 @@
 */
 
 /** \ingroup Group_USBClassDrivers
- *  @defgroup Group_USBClassMS Mass Storage Device Class Driver - LUFA/Drivers/Class/MassStorage.h
+ *  @defgroup Group_USBClassMS Mass Storage Class Driver - LUFA/Drivers/Class/MassStorage.h
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
@@ -37,11 +37,11 @@
  *    - LUFA/Drivers/USB/Class/Host/MassStorage.c
  *
  *  \section Module Description
- *  Mass Storage Class Driver module. This module contains an internal implementation of the USB Audio Class, for both
+ *  Mass Storage Class Driver module. This module contains an internal implementation of the USB Mass Storage Class, for both
  *  Device and Host USB modes. User applications can use this class driver instead of implementing the Mass Storage class
  *  manually via the low-level LUFA APIs.
  *
- *  This module is designed to simplify the user code by exposing only the required interface needed to interace with
+ *  This module is designed to simplify the user code by exposing only the required interface needed to interface with
  *  Hosts or Devices using the USB Mass Storage Class.
  *
  *  @{
@@ -52,6 +52,10 @@
 
 	/* Includes: */
 		#include "../HighLevel/USBMode.h"
+
+		#if defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
+		#endif
 
 		#if defined(USB_CAN_BE_DEVICE)
 			#include "Device/MassStorage.h"

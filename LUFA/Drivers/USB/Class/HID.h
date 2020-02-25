@@ -29,7 +29,7 @@
 */
 
 /** \ingroup Group_USBClassDrivers
- *  @defgroup Group_USBClassHID HID Device Class Driver - LUFA/Drivers/Class/HID.h
+ *  @defgroup Group_USBClassHID HID Class Driver - LUFA/Drivers/Class/HID.h
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
@@ -42,7 +42,7 @@
  *  and Host USB modes. User applications can use this class driver instead of implementing the HID class manually 
  *  via the low-level LUFA APIs.
  *
- *  This module is designed to simplify the user code by exposing only the required interface needed to interace with
+ *  This module is designed to simplify the user code by exposing only the required interface needed to interface with
  *  Hosts or Devices using the USB HID Class.
  *
  *  @{
@@ -53,6 +53,10 @@
 
 	/* Includes: */
 		#include "../HighLevel/USBMode.h"
+
+		#if defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
+		#endif
 
 		#if defined(USB_CAN_BE_DEVICE)
 			#include "Device/HID.h"

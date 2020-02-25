@@ -45,7 +45,7 @@ uint32_t CurrentAddress;
  */
 uint8_t V2Protocol_GetSPIPrescalerMask(void)
 {
-	static const uint8_t SPIMaskFromSCKDuration[TOTAL_PROGRAMMING_SPEEDS] =
+	static const uint8_t SPIMaskFromSCKDuration[] =
 	{
 	#if (F_CPU == 8000000)
 		SPI_SPEED_FCPU_DIV_2,    // AVRStudio =   8MHz SPI, Actual =   4MHz SPI
@@ -77,7 +77,7 @@ uint8_t V2Protocol_GetSPIPrescalerMask(void)
 }
 
 /** Asserts or deasserts the target's reset line, using the correct polarity as set by the host using a SET PARAM command.
- *  When not asserted, the line is tristated so as not to intefere with normal device operation.
+ *  When not asserted, the line is tristated so as not to interfere with normal device operation.
  *
  *  \param[in] ResetTarget Boolean true when the target should be held in reset, false otherwise
  */
@@ -85,7 +85,7 @@ void V2Protocol_ChangeTargetResetLine(bool ResetTarget)
 {
 	if (ResetTarget)
 	{
-		RESET_LINE_DDR  |= RESET_LINE_MASK;
+		RESET_LINE_DDR |= RESET_LINE_MASK;
 		
 		if (!(V2Params_GetParameterValue(PARAM_RESET_POLARITY)))
 		  RESET_LINE_PORT |= RESET_LINE_MASK;
@@ -155,17 +155,14 @@ uint8_t V2Protocol_WaitWhileTargetBusy(void)
 {
 	TCNT0 = 0;
 	
-	bool DeviceBusy;
-	
 	do
 	{
 		SPI_SendByte(0xF0);
 		SPI_SendByte(0x00);
 
 		SPI_SendByte(0x00);
-		DeviceBusy = (SPI_ReceiveByte() & 0x01);
 	}
-	while (DeviceBusy && (TCNT0 < TARGET_BUSY_TIMEOUT_MS));
+	while ((SPI_ReceiveByte() & 0x01) && (TCNT0 < TARGET_BUSY_TIMEOUT_MS));
 
 	if (TCNT0 >= TARGET_BUSY_TIMEOUT_MS)
 	  return STATUS_RDY_BSY_TOUT;

@@ -91,21 +91,21 @@ bool CDC_Device_ConfigureEndpoints(USB_ClassInfo_CDC_Device_t* CDCInterfaceInfo)
 
 	if (!(Endpoint_ConfigureEndpoint(CDCInterfaceInfo->Config.DataINEndpointNumber, EP_TYPE_BULK,
 							         ENDPOINT_DIR_IN, CDCInterfaceInfo->Config.DataINEndpointSize,
-							         ENDPOINT_BANK_SINGLE)))
+							         CDCInterfaceInfo->Config.DataINEndpointDoubleBank ? ENDPOINT_BANK_DOUBLE : ENDPOINT_BANK_SINGLE)))
 	{
 		return false;
 	}
 
 	if (!(Endpoint_ConfigureEndpoint(CDCInterfaceInfo->Config.DataOUTEndpointNumber, EP_TYPE_BULK,
 	                                 ENDPOINT_DIR_OUT, CDCInterfaceInfo->Config.DataOUTEndpointSize,
-	                                 ENDPOINT_BANK_SINGLE)))
+	                                 CDCInterfaceInfo->Config.DataOUTEndpointDoubleBank ? ENDPOINT_BANK_DOUBLE : ENDPOINT_BANK_SINGLE)))
 	{
 		return false;
 	}
 
 	if (!(Endpoint_ConfigureEndpoint(CDCInterfaceInfo->Config.NotificationEndpointNumber, EP_TYPE_INTERRUPT,
 	                                 ENDPOINT_DIR_IN, CDCInterfaceInfo->Config.NotificationEndpointSize,
-	                                 ENDPOINT_BANK_SINGLE)))
+	                                 CDCInterfaceInfo->Config.NotificationEndpointDoubleBank ? ENDPOINT_BANK_DOUBLE : ENDPOINT_BANK_SINGLE)))
 	{
 		return false;
 	}
@@ -232,6 +232,42 @@ void CDC_Device_SendControlLineStateChange(USB_ClassInfo_CDC_Device_t* const CDC
 	                         sizeof(CDCInterfaceInfo->State.ControlLineStates.DeviceToHost),
 	                         NO_STREAM_CALLBACK);
 	Endpoint_ClearIN();
+}
+
+void CDC_Device_CreateStream(USB_ClassInfo_CDC_Device_t* CDCInterfaceInfo, FILE* Stream)
+{
+	*Stream = (FILE)FDEV_SETUP_STREAM(CDC_Device_putchar, CDC_Device_getchar, _FDEV_SETUP_RW);
+	fdev_set_udata(Stream, CDCInterfaceInfo);
+}
+
+void CDC_Device_CreateBlockingStream(USB_ClassInfo_CDC_Device_t* CDCInterfaceInfo, FILE* Stream)
+{
+	*Stream = (FILE)FDEV_SETUP_STREAM(CDC_Device_putchar, CDC_Device_getchar_Blocking, _FDEV_SETUP_RW);
+	fdev_set_udata(Stream, CDCInterfaceInfo);
+}
+
+static int CDC_Device_putchar(char c, FILE* Stream)
+{
+	return CDC_Device_SendByte((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream), c) ? _FDEV_ERR : 0;
+}
+
+static int CDC_Device_getchar(FILE* Stream)
+{
+	if (!(CDC_Device_BytesReceived((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream))))
+	  return _FDEV_EOF;
+
+	return CDC_Device_ReceiveByte((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream));
+}
+
+static int CDC_Device_getchar_Blocking(FILE* Stream)
+{
+	while (!(CDC_Device_BytesReceived((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream))))
+	{
+		CDC_Device_USBTask((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream));
+		USB_USBTask();
+	}
+
+	return CDC_Device_ReceiveByte((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream));
 }
 
 #endif

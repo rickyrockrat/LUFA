@@ -29,18 +29,19 @@
 */
 
 /** \ingroup Group_USBClassDrivers
- *  @defgroup Group_USBClassMIDI MIDI Device Class Driver - LUFA/Drivers/Class/MIDI.h
+ *  @defgroup Group_USBClassMIDI MIDI Class Driver - LUFA/Drivers/Class/MIDI.h
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - LUFA/Drivers/USB/Class/Device/MIDI.c
+ *    - LUFA/Drivers/USB/Class/Host/MIDI.c
  *
  *  \section Module Description
  *  MIDI Class Driver module. This module contains an internal implementation of the USB MIDI Class, for both Device
- *  and Host USB modes. User applications can use this class driver instead of implementing the MIDI class manuall
+ *  and Host USB modes. User applications can use this class driver instead of implementing the MIDI class manually
  *  via the low-level LUFA APIs.
  *
- *  This module is designed to simplify the user code by exposing only the required interface needed to interace with
+ *  This module is designed to simplify the user code by exposing only the required interface needed to interface with
  *  Hosts or Devices using the USB MIDI Class.
  *
  *  \note The USB MIDI class is actually a special case of the regular Audio class, thus this module depends on
@@ -55,8 +56,16 @@
 	/* Includes: */
 		#include "../HighLevel/USBMode.h"
 
+		#if defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
+		#endif
+
 		#if defined(USB_CAN_BE_DEVICE)
 			#include "Device/MIDI.h"
+		#endif
+
+		#if defined(USB_CAN_BE_HOST)
+			#include "Host/MIDI.h"
 		#endif
 		
 #endif

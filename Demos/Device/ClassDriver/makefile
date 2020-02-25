@@ -22,6 +22,9 @@ all:
 
 	make -C CDC clean
 	make -C CDC all
+	
+	make -C CDCMouse clean
+	make -C CDCMouse all	
 
 	make -C DualCDC clean
 	make -C DualCDC all
@@ -53,13 +56,11 @@ all:
 	make -C RNDISEthernet clean
 	make -C RNDISEthernet all
 
-	make -C USBtoSerial clean
-	make -C USBtoSerial all
-
 %:
 	make -C AudioInput $@
 	make -C AudioOutput $@
 	make -C CDC $@
+	make -C CDCMouse $@
 	make -C DualCDC $@
 	make -C GenericHID $@
 	make -C Joystick $@
@@ -70,4 +71,3 @@ all:
 	make -C MIDI $@
 	make -C Mouse $@
 	make -C RNDISEthernet $@
-	make -C USBtoSerial $@

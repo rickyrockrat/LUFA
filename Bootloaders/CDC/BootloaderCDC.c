@@ -36,7 +36,6 @@
 #define  INCLUDE_FROM_BOOTLOADERCDC_C
 #include "BootloaderCDC.h"
 
-/* Globals: */
 /** Line coding options for the virtual serial port. Although the virtual serial port data is never
  *  sent through a physical serial port, the line encoding data must still be read and preserved from
  *  the host, or the host will detect a problem and fail to open the port. This structure contains the
@@ -344,7 +343,7 @@ static void WriteNextResponseByte(const uint8_t Response)
 	/* Select the IN endpoint so that the next data byte can be written */
 	Endpoint_SelectEndpoint(CDC_TX_EPNUM);
 	
-	/* If IN endpoint full, clear it and wait util ready for the next packet to the host */
+	/* If IN endpoint full, clear it and wait until ready for the next packet to the host */
 	if (!(Endpoint_IsReadWriteAllowed()))
 	{
 		Endpoint_ClearIN();

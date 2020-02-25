@@ -70,12 +70,15 @@
 
 					uint8_t  DataINEndpointNumber; /**< Endpoint number of the CDC interface's IN data endpoint */
 					uint16_t DataINEndpointSize; /**< Size in bytes of the CDC interface's IN data endpoint */
+					bool     DataINEndpointDoubleBank; /** Indicates if the RNDIS interface's IN data endpoint should use double banking */
 
 					uint8_t  DataOUTEndpointNumber; /**< Endpoint number of the CDC interface's OUT data endpoint */
 					uint16_t DataOUTEndpointSize;  /**< Size in bytes of the CDC interface's OUT data endpoint */
+					bool     DataOUTEndpointDoubleBank; /** Indicates if the RNDIS interface's OUT data endpoint should use double banking */
 
 					uint8_t  NotificationEndpointNumber; /**< Endpoint number of the CDC interface's IN notification endpoint, if used */
 					uint16_t NotificationEndpointSize;  /**< Size in bytes of the CDC interface's IN notification endpoint, if used */
+					bool     NotificationEndpointDoubleBank; /** Indicates if the RNDIS interface's notification endpoint should use double banking */
 					
 					char*         AdapterVendorDescription; /**< String description of the adapter vendor */
 					MAC_Address_t AdapterMACAddress; /**< MAC address of the adapter */
@@ -106,23 +109,23 @@
 			 *  \ref EVENT_USB_Device_ConfigurationChanged() event so that the endpoints are configured when the configuration
 			 *  containing the given HID interface is selected.
 			 *
-			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing a RNDIS Class configuration and state.
+			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing a RNDIS Class configuration and state
 			 *
-			 *  \return Boolean true if the endpoints were sucessfully configured, false otherwise
+			 *  \return Boolean true if the endpoints were successfully configured, false otherwise
 			 */
 			bool RNDIS_Device_ConfigureEndpoints(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** Processes incomming control requests from the host, that are directed to the given RNDIS class interface. This should be
+			/** Processes incoming control requests from the host, that are directed to the given RNDIS class interface. This should be
 			 *  linked to the library \ref EVENT_USB_Device_UnhandledControlRequest() event.
 			 *
-			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing a RNDIS Class configuration and state.
+			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing a RNDIS Class configuration and state
 			 */		
 			void RNDIS_Device_ProcessControlRequest(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			
 			/** General management task for a given HID class interface, required for the correct operation of the interface. This should
 			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
 			 *
-			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing a RNDIS Class configuration and state.
+			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing a RNDIS Class configuration and state
 			 */
 			void RNDIS_Device_USBTask(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 		
@@ -130,12 +133,15 @@
 	#if !defined(__DOXYGEN__)
 		/* Function Prototypes: */
 		#if defined(INCLUDE_FROM_RNDIS_CLASS_DEVICE_C)
-			static void RNDIS_Device_ProcessRNDISControlMessage(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+			static void RNDIS_Device_ProcessRNDISControlMessage(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo)
+			                                                    ATTR_NON_NULL_PTR_ARG(1);
 			static bool RNDIS_Device_ProcessNDISQuery(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo, 
 			                                          const uint32_t OId, void* const QueryData, const uint16_t QuerySize,
-										              void* ResponseData, uint16_t* const ResponseSize) ATTR_NON_NULL_PTR_ARG(1, 5, 6);
+										              void* ResponseData, uint16_t* const ResponseSize) ATTR_NON_NULL_PTR_ARG(1)
+			                                          ATTR_NON_NULL_PTR_ARG(5) ATTR_NON_NULL_PTR_ARG(6);
 			static bool RNDIS_Device_ProcessNDISSet(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo, const uint32_t OId,
-			                                        void* SetData, const uint16_t SetSize) ATTR_NON_NULL_PTR_ARG(1, 3);
+			                                        void* SetData, const uint16_t SetSize) ATTR_NON_NULL_PTR_ARG(1)
+			                                        ATTR_NON_NULL_PTR_ARG(3);
 		#endif
 		
 	#endif

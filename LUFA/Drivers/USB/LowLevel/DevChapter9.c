@@ -121,7 +121,7 @@ static void USB_Device_SetAddress(void)
 
 	Endpoint_ClearSETUP();
 	
-	Endpoint_ClearIN();
+	Endpoint_ClearStatusStage();
 	
 	while (!(Endpoint_IsINReady()))
 	{
@@ -129,10 +129,10 @@ static void USB_Device_SetAddress(void)
 		  return;
 	}
 
-	UDADDR = ((1 << ADDEN) | DeviceAddress);
-
 	if (DeviceAddress)
 	  USB_DeviceState = DEVICE_STATE_Addressed;
+
+	UDADDR = ((1 << ADDEN) | DeviceAddress);
 
 	return;
 }
@@ -190,12 +190,9 @@ static void USB_Device_SetConfiguration(void)
 
 	USB_ConfigurationNumber = (uint8_t)USB_ControlRequest.wValue;
 
-	Endpoint_ClearIN();
+	Endpoint_ClearStatusStage();
 
-	if (USB_ConfigurationNumber)
-	  USB_DeviceState = DEVICE_STATE_Configured;
-	else
-	  USB_DeviceState = DEVICE_STATE_Addressed;
+	USB_DeviceState = (USB_ConfigurationNumber) ? DEVICE_STATE_Configured : DEVICE_STATE_Addressed;
 
 	EVENT_USB_Device_ConfigurationChanged();
 }
@@ -205,16 +202,9 @@ void USB_Device_GetConfiguration(void)
 	Endpoint_ClearSETUP();
 
 	Endpoint_Write_Byte(USB_ConfigurationNumber);
-	
 	Endpoint_ClearIN();
 
-	while (!(Endpoint_IsOUTReceived()))
-	{
-		if (USB_DeviceState == DEVICE_STATE_Unattached)
-		  return;	
-	}
-
-	Endpoint_ClearOUT();
+	Endpoint_ClearStatusStage();
 }
 
 #if !defined(NO_INTERNAL_SERIAL) && (defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR))
@@ -232,10 +222,10 @@ static void USB_Device_GetInternalSerialDescriptor(void)
 		int16_t                 UnicodeString[20];
 	} SignatureDescriptor;
 
-	SignatureDescriptor.Header.Size  = sizeof(SignatureDescriptor);
-	SignatureDescriptor.Header.Type  = DTYPE_String;
+	SignatureDescriptor.Header.Type = DTYPE_String;
+	SignatureDescriptor.Header.Size = sizeof(SignatureDescriptor);
 	
-	uint8_t  SigReadAddress     = 0x0E;
+	uint8_t SigReadAddress = 0x0E;
 
 	for (uint8_t SerialCharNum = 0; SerialCharNum < 20; SerialCharNum++)
 	{
@@ -251,7 +241,9 @@ static void USB_Device_GetInternalSerialDescriptor(void)
 	}
 	
 	Endpoint_ClearSETUP();
+
 	Endpoint_Write_Control_Stream_LE(&SignatureDescriptor, sizeof(SignatureDescriptor));
+
 	Endpoint_ClearOUT();
 }
 #endif
@@ -319,7 +311,7 @@ static void USB_Device_GetStatus(void)
 			break;
 #if !defined(CONTROL_ONLY_DEVICE)
 		case (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_ENDPOINT):
-			Endpoint_SelectEndpoint((uint8_t)USB_ControlRequest.wIndex);
+			Endpoint_SelectEndpoint(USB_ControlRequest.wIndex & 0xFF);
 
 			CurrentStatus = Endpoint_IsStalled();
 
@@ -334,16 +326,9 @@ static void USB_Device_GetStatus(void)
 	Endpoint_ClearSETUP();
 
 	Endpoint_Write_Word_LE(CurrentStatus);
-
 	Endpoint_ClearIN();
 	
-	while (!(Endpoint_IsOUTReceived()))
-	{
-		if (USB_DeviceState == DEVICE_STATE_Unattached)
-		  return;	
-	}
-	
-	Endpoint_ClearOUT();
+	Endpoint_ClearStatusStage();
 }
 
 static void USB_Device_ClearSetFeature(void)
@@ -370,16 +355,16 @@ static void USB_Device_ClearSetFeature(void)
 
 				if (Endpoint_IsEnabled())
 				{				
-					if (USB_ControlRequest.bRequest == REQ_ClearFeature)
+					if (USB_ControlRequest.bRequest == REQ_SetFeature)
+					{
+						Endpoint_StallTransaction();
+					}
+					else
 					{
 						Endpoint_ClearStall();
 						Endpoint_ResetFIFO(EndpointIndex);
 						Endpoint_ResetDataToggle();
-					}
-					else
-					{
-						Endpoint_StallTransaction();
-					}
+					}					
 				}
 			}
 			
@@ -391,7 +376,7 @@ static void USB_Device_ClearSetFeature(void)
 
 	Endpoint_ClearSETUP();
 
-	Endpoint_ClearIN();
+	Endpoint_ClearStatusStage();
 }
 
 #endif

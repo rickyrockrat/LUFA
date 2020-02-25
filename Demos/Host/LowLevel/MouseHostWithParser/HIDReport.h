@@ -43,6 +43,9 @@
 		#include "MouseHostWithParser.h"
 
 	/* Macros: */
+		/** HID Report Descriptor Usage for a Mouse */
+		#define USAGE_MOUSE                 0x02
+
 		/** HID Report Descriptor Usage Page value for a toggle button */
 		#define USAGE_PAGE_BUTTON           0x09
 
@@ -55,6 +58,9 @@
 		/** HID Report Descriptor Usage value for a Y axis movement */
 		#define USAGE_Y                     0x31
 
+		/** HID Report Descriptor Usage value for a Scroll Wheel movement */
+		#define USAGE_SCROLL_WHEEL          0x38
+		
 	/* Enums: */
 		/** Enum for the possible return codes of the GetHIDReportData() function. */
 		enum MouseHostWithParser_GetHIDReportDataCodes_t
@@ -86,6 +92,6 @@
 	/* Function Prototypes: */
 		uint8_t GetHIDReportData(void);
 		
-		bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_Attributes_t* CurrentItemAttributes);
+		bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_t* CurrentItem);
 		
 #endif

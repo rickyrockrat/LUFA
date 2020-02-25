@@ -68,12 +68,12 @@
 			/** Macro for calculating the baud value from a given baud rate when the U2X (double speed) bit is
 			 *  not set.
 			 */
-			#define SERIAL_UBBRVAL(baud)    (((F_CPU / 16) / baud) - 1)
+			#define SERIAL_UBBRVAL(baud)    (((F_CPU / 16) / (baud)) - 1)
 
 			/** Macro for calculating the baud value from a given baud rate when the U2X (double speed) bit is
 			 *  set.
 			 */
-			#define SERIAL_2X_UBBRVAL(baud) (((F_CPU / 8) / baud) - 1)
+			#define SERIAL_2X_UBBRVAL(baud) (((F_CPU / 8) / (baud)) - 1)
 
 		/* Pseudo-Function Macros: */
 			#if defined(__DOXYGEN__)
@@ -100,7 +100,7 @@
 			void Serial_TxString(const char *StringPtr) ATTR_NON_NULL_PTR_ARG(1);
 
 		/* Inline Functions: */
-			/** Initializes the USART, ready for serial data transmission and reception. This initialises the interface to
+			/** Initializes the USART, ready for serial data transmission and reception. This initializes the interface to
 			 *  standard 8-bit, no parity, 1 stop bit settings suitable for most applications.
 			 *
 			 *  \param[in] BaudRate     Serial baud rate, in bits per second

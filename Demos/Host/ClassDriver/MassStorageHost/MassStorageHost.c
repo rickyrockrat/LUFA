@@ -45,13 +45,16 @@ USB_ClassInfo_MS_Host_t FlashDisk_MS_Interface =
 		.Config =
 			{
 				.DataINPipeNumber       = 1,
+				.DataINPipeDoubleBank   = false,
+				
 				.DataOUTPipeNumber      = 2,
+				.DataOUTPipeDoubleBank  = false,
 			},
 	};
 
 	
 /** Main program entry point. This routine configures the hardware required by the application, then
- *  starts the scheduler to run the application tasks.
+ *  enters a loop to run the application tasks in sequence.
  */
 int main(void)
 {
@@ -71,8 +74,8 @@ int main(void)
 				uint16_t ConfigDescriptorSize;
 				uint8_t  ConfigDescriptorData[512];
 
-				if (USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
-				                                  sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
+				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
+				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
 					printf("Error Retrieving Configuration Descriptor.\r\n");
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
@@ -142,7 +145,7 @@ int main(void)
 				SCSI_Inquiry_Response_t InquiryData;
 				if (MS_Host_GetInquiryData(&FlashDisk_MS_Interface, 0, &InquiryData))
 				{
-					printf("Error retreiving device Inquiry data.\r\n");
+					printf("Error retrieving device Inquiry data.\r\n");
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 					USB_HostState = HOST_STATE_WaitForDeviceRemoval;
 					break;				

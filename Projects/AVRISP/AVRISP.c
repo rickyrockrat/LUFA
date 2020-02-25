@@ -34,9 +34,6 @@
  *  the project and is responsible for the initial application hardware configuration.
  */
 
-// TODO: Add in software SPI for lower programming speeds below 125KHz
-// TODO: Add reversed/shorted target connector checks
-
 #include "AVRISP.h"
 
 /** Main program entry point. This routine contains the overall program flow, including initial
@@ -114,7 +111,7 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 	}
 }
 
-/** Processes incomming V2 Protocol commands from the host, returning a response when required. */
+/** Processes incoming V2 Protocol commands from the host, returning a response when required. */
 void Process_AVRISP_Commands(void)
 {
 	/* Device must be connected and configured for the task to run */
@@ -123,11 +120,11 @@ void Process_AVRISP_Commands(void)
 
 	Endpoint_SelectEndpoint(AVRISP_DATA_EPNUM);
 	
-	/* Check to see if a V2 Protocol command has been received - if not, abort */
-	if (!(Endpoint_IsOUTReceived()))
-	  return;
-
-	/* Pass off processing of the V2 Protocol command to the V2 Protocol handler */
-	V2Protocol_ProcessCommand();
+	/* Check to see if a V2 Protocol command has been received */
+	if (Endpoint_IsOUTReceived())
+	{
+		/* Pass off processing of the V2 Protocol command to the V2 Protocol handler */
+		V2Protocol_ProcessCommand();
+	}
 }
 

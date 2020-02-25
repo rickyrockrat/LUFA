@@ -47,13 +47,14 @@ USB_ClassInfo_HID_Device_t Mouse_HID_Interface =
 	{
 		.Config =
 			{
-				.InterfaceNumber         = 0,
+				.InterfaceNumber              = 0,
 
-				.ReportINEndpointNumber  = MOUSE_EPNUM,
-				.ReportINEndpointSize    = MOUSE_EPSIZE,
+				.ReportINEndpointNumber       = MOUSE_EPNUM,
+				.ReportINEndpointSize         = MOUSE_EPSIZE,
+				.ReportINEndpointDoubleBank   = false,
 
-				.PrevReportINBuffer      = PrevMouseHIDReportBuffer,
-				.PrevReportINBufferSize  = sizeof(PrevMouseHIDReportBuffer),
+				.PrevReportINBuffer           = PrevMouseHIDReportBuffer,
+				.PrevReportINBufferSize       = sizeof(PrevMouseHIDReportBuffer),
 			},
 	};
 
@@ -147,10 +148,10 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 	else if (JoyStatus_LCL & JOY_DOWN)
 	  MouseReport->Y =  1;
 
-	if (JoyStatus_LCL & JOY_RIGHT)
-	  MouseReport->X =  1;
-	else if (JoyStatus_LCL & JOY_LEFT)
+	if (JoyStatus_LCL & JOY_LEFT)
 	  MouseReport->X = -1;
+	else if (JoyStatus_LCL & JOY_RIGHT)
+	  MouseReport->X =  1;
 
 	if (JoyStatus_LCL & JOY_PRESS)
 	  MouseReport->Button  = (1 << 0);

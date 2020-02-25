@@ -48,7 +48,10 @@ USB_ClassInfo_HID_Host_t Mouse_HID_Interface =
 		.Config =
 			{
 				.DataINPipeNumber       = 1,
+				.DataINPipeDoubleBank   = false,
+
 				.DataOUTPipeNumber      = 2,
+				.DataOUTPipeDoubleBank  = false,
 				
 				.HIDInterfaceProtocol   = HID_NON_BOOT_PROTOCOL,
 				
@@ -58,7 +61,7 @@ USB_ClassInfo_HID_Host_t Mouse_HID_Interface =
 
 	
 /** Main program entry point. This routine configures the hardware required by the application, then
- *  starts the scheduler to run the application tasks.
+ *  enters a loop to run the application tasks in sequence.
  */
 int main(void)
 {
@@ -78,8 +81,8 @@ int main(void)
 				uint16_t ConfigDescriptorSize;
 				uint8_t  ConfigDescriptorData[512];
 
-				if (USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
-				                                  sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
+				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
+				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
 					printf("Error Retrieving Configuration Descriptor.\r\n");
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
@@ -140,6 +143,21 @@ int main(void)
 
 							if (ReportItem->Value)
 							  LEDMask = LEDS_ALL_LEDS;
+						}
+						else if ((ReportItem->Attributes.Usage.Page   == USAGE_PAGE_GENERIC_DCTRL) &&
+								 (ReportItem->Attributes.Usage.Usage  == USAGE_SCROLL_WHEEL)       &&
+								 (ReportItem->ItemType                == REPORT_ITEM_TYPE_In))
+						{
+							/* Get the mouse wheel value if it is contained within the current 
+							 * report, if not, skip to the next item in the parser list
+							 */
+							if (!(USB_GetHIDReportItemInfo(MouseReport, ReportItem)))
+							  continue;							  
+
+							int16_t WheelDelta = (int16_t)(ReportItem->Value << (16 - ReportItem->Attributes.BitSize));
+							
+							if (WheelDelta)
+							  LEDMask = (LEDS_LED1 | LEDS_LED2 | ((WheelDelta > 0) ? LEDS_LED3 : LEDS_LED4));
 						}
 						else if ((ReportItem->Attributes.Usage.Page   == USAGE_PAGE_GENERIC_DCTRL) &&
 								 ((ReportItem->Attributes.Usage.Usage == USAGE_X)                  ||
@@ -250,16 +268,36 @@ void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode, const uint8
  *  we aren't interested in (preventing us from being able to extract them later on, but saving on the RAM they would
  *  have occupied).
  *
- *  \param[in] CurrentItemAttributes  Pointer to the attrbutes of the item the HID report parser is currently working with
+ *  \param[in] CurrentItem  Pointer to the item the HID report parser is currently working with
  *
  *  \return Boolean true if the item should be stored into the HID report structure, false if it should be discarded
  */
-bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_Attributes_t* CurrentItemAttributes)
+bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_t* CurrentItem)
 {
+	bool IsMouse = false;
+
+	/* Iterate through the item's collection path, until either the root collection node or a collection with the
+	 * Mouse Usage is found - this prevents Joysticks, which use identical descriptors except for the Joystick usage
+	 * parent node, from being erroneously treated as a mouse by the demo
+	 */
+	for (HID_CollectionPath_t* CurrPath = CurrentItem->CollectionPath; CurrPath != NULL; CurrPath = CurrPath->Parent)
+	{
+		if ((CurrPath->Usage.Page  == USAGE_PAGE_GENERIC_DCTRL) &&
+		    (CurrPath->Usage.Usage == USAGE_MOUSE))
+		{
+			IsMouse = true;
+			break;
+		}
+	}
+
+	/* If a collection with the mouse usage was not found, indicate that we are not interested in this item */
+	if (!IsMouse)
+	  return false;
+
 	/* Check the attributes of the current item - see if we are interested in it or not;
 	 * only store BUTTON and GENERIC_DESKTOP_CONTROL items into the Processed HID Report
 	 * structure to save RAM and ignore the rest
 	 */
-	return ((CurrentItemAttributes->Usage.Page == USAGE_PAGE_BUTTON) ||
-	        (CurrentItemAttributes->Usage.Page == USAGE_PAGE_GENERIC_DCTRL))
+	return ((CurrentItem->Attributes.Usage.Page == USAGE_PAGE_BUTTON) ||
+	        (CurrentItem->Attributes.Usage.Page == USAGE_PAGE_GENERIC_DCTRL));
 }

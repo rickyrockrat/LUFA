@@ -42,9 +42,9 @@ uint8_t PrevHIDReportBuffer[GENERIC_REPORT_SIZE];
 /** Structure to contain reports from the host, so that they can be echoed back upon request */
 struct
 {
-	uint8_t ReportID;
+	uint8_t  ReportID;
 	uint16_t ReportSize;
-	uint8_t ReportData[GENERIC_REPORT_SIZE];
+	uint8_t  ReportData[GENERIC_REPORT_SIZE];
 } HIDReportEcho;
 
 /** LUFA HID Class driver interface configuration and state information. This structure is
@@ -55,13 +55,14 @@ USB_ClassInfo_HID_Device_t Generic_HID_Interface =
 	{
 		.Config =
 			{
-				.InterfaceNumber         = 0,
+				.InterfaceNumber              = 0,
 
-				.ReportINEndpointNumber  = GENERIC_IN_EPNUM,
-				.ReportINEndpointSize    = GENERIC_EPSIZE,
+				.ReportINEndpointNumber       = GENERIC_IN_EPNUM,
+				.ReportINEndpointSize         = GENERIC_EPSIZE,
+				.ReportINEndpointDoubleBank   = false,
 				
-				.PrevReportINBuffer      = PrevHIDReportBuffer,
-				.PrevReportINBufferSize  = sizeof(PrevHIDReportBuffer),
+				.PrevReportINBuffer           = PrevHIDReportBuffer,
+				.PrevReportINBufferSize       = sizeof(PrevHIDReportBuffer),
 			},
 	};
 

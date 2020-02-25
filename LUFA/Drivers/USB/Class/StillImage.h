@@ -29,7 +29,7 @@
 */
 
 /** \ingroup Group_USBClassDrivers
- *  @defgroup Group_USBClassSI Still Image Device Class Driver - LUFA/Drivers/Class/StillImage.h
+ *  @defgroup Group_USBClassSI Still Image Class Driver - LUFA/Drivers/Class/StillImage.h
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
@@ -40,7 +40,7 @@
  *  for USB Host mode only. User applications can use this class driver instead of implementing the Still Image class
  *  manually via the low-level LUFA APIs.
  *
- *  This module is designed to simplify the user code by exposing only the required interface needed to interace with
+ *  This module is designed to simplify the user code by exposing only the required interface needed to interface with
  *  Devices using the USB Still Image Class.
  *
  *  @{
@@ -52,6 +52,10 @@
 	/* Includes: */
 		#include "../HighLevel/USBMode.h"
 		
+		#if defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
+		#endif
+
 		#if defined(USB_CAN_BE_HOST)
 			#include "Host/StillImage.h"
 		#endif

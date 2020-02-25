@@ -16,4 +16,4 @@
 %:
 	make -C Device/ $@
 	make -C Host/ $@
-	make -C OTG/ $@
+	make -C DualRole/ $@

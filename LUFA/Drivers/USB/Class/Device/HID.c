@@ -56,6 +56,7 @@ void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* const HIDInter
 				CALLBACK_HID_Device_CreateHIDReport(HIDInterfaceInfo, &ReportID,
 				                                    HIDInterfaceInfo->Config.PrevReportINBuffer, &ReportINSize);
 
+				Endpoint_SelectEndpoint(ENDPOINT_CONTROLEP);
 				Endpoint_Write_Control_Stream_LE(HIDInterfaceInfo->Config.PrevReportINBuffer, ReportINSize);
 				Endpoint_ClearOUT();
 			}
@@ -94,7 +95,7 @@ void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* const HIDInter
 			{
 				Endpoint_ClearSETUP();
 
-				HIDInterfaceInfo->State.UsingReportProtocol = (USB_ControlRequest.wValue != 0x0000);
+				HIDInterfaceInfo->State.UsingReportProtocol = ((USB_ControlRequest.wValue & 0xFF) != 0x00);
 				
 				Endpoint_ClearStatusStage();
 			}
@@ -133,7 +134,8 @@ bool HID_Device_ConfigureEndpoints(USB_ClassInfo_HID_Device_t* const HIDInterfac
 	HIDInterfaceInfo->State.IdleCount = 500;
 
 	if (!(Endpoint_ConfigureEndpoint(HIDInterfaceInfo->Config.ReportINEndpointNumber, EP_TYPE_INTERRUPT,
-									 ENDPOINT_DIR_IN, HIDInterfaceInfo->Config.ReportINEndpointSize, ENDPOINT_BANK_SINGLE)))
+									 ENDPOINT_DIR_IN, HIDInterfaceInfo->Config.ReportINEndpointSize,
+									 HIDInterfaceInfo->Config.ReportINEndpointDoubleBank ? ENDPOINT_BANK_DOUBLE : ENDPOINT_BANK_SINGLE)))
 	{
 		return false;
 	}
@@ -156,16 +158,21 @@ void HID_Device_USBTask(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo)
 
 		memset(ReportINData, 0, sizeof(ReportINData));
 
-		bool ForceSend = CALLBACK_HID_Device_CreateHIDReport(HIDInterfaceInfo, &ReportID, ReportINData, &ReportINSize);
-
-		bool StatesChanged     = (memcmp(ReportINData, HIDInterfaceInfo->Config.PrevReportINBuffer, ReportINSize) != 0);
+		bool ForceSend         = CALLBACK_HID_Device_CreateHIDReport(HIDInterfaceInfo, &ReportID, ReportINData, &ReportINSize);
+		bool StatesChanged     = false;
 		bool IdlePeriodElapsed = (HIDInterfaceInfo->State.IdleCount && !(HIDInterfaceInfo->State.IdleMSRemaining));
 		
-		memcpy(HIDInterfaceInfo->Config.PrevReportINBuffer, ReportINData, ReportINSize);
+		if (HIDInterfaceInfo->Config.PrevReportINBuffer != NULL)
+		{
+			StatesChanged = (memcmp(ReportINData, HIDInterfaceInfo->Config.PrevReportINBuffer, ReportINSize) != 0);
+			memcpy(HIDInterfaceInfo->Config.PrevReportINBuffer, ReportINData, ReportINSize);
+		}
 
 		if (ReportINSize && (ForceSend || StatesChanged || IdlePeriodElapsed))
 		{
 			HIDInterfaceInfo->State.IdleMSRemaining = HIDInterfaceInfo->State.IdleCount;
+
+			Endpoint_SelectEndpoint(HIDInterfaceInfo->Config.ReportINEndpointNumber);
 
 			if (ReportID)
 			  Endpoint_Write_Byte(ReportID);

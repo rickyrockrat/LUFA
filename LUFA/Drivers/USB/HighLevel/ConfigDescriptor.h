@@ -78,7 +78,7 @@
 			 *  // Can now access elements of the configuration header struct using the -> indirection operator
 			 *  \endcode
 			 */
-			#define DESCRIPTOR_PCAST(DescriptorPtr, Type) ((Type*)DescriptorPtr)
+			#define DESCRIPTOR_PCAST(DescriptorPtr, Type) ((Type*)(DescriptorPtr))
 
 			/** Casts a pointer to a descriptor inside the configuration descriptor into the given descriptor
 			 *  type (as an actual struct instance rather than a pointer to a struct).
@@ -152,10 +152,10 @@
 			 *  }
 			 *  \endcode
 			 */
-			uint8_t USB_GetNextDescriptorComp(uint16_t* BytesRem, uint8_t** CurrConfigLoc, ConfigComparatorPtr_t ComparatorRoutine);
+			uint8_t USB_GetNextDescriptorComp(uint16_t* BytesRem, void** CurrConfigLoc, ConfigComparatorPtr_t ComparatorRoutine);
 			
 		/* Enums: */
-			/** Enum for the possible return codes of the \ref USB_GetDeviceConfigDescriptor() function. */
+			/** Enum for the possible return codes of the \ref USB_Host_GetDeviceConfigDescriptor() function. */
 			enum USB_Host_GetConfigDescriptor_ErrorCodes_t
 			{
 				HOST_GETCONFIG_Successful       = 0, /**< No error occurred while retrieving the configuration descriptor */
@@ -202,8 +202,8 @@
 			 *
 			 *  \return A value from the \ref USB_Host_GetConfigDescriptor_ErrorCodes_t enum
 			 */
-			uint8_t USB_GetDeviceConfigDescriptor(uint8_t ConfigNumber, uint16_t* const ConfigSizePtr, void* BufferPtr,
-			                                      uint16_t BufferSize) ATTR_NON_NULL_PTR_ARG(2, 3);
+			uint8_t USB_Host_GetDeviceConfigDescriptor(uint8_t ConfigNumber, uint16_t* const ConfigSizePtr, void* BufferPtr,
+			                                           uint16_t BufferSize) ATTR_NON_NULL_PTR_ARG(2) ATTR_NON_NULL_PTR_ARG(3);
 
 			/** Skips to the next sub-descriptor inside the configuration descriptor of the specified type value.
 			 *  The bytes remaining value is automatically decremented.
@@ -213,9 +213,9 @@
 			 * \param[in] Type  Descriptor type value to search for
 			 */
 			void USB_GetNextDescriptorOfType(uint16_t* const BytesRem,
-			                                 uint8_t** const CurrConfigLoc,
+			                                 void** const CurrConfigLoc,
 			                                 const uint8_t Type)
-			                                 ATTR_NON_NULL_PTR_ARG(1, 2);
+			                                 ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
 			/** Skips to the next sub-descriptor inside the configuration descriptor of the specified type value,
 			 *  which must come before a descriptor of the second given type value. If the BeforeType type
@@ -228,10 +228,10 @@
 			 * \param[in] BeforeType  Descriptor type value which must not be reached before the given Type descriptor
 			 */
 			void USB_GetNextDescriptorOfTypeBefore(uint16_t* const BytesRem,
-			                                       uint8_t** const CurrConfigLoc,
+			                                       void** const CurrConfigLoc,
 			                                       const uint8_t Type,
 			                                       const uint8_t BeforeType)
-			                                       ATTR_NON_NULL_PTR_ARG(1, 2);
+			                                       ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
 			/** Skips to the next sub-descriptor inside the configuration descriptor of the specified type value,
 			 *  which must come after a descriptor of the second given type value. The bytes remaining value is
@@ -243,10 +243,10 @@
 			 * \param[in] AfterType  Descriptor type value which must be reached before the given Type descriptor
 			 */
 			void USB_GetNextDescriptorOfTypeAfter(uint16_t* const BytesRem,
-			                                      uint8_t** const CurrConfigLoc,
+			                                      void** const CurrConfigLoc,
 			                                      const uint8_t Type,
 			                                      const uint8_t AfterType)
-			                                      ATTR_NON_NULL_PTR_ARG(1, 2);
+			                                      ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
 		/* Inline Functions: */
 			/** Skips over the current sub-descriptor inside the configuration descriptor, so that the pointer then
@@ -256,15 +256,15 @@
 			 * \param[in,out] CurrConfigLoc  Pointer to the current descriptor inside the configuration descriptor
 			 */
 			static inline void USB_GetNextDescriptor(uint16_t* const BytesRem,
-			                                         uint8_t** const CurrConfigLoc) 
-			                                         ATTR_NON_NULL_PTR_ARG(1, 2);									  
+			                                         void** const CurrConfigLoc) 
+			                                         ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);									  
 			static inline void USB_GetNextDescriptor(uint16_t* const BytesRem,
-			                                         uint8_t** const CurrConfigLoc)
+			                                         void** const CurrConfigLoc)
 			{
 				uint16_t CurrDescriptorSize = DESCRIPTOR_CAST(*CurrConfigLoc, USB_Descriptor_Header_t).Size;
 
-				*CurrConfigLoc += CurrDescriptorSize;
-				*BytesRem      -= CurrDescriptorSize;
+				*((uint8_t**)CurrConfigLoc) += CurrDescriptorSize;
+				*BytesRem                   -= CurrDescriptorSize;
 			}
 			
 	/* Disable C linkage for C++ Compilers: */

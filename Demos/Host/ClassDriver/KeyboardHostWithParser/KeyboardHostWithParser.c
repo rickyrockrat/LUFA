@@ -48,7 +48,10 @@ USB_ClassInfo_HID_Host_t Keyboard_HID_Interface =
 		.Config =
 			{
 				.DataINPipeNumber       = 1,
+				.DataINPipeDoubleBank   = false,
+
 				.DataOUTPipeNumber      = 2,
+				.DataOUTPipeDoubleBank  = false,
 				
 				.HIDInterfaceProtocol   = HID_NON_BOOT_PROTOCOL,
 				
@@ -58,7 +61,7 @@ USB_ClassInfo_HID_Host_t Keyboard_HID_Interface =
 
 	
 /** Main program entry point. This routine configures the hardware required by the application, then
- *  starts the scheduler to run the application tasks.
+ *  enters a loop to run the application tasks in sequence.
  */
 int main(void)
 {
@@ -78,8 +81,8 @@ int main(void)
 				uint16_t ConfigDescriptorSize;
 				uint8_t  ConfigDescriptorData[512];
 
-				if (USB_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
-				                                  sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
+				if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, ConfigDescriptorData,
+				                                       sizeof(ConfigDescriptorData)) != HOST_GETCONFIG_Successful)
 				{
 					printf("Error Retrieving Configuration Descriptor.\r\n");
 					LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
@@ -251,15 +254,15 @@ void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode, const uint8
  *  we aren't interested in (preventing us from being able to extract them later on, but saving on the RAM they would
  *  have occupied).
  *
- *  \param[in] CurrentItemAttributes  Pointer to the attrbutes of the item the HID report parser is currently working with
+ *  \param[in] CurrentItem  Pointer to the item the HID report parser is currently working with
  *
  *  \return Boolean true if the item should be stored into the HID report structure, false if it should be discarded
  */
-bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_Attributes_t* CurrentItemAttributes)
+bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_t* CurrentItem)
 {
 	/* Check the attributes of the current item - see if we are interested in it or not;
 	 * only store KEYBOARD usage page items into the Processed HID Report structure to
 	 * save RAM and ignore the rest
 	 */
-	return (CurrentItemAttributes->Usage.Page == USAGE_PAGE_KEYBOARD)
+	return (CurrentItem->Attributes.Usage.Page == USAGE_PAGE_KEYBOARD);
 }

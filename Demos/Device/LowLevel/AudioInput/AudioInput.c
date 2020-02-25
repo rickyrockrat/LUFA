@@ -84,9 +84,9 @@ void EVENT_USB_Device_Connect(void)
 	LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
 
 	/* Sample reload timer initialization */
-	OCR0A   = (F_CPU / AUDIO_SAMPLE_FREQUENCY) - 1;
+	OCR0A   = (F_CPU / 8 / AUDIO_SAMPLE_FREQUENCY) - 1;
 	TCCR0A  = (1 << WGM01);  // CTC mode
-	TCCR0B  = (1 << CS00);   // Fcpu speed	
+	TCCR0B  = (1 << CS01);   // Fcpu/8 speed
 }
 
 /** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
@@ -169,10 +169,10 @@ void USB_Audio_Task(void)
 		/* Audio sample is ADC value scaled to fit the entire range */
 		int16_t AudioSample = ((SAMPLE_MAX_RANGE / ADC_MAX_RANGE) * ADC_GetResult());
 		
-#if defined(MICROPHONE_BIASED_TO_HALF_RAIL)
+		#if defined(MICROPHONE_BIASED_TO_HALF_RAIL)
 		/* Microphone is biased to half rail voltage, subtract the bias from the sample value */
 		AudioSample -= (SAMPLE_MAX_RANGE / 2));
-#endif
+		#endif
 
 		/* Write the sample to the buffer */
 		Endpoint_Write_Word_LE(AudioSample);

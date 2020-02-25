@@ -138,7 +138,7 @@
 		#define EP_ACCEPTS_SMALL_PACKETS     (0 << 7)
 
 		/** Endpoint number of the Audio isochronous streaming data endpoint. */
-		#define AUDIO_STREAM_EPNUM       1
+		#define AUDIO_STREAM_EPNUM           1
 		
 		/** Endpoint size in bytes of the Audio isochronous streaming data endpoint. The Windows audio stack requires
 		 *  at least 192 bytes for correct output, thus the smaller 128 byte maximum endpoint size on some of the smaller
@@ -274,7 +274,7 @@
 			USB_Descriptor_Endpoint_t Endpoint; /**< Standard endpoint descriptor describing the audio endpoint */
 
 			uint8_t                   Refresh; /**< Always set to zero */
-			uint8_t                   SyncEndpointNumber; /**< Endpoint address to send synchronisation information to, if needed (zero otherwise) */
+			uint8_t                   SyncEndpointNumber; /**< Endpoint address to send synchronization information to, if needed (zero otherwise) */
 		} USB_Audio_StreamEndpoint_Std_t;
 					
 		/** Type define for an Audio class specific extended endpoint descriptor. This contains extra information

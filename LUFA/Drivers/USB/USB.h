@@ -54,6 +54,15 @@
  *  Driver and framework for the USB controller hardware on the USB series of AVR microcontrollers. This module
  *  consists of many submodules, and is designed to provide an easy way to configure and control USB host, device
  *  or OTG mode USB applications.
+ *
+ *  The USB stack requires the sole control over the USB controller in the microcontroller only; i.e. it does not
+ *  require any additional AVR timers, etc. to operate. This ensures that the USB stack requires as few resources
+ *  as possible.
+ *
+ *  The USB stack can be used in Device Mode for connections to USB Hosts (see \ref Group_Device), in Host mode for
+ *  hosting of other USB devices (see \ref Group_Host), or as a dual role device which can either act as a USB host
+ *  or device depending on what peripheral is connected (see \ref Group_OTG). Both modes also require a common set
+ *  of USB management functions found \ref Group_USBManagement.
  */
 
 /** \ingroup Group_USB
@@ -68,6 +77,56 @@
  *  Multiple device mode class drivers can be used within a project, including multiple instances of the
  *  same class driver. In this way, USB Hosts and Devices can be made quickly using the internal class drivers
  *  so that more time and effort can be put into the end application instead of the USB protocol.
+ *
+ *  The available class drivers and their modes are listed below.
+ *
+ *  <table>
+ *  <tr>
+ *   <th width="100px">USB Class</th> 
+ *   <th width="80px">Device</th> 
+ *   <th width="80px">Host</th> 
+ *  </tr>
+ *  <tr>
+ *   <td>Audio</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *   <td bgcolor="#EE0000">No</td>
+ *  </tr>
+ *  <tr>
+ *   <td>CDC</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *  </tr>
+ *  <tr>
+ *   <td>HID</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *  </tr>
+ *  <tr>
+ *   <td>MIDI</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *  </tr>
+ *  <tr>
+ *   <td>Mass Storage</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *  </tr>
+ *  <tr>
+ *   <td>Printer</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+*    <td bgcolor="#00EE00">Yes</td>
+ *  </tr>
+ *  <tr>
+ *   <td>RNDIS</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *   <td bgcolor="#EE0000">No</td>
+ *  </tr>
+ *  <tr>
+ *   <td>Still Image</td>
+ *   <td bgcolor="#EE0000">No</td>
+ *   <td bgcolor="#00EE00">Yes</td>
+ *  </tr>
+ *  </table>
  */
  
 #ifndef __USB_H__

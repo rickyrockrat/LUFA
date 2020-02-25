@@ -20,11 +20,17 @@ all:
 	make -C GenericHIDHost clean
 	make -C GenericHIDHost all	
 
+	make -C JoystickHostWithParser clean
+	make -C JoystickHostWithParser all	
+
 	make -C KeyboardHost clean
 	make -C KeyboardHost all	
 
 	make -C MassStorageHost clean
 	make -C MassStorageHost all	
+
+	make -C MIDIHost clean
+	make -C MIDIHost all	
 
 	make -C MouseHost clean
 	make -C MouseHost all	
@@ -41,9 +47,11 @@ all:
 %:
 	make -C CDCHost $@
 	make -C GenericHIDHost $@
+	make -C JoystickHostWithParser $@
 	make -C KeyboardHost $@
 	make -C KeyboardHostWithParser $@
 	make -C MassStorageHost $@
+	make -C MIDIHost $@
 	make -C MouseHost $@
 	make -C MouseHostWithParser $@
 	make -C PrinterHost $@

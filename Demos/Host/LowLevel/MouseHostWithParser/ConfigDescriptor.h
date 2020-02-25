@@ -59,7 +59,7 @@
 	
 	/* Enums: */
 		/** Enum for the possible return codes of the ProcessConfigurationDescriptor() function. */
-		enum CDCHost_GetConfigDescriptorDataCodes_t
+		enum MouseHostWithParser_GetConfigDescriptorDataCodes_t
 		{
 			SuccessfulConfigRead            = 0, /**< Configuration Descriptor was processed successfully */
 			ControlError                    = 1, /**< A control request to the device failed to complete successfully */
@@ -74,7 +74,7 @@
 		uint8_t ProcessConfigurationDescriptor(void);
 
 		uint8_t DComp_NextMouseInterface(void* CurrentDescriptor);
-		uint8_t DComp_NextInterfaceMouseDataEndpoint(void* CurrentDescriptor);
+		uint8_t DComp_NextMouseInterfaceDataEndpoint(void* CurrentDescriptor);
 		uint8_t DComp_NextHID(void* CurrentDescriptor);
 
 #endif

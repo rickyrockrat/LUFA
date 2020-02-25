@@ -36,7 +36,7 @@
 #define  INCLUDE_FROM_V2PROTOCOL_C
 #include "V2Protocol.h"
 
-/** Master V2 Protocol packet handler, for receieved V2 Protocol packets from a connected host.
+/** Master V2 Protocol packet handler, for received V2 Protocol packets from a connected host.
  *  This routine decodes the issued command and passes off the handling of the command to the
  *  appropriate function.
  */
@@ -105,7 +105,7 @@ void V2Protocol_ProcessCommand(void)
  */
 static void V2Protocol_Command_Unknown(uint8_t V2Command)
 {
-	/* Discard all incomming data */
+	/* Discard all incoming data */
 	while (Endpoint_BytesInEndpoint() == AVRISP_DATA_EPSIZE)
 	{
 		Endpoint_ClearOUT();
@@ -151,7 +151,7 @@ static void V2Protocol_Command_GetSetParam(uint8_t V2Command)
 	
 	Endpoint_Write_Byte(V2Command);
 	
-	uint8_t ParamPrivs = V2Params_GetParameterPrivellages(ParamID);
+	uint8_t ParamPrivs = V2Params_GetParameterPrivileges(ParamID);
 	
 	if ((V2Command == CMD_SET_PARAMETER) && (ParamPrivs & PARAM_PRIV_WRITE))
 	{
@@ -301,11 +301,9 @@ static void V2Protocol_Command_ProgramMemory(uint8_t V2Command)
 		uint8_t  ProgrammingCommands[3];
 		uint8_t  PollValue1;
 		uint8_t  PollValue2;
-		uint8_t  ProgData[256];
-	} Write_Memory_Params;
+		uint8_t  ProgData[256]; // Note, the Jungo driver has a very short ACK timeout period, need to buffer the
+	} Write_Memory_Params;      // whole page and ACK the packet as fast as possible to prevent it from aborting
 	
-	uint8_t* NextWriteByte = Write_Memory_Params.ProgData;
-
 	Endpoint_Read_Stream_LE(&Write_Memory_Params, sizeof(Write_Memory_Params) - sizeof(Write_Memory_Params.ProgData));
 	Write_Memory_Params.BytesToWrite = SwapEndian_16(Write_Memory_Params.BytesToWrite);
 	
@@ -329,6 +327,8 @@ static void V2Protocol_Command_ProgramMemory(uint8_t V2Command)
 	uint16_t PollAddress       = 0;
 	uint8_t  PollValue         = (V2Command == CMD_PROGRAM_FLASH_ISP) ? Write_Memory_Params.PollValue1 :
 	                                                                    Write_Memory_Params.PollValue2;
+	uint8_t* NextWriteByte = Write_Memory_Params.ProgData;
+
 	if (Write_Memory_Params.ProgrammingMode & PROG_MODE_PAGED_WRITES_MASK)
 	{
 		uint16_t StartAddress = (CurrentAddress & 0xFFFF);

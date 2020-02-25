@@ -46,11 +46,13 @@ USB_ClassInfo_MIDI_Device_t Keyboard_MIDI_Interface =
 			{
 				.StreamingInterfaceNumber = 1,
 
-				.DataINEndpointNumber     = MIDI_STREAM_IN_EPNUM,
-				.DataINEndpointSize       = MIDI_STREAM_EPSIZE,
+				.DataINEndpointNumber      = MIDI_STREAM_IN_EPNUM,
+				.DataINEndpointSize        = MIDI_STREAM_EPSIZE,
+				.DataINEndpointDoubleBank  = false,
 
-				.DataOUTEndpointNumber    = MIDI_STREAM_OUT_EPNUM,
-				.DataOUTEndpointSize      = MIDI_STREAM_EPSIZE,
+				.DataOUTEndpointNumber     = MIDI_STREAM_OUT_EPNUM,
+				.DataOUTEndpointSize       = MIDI_STREAM_EPSIZE,
+				.DataOUTEndpointDoubleBank = false,
 			},
 	};
 
@@ -67,9 +69,14 @@ int main(void)
 	{
 		CheckJoystickMovement();
 		
-		/* Must acknowedge MIDI packets from the host even though they aren't used, or the host locks up */
-		MIDI_EventPacket_t DummyMIDIEvent;
-		MIDI_Device_ReceiveEventPacket(&Keyboard_MIDI_Interface, &DummyMIDIEvent);
+		MIDI_EventPacket_t ReceivedMIDIEvent;
+		if (MIDI_Device_ReceiveEventPacket(&Keyboard_MIDI_Interface, &ReceivedMIDIEvent))
+		{
+			if (ReceivedMIDIEvent.Command == (MIDI_COMMAND_NOTE_ON >> 4))
+			  LEDs_SetAllLEDs(ReceivedMIDIEvent.Data2 > 64 ? LEDS_LED1 : LEDS_LED2);
+			else
+			  LEDs_SetAllLEDs(LEDS_NO_LEDS);
+		}
 	
 		MIDI_Device_USBTask(&Keyboard_MIDI_Interface);
 		USB_USBTask();

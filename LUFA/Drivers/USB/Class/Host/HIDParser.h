@@ -62,6 +62,7 @@
 		#include <stdbool.h>
 
 		#include "HIDReportData.h"
+		#include "../Common/HID.h"
 
 		#include "../../../../Common/Common.h"
 
@@ -99,7 +100,7 @@
 			 *  overridden by defining HID_MAX_COLLECTIONS to another value in the user project makefile, passing
 			 *  the define to the compiler using the -D compiler switch.
 			 */
-			#define HID_MAX_COLLECTIONS           5
+			#define HID_MAX_COLLECTIONS           10
 		#endif
 		
 		#if !defined(HID_MAX_REPORTITEMS) || defined(__DOXYGEN__)
@@ -124,15 +125,7 @@
 		#endif
 
 	/* Public Interface - May be used in end-application: */
-		/* Enums: */
-			/** Enum for indicating what type of report item an entry in a \ref HID_ReportInfo_t ReportItem array is */
-			enum HID_ReportItemTypes_t
-			{
-				REPORT_ITEM_TYPE_In                   = 0, /**< Indicates that the item is an IN report type. */
-				REPORT_ITEM_TYPE_Out                  = 1, /**< Indicates that the item is an OUT report type. */
-				REPORT_ITEM_TYPE_Feature              = 2, /**< Indicates that the item is a FEATURE report type. */
-			};
-			
+		/* Enums: */			
 			/** Enum for the possible error codes in the return value of the \ref USB_ProcessHIDReport() function */
 			enum HID_Parse_ErrorCodes_t
 			{
@@ -142,7 +135,7 @@
 				HID_PARSE_InsufficientReportItems     = 3, /**< More than \ref HID_MAX_REPORTITEMS report items in the report. */
 				HID_PARSE_UnexpectedEndCollection     = 4, /**< An END COLLECTION item found without matching COLLECTION item. */
 				HID_PARSE_InsufficientCollectionPaths = 5, /**< More than \ref HID_MAX_COLLECTIONS collections in the report. */
-				HID_PARSE_UsageStackOverflow          = 6, /**< More than \ref HID_USAGE_STACK_DEPTH usages listed in a row. */
+				HID_PARSE_UsageListOverflow           = 6, /**< More than \ref HID_USAGE_STACK_DEPTH usages listed in a row. */
 				HID_PARSE_InsufficientReportIDItems   = 7, /**< More than \ref HID_MAX_REPORT_IDS report IDs in the device. */
 				HID_PARSE_NoUnfilteredReportItems     = 8, /**< All report items from the device were filtered by the filtering callback routine. */
 			};
@@ -245,7 +238,7 @@
 			 *  \return A value in the \ref HID_Parse_ErrorCodes_t enum
 			 */
 			uint8_t USB_ProcessHIDReport(const uint8_t* ReportData, uint16_t ReportSize, HID_ReportInfo_t* const ParserData)
-			                             ATTR_NON_NULL_PTR_ARG(1, 3);
+			                             ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(3);
 
 			/** Extracts the given report item's value out of the given HID report and places it into the Value
 			 *  member of the report item's \ref HID_ReportItem_t structure.
@@ -256,7 +249,7 @@
 			 *  \returns Boolean true if the item to retrieve was located in the given report, false otherwise
 			 */
 			bool USB_GetHIDReportItemInfo(const uint8_t* ReportData, HID_ReportItem_t* const ReportItem)
-			                              ATTR_NON_NULL_PTR_ARG(1, 2);
+			                              ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
 			/** Retrieves the given report item's value out of the Value member of the report item's
 			 *  \ref HID_ReportItem_t structure and places it into the correct position in the HID report
@@ -269,7 +262,7 @@
 			 *  \param[in] ReportItem  Pointer to the report item of interest in a \ref HID_ReportInfo_t ReportItem array
 			 */
 			void USB_SetHIDReportItemInfo(uint8_t* ReportData, const HID_ReportItem_t* ReportItem)
-			                              ATTR_NON_NULL_PTR_ARG(1, 2);
+			                              ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 										  
 			/** Retrieves the size of a given HID report in bytes from it's Report ID.
 			 *
@@ -281,18 +274,18 @@
 			 *  \return Size of the report in bytes, or 0 if the report does not exist
 			 */
 			uint16_t USB_GetHIDReportSize(HID_ReportInfo_t* const ParserData, const uint8_t ReportID,
-			                              const uint8_t ReportType) ATTR_NON_NULL_PTR_ARG(1) ATTR_CONST;
+			                              const uint8_t ReportType) ATTR_CONST ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Callback routine for the HID Report Parser. This callback <b>must</b> be implemented by the user code when
 			 *  the parser is used, to determine what report IN, OUT and FEATURE item's information is stored into the user
 			 *  HID_ReportInfo_t structure. This can be used to filter only those items the application will be using, so that
 			 *  no RAM is wasted storing the attributes for report items which will never be referenced by the application.
 			 *
-			 *  \param[in] CurrentItemAttributes  Pointer to the current report item attributes for user checking
+			 *  \param[in] CurrentItem  Pointer to the current report item for user checking
 			 *
 			 *  \return Boolean true if the item should be stored into the HID_ReportInfo_t structure, false if it should be ignored
 			 */
-			bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_Attributes_t* CurrentItemAttributes);
+			bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_t* CurrentItem);
 
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
