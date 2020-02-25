@@ -34,6 +34,7 @@
 	/* Includes: */
 		#include <avr/io.h>
 		#include <avr/wdt.h>
+		#include <string.h>
 
 		#include "Descriptors.h"
 
@@ -72,7 +73,7 @@
 			TwoStopBits         = 2,
 		};
 		
-		enum CDC_Line_Codeing_Parity_t
+		enum CDC_Line_Coding_Parity_t
 		{
 			Parity_None         = 0,
 			Parity_Odd          = 1,
@@ -80,9 +81,6 @@
 			Parity_Mark         = 3,
 			Parity_Space        = 4,
 		};
-
-	/* Function Prototypes: */
-		void SendStringViaCDC(char* FlashString);
 
 	/* Tasks: */
 		TASK(CDC_Task);

@@ -52,6 +52,9 @@
 
 		#define MAX_SCSI_COMMAND_LENGTH    16
 		
+		#define TOTAL_LUNS                 2
+		#define LUN_MEDIA_SIZE             (VIRTUAL_MEMORY_BLOCKS / TOTAL_LUNS)    
+		
 		#define CBW_SIGNATURE              0x43425355UL
 		#define CSW_SIGNATURE              0x53425355UL
 		
@@ -96,18 +99,23 @@
 	/* Global Variables: */
 		extern CommandBlockWrapper_t  CommandBlock;
 		extern CommandStatusWrapper_t CommandStatus;
+		extern volatile bool          IsMassStoreReset;
 
 	/* Task Definitions: */
 		TASK(USB_MassStorage);
+		
+	/* Stream Callbacks: */
+		STREAM_CALLBACK(AbortOnMassStoreReset);
 
 	/* Event Handlers: */
+		HANDLES_EVENT(USB_Reset);
 		HANDLES_EVENT(USB_Connect);
 		HANDLES_EVENT(USB_Disconnect);
 		HANDLES_EVENT(USB_ConfigurationChanged);
 		HANDLES_EVENT(USB_UnhandledControlPacket);
 
 	/* Function Prototypes: */
-		#if defined(INCLUDE_FROM_MASSSTORAGE_C)
+		#if defined(INCLUDE_FROM_MASSSTORAGEDUALLUN_C)
 			static bool ReadInCommandBlock(void);
 			static void ReturnCommandStatus(void);
 		#endif

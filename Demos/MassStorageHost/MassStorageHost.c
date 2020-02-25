@@ -251,20 +251,24 @@ TASK(USB_MassStore_Host)
 				break;
 			}
 			
-			/* Print number of LUNs detected in the attached device */
-			printf_P(PSTR("Total LUNs: %d.\r\n"), (MassStore_NumberOfLUNs + 1));
+			/* Device indicates the maximum LUN index, the 1-indexed number of LUNs is one more that this */
+			MassStore_NumberOfLUNs++;
 			
-			/* Get sense data from the device - it will not respond to requests until this is done */
+			/* Print number of LUNs detected in the attached device */
+			printf_P(PSTR("Total LUNs: %d.\r\n"), MassStore_NumberOfLUNs);
+
+			/* Set the prevent removal flag for the device, allowing it to be accessed */
+			MassStore_PreventAllowMediumRemoval(0, true);
+			
+			/* Get sense data from the device - many devices will not accept any other commands until the sense data
+			 * is read - both on startup and after a failed command */
 			SCSI_Request_Sense_Response_t SenseData;
 			if ((ErrorCode = MassStore_RequestSense(0, &SenseData)) != 0)
 			{
 				ShowDiskReadError(ErrorCode);
 				break;
 			}
-			
-			/* Set the prevent removal flag for the device, allowing it to be accessed */
-			MassStore_PreventAllowMediumRemoval(0, true);
-			
+
 			puts_P(PSTR("Waiting until ready"));
 			
 			/* Wait until disk ready */
@@ -273,8 +277,12 @@ TASK(USB_MassStore_Host)
 				Serial_TxByte('.');
 				MassStore_TestUnitReady(0);
 			}
-			while (SCSICommandStatus.Status != Command_Pass);
+			while ((SCSICommandStatus.Status != Command_Pass) && USB_IsConnected);
 			
+			/* Abort if device removed */
+			if (!(USB_IsConnected))
+			  break;
+
 			puts_P(PSTR("\r\nRetrieving Capacity.\r\n"));
 
 			/* Create new structure for the disk's capacity in blocks and block size */
@@ -322,7 +330,7 @@ TASK(USB_MassStore_Host)
 					printf_P(PSTR("%c"), '.');				
 				}
 			}
-			
+
 			/* Indicate device no longer busy */
 			LEDs_SetAllLEDs(LEDS_LED4);
 			

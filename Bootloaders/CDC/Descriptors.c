@@ -172,7 +172,7 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor =
 		}
 };
 
-USB_Descriptor_String_t LanguageString PROGMEM =
+USB_Descriptor_String_t LanguageString =
 {
 	Header:                 {Size: USB_STRING_LEN(1), Type: DTYPE_String},
 		
@@ -181,9 +181,9 @@ USB_Descriptor_String_t LanguageString PROGMEM =
 
 USB_Descriptor_String_t ProductString =
 {
-	Header:                 {Size: USB_STRING_LEN(20), Type: DTYPE_String},
+	Header:                 {Size: USB_STRING_LEN(15), Type: DTYPE_String},
 		
-	UnicodeString:          L"MyUSB CDC Bootloader"
+	UnicodeString:          L"AVR CDC BOOTLDR"
 };
 
 bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
@@ -206,12 +206,12 @@ bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 			if (!(wValue))
 			{
 				Address = DESCRIPTOR_ADDRESS(LanguageString);
-				Size    = pgm_read_byte(&LanguageString.Header.Size);
+				Size    = LanguageString.Header.Size;
 			}
 			else
 			{
 				Address = DESCRIPTOR_ADDRESS(ProductString);
-				Size    = pgm_read_byte(&ProductString.Header.Size);
+				Size    = ProductString.Header.Size;
 			}
 			
 			break;

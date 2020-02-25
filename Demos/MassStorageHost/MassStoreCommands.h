@@ -51,8 +51,8 @@
 		
 		#define COMMAND_DATA_TIMEOUT_MS          5000
 
-		#define MASS_STORE_DATA_IN_PIPE          0x01
-		#define MASS_STORE_DATA_OUT_PIPE         0x02
+		#define MASS_STORE_DATA_IN_PIPE          1
+		#define MASS_STORE_DATA_OUT_PIPE         2
 		
 		#define DEVICE_BLOCK_SIZE                512
 
@@ -129,9 +129,12 @@
 		extern CommandStatusWrapper_t SCSICommandStatus;
 		
 	/* Function Prototypes: */
-		void    MassStore_SendCommand(void);
-		uint8_t MassStore_WaitForDataRecieved(void);
-		uint8_t MassStore_SendReceiveData(void* BufferPtr) ATTR_NON_NULL_PTR_ARG(1);
+		#if defined(INCLUDE_FROM_MASSSTORE_COMMANDS_C)
+			static void    MassStore_SendCommand(void);
+			static uint8_t MassStore_WaitForDataReceived(void);
+			static uint8_t MassStore_SendReceiveData(void* BufferPtr) ATTR_NON_NULL_PTR_ARG(1);
+		#endif
+		
 		void    MassStore_GetReturnedStatus(void);
 		uint8_t MassStore_ClearPipeStall(const uint8_t PipeEndpointNum);
 

@@ -1,7 +1,41 @@
 Changelog for MyUSB:
 =======================================
 
-	Version 1.5.2 - UNRELEASED:
+	Version 1.5.3 - Released 2nd October, 2008:
+	--------------------------------------------
+		* Fixed CDC bootloader using pgmspace macros for some descriptors inappropriately
+		* Updated all Mouse and Keyboard device demos to include boot protocol support (now works in BIOS)
+		* Renamed bootloader directories to remove spaces, which were causing build problems on several OSes
+		* Removed serial number strings from all but the MassStore demo where it is required - users were not
+		  modifing the code to either ommit the descriptor or use a unique serial per device causing problems
+		  when multiple units of the same device were plugged in at the same time
+		* AudioOutput and AudioInput demos now correctly silence endpoints when not enabled by the host
+		* Added KeyboardMouse demo (Keyboard and Mouse functionality combined into a single demo)
+		* Added DriverStubs directory to house board level driver templates, to make MyUSB compatible custom board
+		  driver creation easier
+		* Extended MassStorage demo to support multiple LUNs, 2 by default
+		* Fixed incorrect device address mask, preventing the device from enumerating with addresses larger than 63
+		* Fixed incorrect data direction mask in the GetStatus standard request, preventing it from being handled
+		* Fixed incorrect GetStatus standard request for endpoints, now returns the endpoint STALL status correctly
+		* Added in new USB_RemoteWakeupEnabled and USB_CurrentlySelfPowered flags rather than using fixed values
+		* Added DualCDC demo to demonstrate the use of Interface Association Descriptors
+		* Added pipe NAK detection and clearing API
+		* Added pipe status change (NAK, STALL, etc.) interrupt API
+		* Fixed MassStorageHost demo so that it no longer freezes randomly when issuing several commands in a row
+		* Host demos configuration descriptor routines now return a unique error code when the returned data does
+		  not have a valid configuration descriptor header
+		* Added Endpoint_WaitUntilReady() and Pipe_WaitUntilReady() functions
+		* Stream functions now have software timeouts, timeout period can be set by the USB_STREAM_TIMEOUT_MS token
+		* All demos now pass the USB.org automated Chapter 9 device compliance tests
+		* All HID demos now pass the USB.org automated HID compliance tests
+		* Polling interval of the interrupt endpoint in the CDC based demos changed to 0xFF to fix problems on Linux systems
+		* Changed stream functions to accept a new callback function, with NO_STREAM_CALLBACKS used to disable all callbacks
+		* Mass Storage demo dataflash management routines changed to use the endpoint stream functions		
+		* Added AVRStudio project files for each demo in addition to the existing Programmer's Notepad master project file
+		* Re-added call to ReconfigureUSART() in USBtoSerial SetLineCoding request, so that baud rate changes
+		  are reflected in the hardware (change was previously lost)
+
+	Version 1.5.2 - Released 31st July, 2008:
 	--------------------------------------------
 		* Fixed SwapEndian_32() function in Common.h so that it now works correctly (wrong parameter types)
 		* Updated RNDIS demo - notification endpoint is no longer blocking so that it works with faulty Linux RNDIS

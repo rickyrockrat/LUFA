@@ -33,59 +33,51 @@
 
 	/* Includes: */
 		#include <MyUSB/Drivers/USB/USB.h>
-		
-		#include "BootloaderDFU.h"
 
-	/* Macros: */
-		#define DTYPE_DFUFunctional               0x21
-		
-		#define ATTR_WILL_DETATCH                 (1 << 3)
-		#define ATTR_MANEFESTATION_TOLLERANT      (1 << 2)
-		#define ATTR_CAN_UPLOAD                   (1 << 1)
-		#define ATTR_CAN_DOWNLOAD                 (1 << 0)
-		
-		#define CONTROL_ENDPOINT_SIZE             32
+		#include <avr/pgmspace.h>
 
-		#if (defined(__AVR_AT90USB1286__) || defined(__AVR_AT90USB1287__))
-			#define PRODUCT_ID_CODE               0x2FFB
-		#elif (defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB647__))
-			#define PRODUCT_ID_CODE               0x2FF9
-		#elif defined(__AVR_AT90USB162__)
-			#define PRODUCT_ID_CODE               0x2FFA
-		#elif defined(__AVR_AT90USB82__)
-			#define PRODUCT_ID_CODE               0x2FF7
-		#elif defined(__AVR_ATmega32U4__)
-			#define PRODUCT_ID_CODE               0x2FF4
-		#elif defined(__AVR_ATmega16U4__)
-			#define PRODUCT_ID_CODE               0x2FF4
-		#endif
-		
-		#if !defined(PRODUCT_ID_CODE)
-			#error Current AVR model is not supported by this bootloader.
-		#endif
-	
 	/* Type Defines: */
 		typedef struct
 		{
 			USB_Descriptor_Header_t               Header;
-			
-			uint8_t                               Attributes;
-			uint16_t                              DetatchTimeout;
-			uint16_t                              TransferSize;
-			
-			uint16_t                              DFUSpecification;			
-		} USB_DFU_Functional_Descriptor_t;
-	
+				
+			uint16_t                              HIDSpec;
+			uint8_t                               CountryCode;
+		
+			uint8_t                               TotalHIDReports;
+
+			uint8_t                               HIDReportType;
+			uint16_t                              HIDReportLength;
+		} USB_Descriptor_HID_t;
+
+		typedef uint8_t USB_Descriptor_HIDReport_Datatype_t;
+
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t Config;
-			USB_Descriptor_Interface_t            DFUInterface;
-			USB_DFU_Functional_Descriptor_t       DFUFunctional;
+			USB_Descriptor_Interface_t            KeyboardInterface;
+			USB_Descriptor_HID_t                  KeyboardHID;
+	        USB_Descriptor_Endpoint_t             KeyboardInEndpoint;
+	        USB_Descriptor_Endpoint_t             KeyboardOutEndpoint;
+			USB_Descriptor_Interface_t            MouseInterface;
+			USB_Descriptor_HID_t                  MouseHID;
+	        USB_Descriptor_Endpoint_t             MouseInEndpoint;
 		} USB_Descriptor_Configuration_t;
-		
+					
+	/* Macros: */
+		#define KEYBOARD_IN_EPNUM              1
+		#define KEYBOARD_OUT_EPNUM             2
+		#define MOUSE_IN_EPNUM                 3
+		#define HID_EPSIZE                     8
+
+		#define DTYPE_HID                      0x21
+		#define DTYPE_Report                   0x22
+
 	/* External Variables: */
-		extern USB_Descriptor_Configuration_t ConfigurationDescriptor;
-		
+		extern USB_Descriptor_HIDReport_Datatype_t MouseReport[];
+		extern USB_Descriptor_HIDReport_Datatype_t KeyboardReport[];
+		extern USB_Descriptor_Configuration_t      ConfigurationDescriptor;
+
 	/* Function Prototypes: */
 		bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 		                       void** const DescriptorAddress, uint16_t* const DescriptorSize)

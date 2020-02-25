@@ -29,19 +29,23 @@
 */
 
 /*
-	Mass Storage demonstration application. This gives a simple reference
-	application for implementing a USB Mass Storage device using the basic
-	USB UFI drivers in all modern OSes (i.e. no special drivers required).
+	Dual LUN Mass Storage demonstration application. This gives a simple
+	reference application for implementing a multiple LUN USB Mass Storage
+	device using the basic USB UFI drivers in all modern OSes (i.e. no
+	special drivers required).
 	
 	On startup the system will automatically enumerate and function as an
-	external mass storage device which may be formatted and used in the
-	same manner as commercial USB Mass Storage devices.
-	
-	Only one Logical Unit (LUN) is currently supported by this example,
-	allowing for one external storage device to be enumerated by the host.
-	
-	You will need to format the mass storage device upon first run of this
+	external mass storage device with two LUNs (seperate disks) which may
+	be formatted and used in the same manner as commercial USB Mass Storage
+	devices.
+		
+	You will need to format the mass storage drives upon first run of this
 	demonstration.
+	
+	This demo is not restricted to only two LUNs; by changing the TOTAL_LUNS
+	value in MassStorageDualLUN.h, any number of LUNs can be used (from 1 to
+	255), with each LUN being allocated an equal portion of the available
+	Dataflash memory.
 */
 
 /*
@@ -55,7 +59,7 @@
 	Usable Speeds:      Full Speed Mode
 */
 
-#define INCLUDE_FROM_MASSSTORAGE_C
+#define INCLUDE_FROM_MASSSTORAGEDUALLUN_C
 #include "MassStorage.h"
 
 /* Project Tags, for reading out using the ButtLoad project */
@@ -67,13 +71,14 @@ BUTTLOADTAG(MyUSBVersion, "MyUSB V" MYUSB_VERSION_STRING);
 /* Scheduler Task List */
 TASK_LIST
 {
-	{ Task: USB_USBTask          , TaskStatus: TASK_STOP },
 	{ Task: USB_MassStorage      , TaskStatus: TASK_STOP },
 };
 
 /* Global Variables */
 CommandBlockWrapper_t  CommandBlock;
 CommandStatusWrapper_t CommandStatus = { Header: {Signature: CSW_SIGNATURE } };
+volatile bool          IsMassStoreReset = false;
+
 
 int main(void)
 {
@@ -104,20 +109,28 @@ int main(void)
 	Scheduler_Start();
 }
 
+EVENT_HANDLER(USB_Reset)
+{
+	/* Select the control endpoint */
+	Endpoint_SelectEndpoint(ENDPOINT_CONTROLEP);
+
+	/* Enable the endpoint SETUP interrupt ISR for the control endpoint */
+	USB_INT_Enable(ENDPOINT_INT_SETUP);
+}
+
 EVENT_HANDLER(USB_Connect)
 {
-	/* Start USB management task */
-	Scheduler_SetTaskMode(USB_USBTask, TASK_RUN);
-
 	/* Indicate USB enumerating */
 	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED4);
+	
+	/* Reset the MSReset flag upon connection */
+	IsMassStoreReset = false;
 }
 
 EVENT_HANDLER(USB_Disconnect)
 {
-	/* Stop running mass storage and USB management tasks */
+	/* Stop running mass storage task */
 	Scheduler_SetTaskMode(USB_MassStorage, TASK_STOP);
-	Scheduler_SetTaskMode(USB_USBTask, TASK_STOP);
 
 	/* Indicate USB not ready */
 	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
@@ -128,11 +141,11 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 	/* Setup Mass Storage In and Out Endpoints */
 	Endpoint_ConfigureEndpoint(MASS_STORAGE_IN_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_IN, MASS_STORAGE_IO_EPSIZE,
-	                           ENDPOINT_BANK_DOUBLE);
+	                           ENDPOINT_BANK_SINGLE);
 
 	Endpoint_ConfigureEndpoint(MASS_STORAGE_OUT_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_OUT, MASS_STORAGE_IO_EPSIZE,
-	                           ENDPOINT_BANK_DOUBLE);
+	                           ENDPOINT_BANK_SINGLE);
 
 	/* Indicate USB connected and ready */
 	LEDs_SetAllLEDs(LEDS_LED2 | LEDS_LED4);
@@ -149,6 +162,9 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 		case MASS_STORAGE_RESET:
 			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
+				/* Indicate that the current transfer should be aborted */
+				IsMassStoreReset = true;
+			
 				Endpoint_ClearSetupReceived();
 				Endpoint_ClearSetupIN();
 			}
@@ -157,8 +173,9 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 		case GET_MAX_LUN:
 			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
+				/* Indicate to the host the number of supported LUNs (virtual disks) on the device */
 				Endpoint_ClearSetupReceived();			
-				Endpoint_Write_Byte(0x00);
+				Endpoint_Write_Byte(TOTAL_LUNS - 1);
 				Endpoint_ClearSetupIN();
 			}
 			
@@ -202,6 +219,9 @@ TASK(USB_MassStorage)
 
 				/* Return command status block to the host */
 				ReturnCommandStatus();
+				
+				/* Clear the abort transfer flag */
+				IsMassStoreReset = false;
 
 				/* Indicate ready */
 				LEDs_SetAllLEDs(LEDS_LED2 | LEDS_LED4);
@@ -221,11 +241,12 @@ static bool ReadInCommandBlock(void)
 	Endpoint_SelectEndpoint(MASS_STORAGE_OUT_EPNUM);
 
 	/* Read in command block header */
-	Endpoint_Read_Stream_LE(&CommandBlock.Header, sizeof(CommandBlock.Header));
+	Endpoint_Read_Stream_LE(&CommandBlock.Header, sizeof(CommandBlock.Header),
+	                        AbortOnMassStoreReset);
 
 	/* Verify the command block - abort if invalid */
 	if ((CommandBlock.Header.Signature != CBW_SIGNATURE) ||
-	    (CommandBlock.Header.LUN != 0x00) ||
+	    (CommandBlock.Header.LUN >= TOTAL_LUNS) ||
 		(CommandBlock.Header.SCSICommandLength > MAX_SCSI_COMMAND_LENGTH))
 	{
 		/* Stall both data pipes until reset by host */
@@ -237,7 +258,9 @@ static bool ReadInCommandBlock(void)
 	}
 
 	/* Read in command block command data */
-	Endpoint_Read_Stream_LE(&CommandBlock.SCSICommandData, CommandBlock.Header.SCSICommandLength);
+	Endpoint_Read_Stream_LE(&CommandBlock.SCSICommandData,
+	                        CommandBlock.Header.SCSICommandLength,
+	                        AbortOnMassStoreReset);
 	  
 	/* Clear the endpoint */
 	Endpoint_ClearCurrentBank();
@@ -255,6 +278,10 @@ static void ReturnCommandStatus(void)
 	{
 		/* Run the USB task manually to process any received control requests */
 		USB_USBTask();
+		
+		/* Check if the current command is being aborted by the host */
+		if (IsMassStoreReset)
+		  return;
 	}
 
 	/* Select the Data In endpoint */
@@ -265,14 +292,42 @@ static void ReturnCommandStatus(void)
 	{
 		/* Run the USB task manually to process any received control requests */
 		USB_USBTask();
+
+		/* Check if the current command is being aborted by the host */
+		if (IsMassStoreReset)
+		  return;
 	}
-	
-	/* Wait until read/write to IN data endpoint allowed */
-	while (!(Endpoint_ReadWriteAllowed()));
 
 	/* Write the CSW to the endpoint */
-	Endpoint_Write_Stream_LE(&CommandStatus, sizeof(CommandStatus));
+	Endpoint_Write_Stream_LE(&CommandStatus, sizeof(CommandStatus),
+	                          AbortOnMassStoreReset);
 	
 	/* Send the CSW */
 	Endpoint_ClearCurrentBank();
+}
+
+STREAM_CALLBACK(AbortOnMassStoreReset)
+{	
+	/* Abort if a Mass Storage reset command was received */
+	if (IsMassStoreReset)
+	  return STREAMCALLBACK_Abort;
+	
+	/* Continue with the current stream operation */
+	return STREAMCALLBACK_Continue;
+}
+
+ISR(ENDPOINT_PIPE_vect)
+{
+	/* Check if the control endpoint has recieved a request */
+	if (Endpoint_HasEndpointInterrupted(ENDPOINT_CONTROLEP))
+	{
+		/* Clear the endpoint interrupt */
+		Endpoint_ClearEndpointInterrupt(ENDPOINT_CONTROLEP);
+
+		/* Process the control request */
+		USB_USBTask();
+
+		/* Handshake the endpoint setup interrupt - must be after the call to USB_USBTask() */
+		USB_INT_Clear(ENDPOINT_INT_SETUP);
+	}
 }

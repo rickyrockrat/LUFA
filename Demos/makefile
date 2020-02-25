@@ -26,8 +26,14 @@ all:
 	make -C CDCHost clean
 	make -C CDCHost all
 
+	make -C DualCDC clean
+	make -C DualCDC all
+
 	make -C Joystick clean
 	make -C Joystick all
+
+	make -C KeyboardMouse clean
+	make -C KeyboardMouse all
 
 	make -C Keyboard clean
 	make -C Keyboard all
@@ -91,7 +97,9 @@ clean:
 	make -C AudioOutput clean
 	make -C CDC clean
 	make -C CDCHost clean
+	make -C DualCDC clean
 	make -C Joystick clean
+	make -C KeyboardMouse clean
 	make -C Keyboard clean
 	make -C KeyboardFullInt clean
 	make -C KeyboardViaInt clean
@@ -117,7 +125,9 @@ clean_list:
 	make -C AudioOutput clean_list
 	make -C CDC clean_list
 	make -C CDCHost clean_list
+	make -C DualCDC clean_list
 	make -C Joystick clean_list
+	make -C KeyboardMouse clean_list
 	make -C Keyboard clean_list
 	make -C KeyboardFullInt clean_list
 	make -C KeyboardViaInt clean_list

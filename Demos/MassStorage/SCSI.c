@@ -92,7 +92,11 @@ void SCSI_DecodeSCSICommand(void)
 			CommandSuccess = SCSI_Command_ReadWrite_10(DATA_READ);
 			break;
 		case SCSI_CMD_TEST_UNIT_READY:
+		case SCSI_CMD_PREVENT_ALLOW_MEDIUM_REMOVAL:
+		case SCSI_CMD_VERIFY_10:
+			/* These commands should just succeed, no handling required */
 			CommandSuccess = true;
+			CommandBlock.Header.DataTransferLength = 0;
 			break;
 		default:
 			/* Update the SENSE key to reflect the invalid command */
@@ -139,7 +143,7 @@ static bool SCSI_Command_Inquiry(void)
 	}
 
 	/* Write the INQUIRY data to the endpoint */
-	Endpoint_Write_Stream_LE(&InquiryData, BytesTransferred);
+	Endpoint_Write_Stream_LE(&InquiryData, BytesTransferred, AbortOnMassStoreReset);
 
 	/* Pad out remaining bytes with 0x00 */
 	while (BytesTransferred < AllocationLength)
@@ -170,7 +174,7 @@ static bool SCSI_Command_Request_Sense(void)
 	uint8_t  BytesTransferred = (AllocationLength < sizeof(SenseData))? AllocationLength : sizeof(SenseData);
 	
 	/* Send the SENSE data - this indicates to the host the status of the last command */
-	Endpoint_Write_Stream_LE(&SenseData, BytesTransferred);
+	Endpoint_Write_Stream_LE(&SenseData, BytesTransferred, AbortOnMassStoreReset);
 	
 	/* Pad out remaining bytes with 0x00 */
 	while (BytesTransferred < AllocationLength)
@@ -197,8 +201,8 @@ static bool SCSI_Command_Request_Sense(void)
 
 static bool SCSI_Command_Read_Capacity_10(void)
 {
-	/* Send the total number of logical blocks in the device */
-	Endpoint_Write_DWord_BE(VIRTUAL_MEMORY_BLOCKS);
+	/* Send the total number of logical blocks in the current LUN */
+	Endpoint_Write_DWord_BE(LUN_MEDIA_SIZE);
 
 	/* Send the logical block size of the device (must be 512 bytes) */
 	Endpoint_Write_DWord_BE(VIRTUAL_MEMORY_BLOCK_SIZE);
@@ -279,7 +283,10 @@ static bool SCSI_Command_ReadWrite_10(const bool IsDataRead)
 
 	/* Load in the 16-bit total blocks (SCSI uses big-endian, so have to do it byte-by-byte) */
 	((uint8_t*)&TotalBlocks)[1]  = CommandBlock.SCSICommandData[7];
-	((uint8_t*)&TotalBlocks)[0]  = CommandBlock.SCSICommandData[8];	
+	((uint8_t*)&TotalBlocks)[0]  = CommandBlock.SCSICommandData[8];
+	
+	/* Adjust the given block address to the real media address based on the selected LUN */
+	BlockAddress += (CommandBlock.Header.LUN * LUN_MEDIA_SIZE);
 	
 	/* Check if the block address is outside the maximum allowable value */
 	if (BlockAddress > VIRTUAL_MEMORY_BLOCKS)

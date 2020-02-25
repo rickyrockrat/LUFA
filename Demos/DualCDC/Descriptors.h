@@ -44,31 +44,47 @@
 		          uint8_t                               Data[size];  \
 		     }
 
-		#define CDC_NOTIFICATION_EPNUM         3
-		#define CDC_TX_EPNUM                   1	
-		#define CDC_RX_EPNUM                   2	
-		#define CDC_NOTIFICATION_EPSIZE        8
-		#define CDC_TXRX_EPSIZE                16
+		#define CDC1_NOTIFICATION_EPNUM        3
+		#define CDC1_TX_EPNUM                  1	
+		#define CDC1_RX_EPNUM                  2	
 
-	/* Type Defines: */
+		#define CDC2_NOTIFICATION_EPNUM        4
+		#define CDC2_TX_EPNUM                  5	
+		#define CDC2_RX_EPNUM                  6	
+
+		#define CDC_NOTIFICATION_EPSIZE        8
+		#define CDC_TXRX_EPSIZE                16	
+
+	/* Type Defines: */	
 		typedef struct
 		{
-			USB_Descriptor_Header_t               Header;
-			uint8_t                               SubType;
+			USB_Descriptor_Header_t                  Header;
+			uint8_t                                  SubType;
 		} USB_Descriptor_CDCFunctional_Header_t;
 
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t    Config;
-			USB_Descriptor_Interface_t               CCI_Interface;
-			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC_Functional_IntHeader;
-			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC_Functional_CallManagement;
-			CDC_FUNCTIONAL_DESCRIPTOR(1)             CDC_Functional_AbstractControlManagement;
-			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC_Functional_Union;
-			USB_Descriptor_Endpoint_t                ManagementEndpoint;
-			USB_Descriptor_Interface_t               DCI_Interface;
-			USB_Descriptor_Endpoint_t                DataOutEndpoint;
-			USB_Descriptor_Endpoint_t                DataInEndpoint;
+			USB_Descriptor_Interface_Association_t   IAD1;
+			USB_Descriptor_Interface_t               CDC1_CCI_Interface;
+			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC1_Functional_IntHeader;
+			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC1_Functional_CallManagement;
+			CDC_FUNCTIONAL_DESCRIPTOR(1)             CDC1_Functional_AbstractControlManagement;
+			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC1_Functional_Union;
+			USB_Descriptor_Endpoint_t                CDC1_ManagementEndpoint;
+			USB_Descriptor_Interface_t               CDC1_DCI_Interface;
+			USB_Descriptor_Endpoint_t                CDC1_DataOutEndpoint;
+			USB_Descriptor_Endpoint_t                CDC1_DataInEndpoint;
+			USB_Descriptor_Interface_Association_t   IAD2;
+			USB_Descriptor_Interface_t               CDC2_CCI_Interface;
+			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC2_Functional_IntHeader;
+			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC2_Functional_CallManagement;
+			CDC_FUNCTIONAL_DESCRIPTOR(1)             CDC2_Functional_AbstractControlManagement;
+			CDC_FUNCTIONAL_DESCRIPTOR(2)             CDC2_Functional_Union;
+			USB_Descriptor_Endpoint_t                CDC2_ManagementEndpoint;
+			USB_Descriptor_Interface_t               CDC2_DCI_Interface;
+			USB_Descriptor_Endpoint_t                CDC2_DataOutEndpoint;
+			USB_Descriptor_Endpoint_t                CDC2_DataInEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Function Prototypes: */

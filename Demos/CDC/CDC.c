@@ -38,8 +38,7 @@
 	Before running, you will need to install the INF file that
 	is located in the CDC project directory. This will enable
 	Windows to use its inbuilt CDC drivers, negating the need
-	for special Windows drivers for the device. To install,
-	right-click the .INF file and choose the Install option.
+	for special Windows drivers for the device.
 */
 
 /*
@@ -71,11 +70,11 @@ CDC_Line_Coding_t LineCoding = { BaudRateBPS: 9600,
                                  ParityType:  Parity_None,
                                  DataBits:    8            };
 
-char JoystickUpString[]      PROGMEM = "Joystick Up\r\n";
-char JoystickDownString[]    PROGMEM = "Joystick Down\r\n";
-char JoystickLeftString[]    PROGMEM = "Joystick Left\r\n";
-char JoystickRightString[]   PROGMEM = "Joystick Right\r\n";
-char JoystickPressedString[] PROGMEM = "Joystick Pressed\r\n";
+char JoystickUpString[]      = "Joystick Up\r\n";
+char JoystickDownString[]    = "Joystick Down\r\n";
+char JoystickLeftString[]    = "Joystick Left\r\n";
+char JoystickRightString[]   = "Joystick Right\r\n";
+char JoystickPressedString[] = "Joystick Pressed\r\n";
 
 int main(void)
 {
@@ -158,7 +157,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				Endpoint_ClearSetupReceived();
 
 				/* Write the line coding data to the control endpoint */
-				Endpoint_Write_Control_Stream_LE(LineCodingData, sizeof(LineCoding));
+				Endpoint_Write_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 				
 				/* Send the line coding data to the host and clear the control endpoint */
 				Endpoint_ClearSetupOUT();
@@ -172,7 +171,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				Endpoint_ClearSetupReceived();
 
 				/* Read the line coding data in from the host into the global struct */
-				Endpoint_Read_Control_Stream_LE(LineCodingData, sizeof(LineCoding));
+				Endpoint_Read_Control_Stream_LE(LineCodingData, sizeof(CDC_Line_Coding_t));
 
 				/* Send the line coding data to the host and clear the control endpoint */
 				Endpoint_ClearSetupIN();
@@ -219,7 +218,15 @@ TASK(CDC_Task)
 	else if (ActionSent == false)
 	{
 		ActionSent = true;
-		SendStringViaCDC(ReportString);
+
+		/* Select the Serial Tx Endpoint */
+		Endpoint_SelectEndpoint(CDC_TX_EPNUM);
+
+		/* Write the String to the Endpoint */
+		Endpoint_Write_Stream_LE(ReportString, strlen(ReportString));
+		
+		/* Send the data */
+		Endpoint_ClearCurrentBank();
 	}
 
 	/* Select the Serial Rx Endpoint */
@@ -228,38 +235,4 @@ TASK(CDC_Task)
 	/* Throw away any recieved data from the host */
 	if (Endpoint_ReadWriteAllowed())
 	  Endpoint_ClearCurrentBank();
-}
-
-void SendStringViaCDC(char* FlashString)
-{
-	/* Check if the USB System is connected to a Host */
-	if (USB_IsConnected)
-	{
-		char StringByte;
-
-		/* Select the Serial Tx Endpoint */
-		Endpoint_SelectEndpoint(CDC_TX_EPNUM);
-
-		/* Wait until Serial Tx Endpoint Ready for Read/Write */
-		while (!(Endpoint_ReadWriteAllowed()));
-		
-		/* Write the String to the Endpoint */
-		while ((StringByte = pgm_read_byte(FlashString++)) != 0x00)
-		{
-			Endpoint_Write_Byte(StringByte);
-			
-			/* Check if the endpoint is full */
-			if (Endpoint_BytesInEndpoint() == CDC_TXRX_EPSIZE)
-			{
-				/* Send the data */
-				Endpoint_ClearCurrentBank();
-
-				/* Wait until Serial Tx Endpoint Ready for Read/Write */
-				while (!(Endpoint_ReadWriteAllowed()));
-			}
-		}
-
-		/* Send the last packet of the transfer to the host */
-		Endpoint_ClearCurrentBank();
-	}
 }
