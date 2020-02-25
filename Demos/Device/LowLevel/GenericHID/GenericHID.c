@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -139,7 +139,7 @@ void EVENT_USB_Device_ControlRequest(void)
 
 				/* Read the report data from the control endpoint */
 				Endpoint_Read_Control_Stream_LE(&GenericData, sizeof(GenericData));
-				Endpoint_ClearOUT();
+				Endpoint_ClearIN();
 
 				ProcessGenericHIDReport(GenericData);
 			}
@@ -198,7 +198,7 @@ void HID_Task(void)
 			uint8_t GenericData[GENERIC_REPORT_SIZE];
 
 			/* Read Generic Report Data */
-			Endpoint_Read_Stream_LE(&GenericData, sizeof(GenericData));
+			Endpoint_Read_Stream_LE(&GenericData, sizeof(GenericData), NULL);
 
 			/* Process Generic Report Data */
 			ProcessGenericHIDReport(GenericData);
@@ -220,7 +220,7 @@ void HID_Task(void)
 		CreateGenericHIDReport(GenericData);
 
 		/* Write Generic Report Data */
-		Endpoint_Write_Stream_LE(&GenericData, sizeof(GenericData));
+		Endpoint_Write_Stream_LE(&GenericData, sizeof(GenericData), NULL);
 
 		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearIN();

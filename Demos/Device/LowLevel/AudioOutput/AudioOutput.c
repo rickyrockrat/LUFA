@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -37,7 +37,8 @@
 #include "AudioOutput.h"
 
 /** Flag to indicate if the streaming audio alternative interface has been selected by the host. */
-bool StreamingAudioInterfaceSelected = false;
+static bool StreamingAudioInterfaceSelected = false;
+
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -183,8 +184,8 @@ ISR(TIMER0_COMPA_vect, ISR_BLOCK)
 	if (Endpoint_IsOUTReceived() && StreamingAudioInterfaceSelected)
 	{
 		/* Retrieve the signed 16-bit left and right audio samples, convert to 8-bit */
-		int8_t LeftSample_8Bit   = ((int16_t)Endpoint_Read_Word_LE() >> 8);
-		int8_t RightSample_8Bit  = ((int16_t)Endpoint_Read_Word_LE() >> 8);
+		int8_t LeftSample_8Bit   = ((int16_t)Endpoint_Read_16_LE() >> 8);
+		int8_t RightSample_8Bit  = ((int16_t)Endpoint_Read_16_LE() >> 8);
 
 		/* Mix the two channels together to produce a mono, 8-bit sample */
 		int8_t MixedSample_8Bit  = (((int16_t)LeftSample_8Bit + (int16_t)RightSample_8Bit) >> 1);

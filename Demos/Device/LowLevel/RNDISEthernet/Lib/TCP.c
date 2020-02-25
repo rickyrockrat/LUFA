@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -74,7 +74,7 @@ void TCP_Task(void)
 	}
 
 	/* Bail out early if there is already a frame waiting to be sent in the Ethernet OUT buffer */
-	if (FrameOUT.FrameInBuffer)
+	if (FrameOUT.FrameLength)
 	  return;
 
 	/* Send response packets from each application as the TCP packet buffers are filled by the applications */
@@ -144,7 +144,6 @@ void TCP_Task(void)
 
 			/* Set the response length in the buffer and indicate that a response is ready to be sent */
 			FrameOUT.FrameLength            = PacketSize;
-			FrameOUT.FrameInBuffer          = true;
 
 			ConnectionStateTable[CSTableEntry].Info.Buffer.Ready = false;
 

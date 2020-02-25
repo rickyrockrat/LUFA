@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -29,7 +29,8 @@
 */
 
 #define  __INCLUDE_FROM_USB_DRIVER
-#include "../../HighLevel/USBMode.h"
+#include "../../Core/USBMode.h"
+
 #if defined(USB_CAN_BE_HOST)
 
 #define  __INCLUDE_FROM_RNDIS_DRIVER
@@ -102,31 +103,59 @@ uint8_t RNDIS_Host_ConfigurePipes(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfa
 
 	for (uint8_t PipeNum = 1; PipeNum < PIPE_TOTAL_PIPES; PipeNum++)
 	{
+		uint16_t Size;
+		uint8_t  Type;
+		uint8_t  Token;
+		uint8_t  EndpointAddress;
+		uint8_t  InterruptPeriod;
+		bool     DoubleBanked;
+
 		if (PipeNum == RNDISInterfaceInfo->Config.DataINPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_BULK, PIPE_TOKEN_IN,
-			                   DataINEndpoint->EndpointAddress, DataINEndpoint->EndpointSize,
-			                   RNDISInterfaceInfo->Config.DataINPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
+			Size            = DataINEndpoint->EndpointSize;
+			EndpointAddress = DataINEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_IN;
+			Type            = EP_TYPE_BULK;
+			DoubleBanked    = RNDISInterfaceInfo->Config.DataINPipeDoubleBank;
+			InterruptPeriod = 0;
 
 			RNDISInterfaceInfo->State.DataINPipeSize = DataINEndpoint->EndpointSize;
 		}
 		else if (PipeNum == RNDISInterfaceInfo->Config.DataOUTPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_BULK, PIPE_TOKEN_OUT,
-			                   DataOUTEndpoint->EndpointAddress, DataOUTEndpoint->EndpointSize,
-			                   RNDISInterfaceInfo->Config.DataOUTPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
+			Size            = DataOUTEndpoint->EndpointSize;
+			EndpointAddress = DataOUTEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_OUT;
+			Type            = EP_TYPE_BULK;
+			DoubleBanked    = RNDISInterfaceInfo->Config.DataOUTPipeDoubleBank;
+			InterruptPeriod = 0;
 
 			RNDISInterfaceInfo->State.DataOUTPipeSize = DataOUTEndpoint->EndpointSize;
 		}
 		else if (PipeNum == RNDISInterfaceInfo->Config.NotificationPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_INTERRUPT, PIPE_TOKEN_IN,
-			                   NotificationEndpoint->EndpointAddress, NotificationEndpoint->EndpointSize,
-			                   RNDISInterfaceInfo->Config.NotificationPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
-			Pipe_SetInterruptPeriod(NotificationEndpoint->PollingIntervalMS);
+			Size            = NotificationEndpoint->EndpointSize;
+			EndpointAddress = NotificationEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_IN;
+			Type            = EP_TYPE_INTERRUPT;
+			DoubleBanked    = RNDISInterfaceInfo->Config.NotificationPipeDoubleBank;
+			InterruptPeriod = NotificationEndpoint->PollingIntervalMS;
 
 			RNDISInterfaceInfo->State.NotificationPipeSize = NotificationEndpoint->EndpointSize;
 		}
+		else
+		{
+			continue;
+		}
+		
+		if (!(Pipe_ConfigurePipe(PipeNum, Type, Token, EndpointAddress, Size,
+		                         DoubleBanked ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE)))
+		{
+			return CDC_ENUMERROR_PipeConfigurationFailed;
+		}
+		
+		if (InterruptPeriod)
+		  Pipe_SetInterruptPeriod(InterruptPeriod);
 	}
 
 	RNDISInterfaceInfo->State.ControlInterfaceNumber = RNDISControlInterface->InterfaceNumber;
@@ -286,7 +315,7 @@ uint8_t RNDIS_Host_InitializeDevice(USB_ClassInfo_RNDIS_Host_t* const RNDISInter
 	}
 
 	if (InitMessageResponse.Status != REMOTE_NDIS_STATUS_SUCCESS)
-	  return RNDIS_COMMAND_FAILED;
+	  return RNDIS_ERROR_LOGICAL_CMD_FAILED;
 
 	RNDISInterfaceInfo->State.DeviceMaxPacketSize = InitMessageResponse.MaxTransferSize;
 
@@ -332,7 +361,7 @@ uint8_t RNDIS_Host_SetRNDISProperty(USB_ClassInfo_RNDIS_Host_t* const RNDISInter
 	}
 
 	if (SetMessageResponse.Status != REMOTE_NDIS_STATUS_SUCCESS)
-	  return RNDIS_COMMAND_FAILED;
+	  return RNDIS_ERROR_LOGICAL_CMD_FAILED;
 
 	return HOST_SENDCONTROL_Successful;
 }
@@ -374,7 +403,7 @@ uint8_t RNDIS_Host_QueryRNDISProperty(USB_ClassInfo_RNDIS_Host_t* const RNDISInt
 	}
 
 	if (QueryMessageResponseData.QueryMessageResponse.Status != REMOTE_NDIS_STATUS_SUCCESS)
-	  return RNDIS_COMMAND_FAILED;
+	  return RNDIS_ERROR_LOGICAL_CMD_FAILED;
 
 	memcpy(Buffer, &QueryMessageResponseData.ContiguousBuffer, MaxLength);
 
@@ -422,17 +451,18 @@ uint8_t RNDIS_Host_ReadPacket(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceIn
 	RNDIS_Packet_Message_t DeviceMessage;
 
 	if ((ErrorCode = Pipe_Read_Stream_LE(&DeviceMessage, sizeof(RNDIS_Packet_Message_t),
-	                                     NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+	                                     NULL)) != PIPE_RWSTREAM_NoError)
 	{
 		return ErrorCode;
 	}
 
 	*PacketLength = (uint16_t)DeviceMessage.DataLength;
 
-	Pipe_Discard_Stream(DeviceMessage.DataOffset - (sizeof(RNDIS_Packet_Message_t) - sizeof(RNDIS_Message_Header_t)),
-	                    NO_STREAM_CALLBACK);
+	Pipe_Discard_Stream(DeviceMessage.DataOffset -
+	                    (sizeof(RNDIS_Packet_Message_t) - sizeof(RNDIS_Message_Header_t)),
+	                    NULL);
 
-	Pipe_Read_Stream_LE(Buffer, *PacketLength, NO_STREAM_CALLBACK);
+	Pipe_Read_Stream_LE(Buffer, *PacketLength, NULL);
 
 	if (!(Pipe_BytesInPipe()))
 	  Pipe_ClearIN();
@@ -463,12 +493,12 @@ uint8_t RNDIS_Host_SendPacket(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceIn
 	Pipe_Unfreeze();
 
 	if ((ErrorCode = Pipe_Write_Stream_LE(&DeviceMessage, sizeof(RNDIS_Packet_Message_t),
-	                                      NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+	                                      NULL)) != PIPE_RWSTREAM_NoError)
 	{
 		return ErrorCode;
 	}
 
-	Pipe_Write_Stream_LE(Buffer, PacketLength, NO_STREAM_CALLBACK);
+	Pipe_Write_Stream_LE(Buffer, PacketLength, NULL);
 	Pipe_ClearOUT();
 
 	Pipe_Freeze();

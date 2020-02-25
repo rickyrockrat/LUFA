@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -30,20 +30,17 @@
 
 /** \file
  *  \brief Board specific joystick driver header for the Atmel USBKEY.
- *
- *  Board specific joystick driver header for the Atmel USBKEY.
+ *  \copydetails Group_Joystick_USBKEY
  *
  *  \note This file should not be included directly. It is automatically included as needed by the joystick driver
  *        dispatch header located in LUFA/Drivers/Board/Joystick.h.
  */
 
 /** \ingroup Group_Joystick
- *  @defgroup Group_Joystick_USBKEY USBKEY
+ *  \defgroup Group_Joystick_USBKEY USBKEY
+ *  \brief Board specific joystick driver header for the Atmel USBKEY.
  *
  *  Board specific joystick driver header for the Atmel USBKEY.
- *
- *  \note This file should not be included directly. It is automatically included as needed by the joystick driver
- *        dispatch header located in LUFA/Drivers/Board/Joystick.h.
  *
  *  @{
  */
@@ -52,8 +49,6 @@
 #define __JOYSTICK_USBKEY_H__
 
 	/* Includes: */
-		#include <avr/io.h>
-
 		#include "../../../Common/Common.h"
 
 	/* Enable C linkage for C++ Compilers: */
@@ -71,6 +66,8 @@
 		/* Macros: */
 			#define JOY_BMASK                 ((1 << 5) | (1 << 6) | (1 << 7))
 			#define JOY_EMASK                 ((1 << 4) | (1 << 5))
+			
+			#define JOY_PORTE_MASK_SHIFT      1
 	#endif
 
 	/* Public Interface - May be used in end-application: */
@@ -79,13 +76,13 @@
 			#define JOY_LEFT                  (1 << 6)
 
 			/** Mask for the joystick being pushed in the right direction. */
-			#define JOY_RIGHT                ((1 << 4) >> 1)
+			#define JOY_RIGHT                ((1 << 4) >> JOY_PORTE_MASK_SHIFT)
 
 			/** Mask for the joystick being pushed in the upward direction. */
 			#define JOY_UP                    (1 << 7)
 
 			/** Mask for the joystick being pushed in the downward direction. */
-			#define JOY_DOWN                 ((1 << 5) >> 1)
+			#define JOY_DOWN                 ((1 << 5) >> JOY_PORTE_MASK_SHIFT)
 
 			/** Mask for the joystick being pushed inward. */
 			#define JOY_PRESS                 (1 << 5)
@@ -104,7 +101,7 @@
 			static inline uint8_t Joystick_GetStatus(void) ATTR_WARN_UNUSED_RESULT;
 			static inline uint8_t Joystick_GetStatus(void)
 			{
-				return (((uint8_t)~PINB & JOY_BMASK) | (((uint8_t)~PINE & JOY_EMASK) >> 1));
+				return (((uint8_t)~PINB & JOY_BMASK) | (((uint8_t)~PINE & JOY_EMASK) >> JOY_PORTE_MASK_SHIFT));
 			}
 		#endif
 

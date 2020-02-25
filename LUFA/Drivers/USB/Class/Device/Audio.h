@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -38,13 +38,13 @@
  */
 
 /** \ingroup Group_USBClassAudio
- *  @defgroup Group_USBClassAudioDevice Audio Class Device Mode Driver
+ *  \defgroup Group_USBClassAudioDevice Audio Class Device Mode Driver
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - LUFA/Drivers/USB/Class/Device/Audio.c <i>(Makefile source module name: LUFA_SRC_USBCLASS)</i>
  *
- *  \section Module Description
+ *  \section Sec_ModDescription Module Description
  *  Device Mode USB Class driver framework interface, for the Audio 1.0 USB Class driver.
  *
  *  @{
@@ -57,8 +57,6 @@
 		#include "../../USB.h"
 		#include "../Common/Audio.h"
 
-		#include <string.h>
-
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
@@ -69,17 +67,13 @@
 			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
 		#endif
 
-		#if defined(__INCLUDE_FROM_AUDIO_DEVICE_C) && defined(NO_STREAM_CALLBACKS)
-			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
-		#endif
-
 	/* Public Interface - May be used in end-application: */
 		/* Type Defines: */
 			/** \brief Audio Class Device Mode Configuration and State Structure.
 			 *
 			 *  Class state structure. An instance of this structure should be made for each Audio interface
 			 *  within the user application, and passed to each of the Audio class driver functions as the
-			 *  AudioInterfaceInfo parameter. This stores each Audio interface's configuration and state information.
+			 *  \c AudioInterfaceInfo parameter. This stores each Audio interface's configuration and state information.
 			 */
 			typedef struct
 			{
@@ -126,7 +120,7 @@
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
 			 *
-			 *  \return Boolean true if the endpoints were successfully configured, false otherwise.
+			 *  \return Boolean \c true if the endpoints were successfully configured, \c false otherwise.
 			 */
 			bool Audio_Device_ConfigureEndpoints(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
@@ -158,7 +152,7 @@
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
 			 *
-			 *  \return Boolean true if the given Audio interface has a sample to be read, false otherwise.
+			 *  \return Boolean \c true if the given Audio interface has a sample to be read, \c false otherwise.
 			 */
 			static inline bool Audio_Device_IsSampleReceived(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo)
 			                                                 ATTR_NON_NULL_PTR_ARG(1) ATTR_ALWAYS_INLINE;
@@ -179,7 +173,7 @@
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
 			 *
-			 *  \return Boolean true if the given Audio interface is ready to accept the next sample, false otherwise.
+			 *  \return Boolean \c true if the given Audio interface is ready to accept the next sample, \c false otherwise.
 			 */
 			static inline bool Audio_Device_IsReadyForNextSample(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo)
 			                                                     ATTR_NON_NULL_PTR_ARG(1) ATTR_ALWAYS_INLINE;
@@ -209,7 +203,7 @@
 
 				(void)AudioInterfaceInfo;
 
-				Sample = Endpoint_Read_Byte();
+				Sample = Endpoint_Read_8();
 
 				if (!(Endpoint_BytesInEndpoint()))
 				  Endpoint_ClearOUT();
@@ -234,7 +228,7 @@
 
 				(void)AudioInterfaceInfo;
 
-				Sample = (int16_t)Endpoint_Read_Word_LE();
+				Sample = (int16_t)Endpoint_Read_16_LE();
 
 				if (!(Endpoint_BytesInEndpoint()))
 				  Endpoint_ClearOUT();
@@ -259,7 +253,7 @@
 
 				(void)AudioInterfaceInfo;
 
-				Sample = (((uint32_t)Endpoint_Read_Byte() << 16) | Endpoint_Read_Word_LE());
+				Sample = (((uint32_t)Endpoint_Read_8() << 16) | Endpoint_Read_16_LE());
 
 				if (!(Endpoint_BytesInEndpoint()))
 				  Endpoint_ClearOUT();
@@ -280,7 +274,7 @@
 			static inline void Audio_Device_WriteSample8(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo,
 			                                             const int8_t Sample)
 			{
-				Endpoint_Write_Byte(Sample);
+				Endpoint_Write_8(Sample);
 
 				if (Endpoint_BytesInEndpoint() == AudioInterfaceInfo->Config.DataINEndpointSize)
 				  Endpoint_ClearIN();
@@ -299,7 +293,7 @@
 			static inline void Audio_Device_WriteSample16(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo,
 			                                              const int16_t Sample)
 			{
-				Endpoint_Write_Word_LE(Sample);
+				Endpoint_Write_16_LE(Sample);
 
 				if (Endpoint_BytesInEndpoint() == AudioInterfaceInfo->Config.DataINEndpointSize)
 				  Endpoint_ClearIN();
@@ -318,8 +312,8 @@
 			static inline void Audio_Device_WriteSample24(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo,
 			                                              const int32_t Sample)
 			{
-				Endpoint_Write_Byte(Sample >> 16);
-				Endpoint_Write_Word_LE(Sample);
+				Endpoint_Write_16_LE(Sample);
+				Endpoint_Write_8(Sample >> 16);
 
 				if (Endpoint_BytesInEndpoint() == AudioInterfaceInfo->Config.DataINEndpointSize)
 				  Endpoint_ClearIN();

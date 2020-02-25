@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -108,15 +108,16 @@ static uint16_t TimerCompareFromSCKDuration[] PROGMEM =
 bool HardwareSPIMode = true;
 
 /** Software SPI data register for sending and receiving */
-volatile uint8_t SoftSPI_Data;
+static volatile uint8_t SoftSPI_Data;
 
 /** Number of bits left to transfer in the software SPI driver */
-volatile uint8_t SoftSPI_BitsRemaining;
+static volatile uint8_t SoftSPI_BitsRemaining;
 
 
 /** ISR to handle software SPI transmission and reception */
 ISR(TIMER1_COMPA_vect, ISR_BLOCK)
 {
+	/* Check if rising edge (output next bit) or falling edge (read in next bit) */
 	if (!(PINB & (1 << 1)))
 	{
 		if (SoftSPI_Data & (1 << 7))
@@ -171,13 +172,15 @@ void ISPTarget_DisableTargetISP(void)
 {
 	if (HardwareSPIMode)
 	{
-		SPI_ShutDown();
+		SPI_Disable();
 	}
 	else
 	{
 		DDRB  &= ~((1 << 1) | (1 << 2));
 		PORTB &= ~((1 << 0) | (1 << 3));
 		
+		/* Must re-enable rescue clock once software ISP has exited, as the timer for the rescue clock is
+		 * re-purposed for software SPI */
 		ISPTarget_ConfigureRescueClock();
 	}
 }
@@ -247,7 +250,7 @@ uint8_t ISPTarget_TransferSoftSPIByte(const uint8_t Byte)
 
 	TCNT1  = 0;
 	TCCR1B = ((1 << WGM12) | (1 << CS11));
-	while (SoftSPI_BitsRemaining && TimeoutTicksRemaining);
+	while (SoftSPI_BitsRemaining && !(TimeoutExpired));
 	TCCR1B = 0;
 
 	return SoftSPI_Data;
@@ -289,9 +292,9 @@ uint8_t ISPTarget_WaitWhileTargetBusy(void)
 		ISPTarget_SendByte(0x00);
 		ISPTarget_SendByte(0x00);
 	}
-	while ((ISPTarget_ReceiveByte() & 0x01) && TimeoutTicksRemaining);
+	while ((ISPTarget_ReceiveByte() & 0x01) && !(TimeoutExpired));
 
-	return TimeoutTicksRemaining ? STATUS_CMD_OK : STATUS_RDY_BSY_TOUT;
+	return (TimeoutExpired) ? STATUS_RDY_BSY_TOUT : STATUS_CMD_OK;
 }
 
 /** Sends a low-level LOAD EXTENDED ADDRESS command to the target, for addressing of memory beyond the
@@ -341,9 +344,9 @@ uint8_t ISPTarget_WaitForProgComplete(const uint8_t ProgrammingMode,
 				ISPTarget_SendByte(PollAddress >> 8);
 				ISPTarget_SendByte(PollAddress & 0xFF);
 			}
-			while ((ISPTarget_TransferByte(0x00) == PollValue) && TimeoutTicksRemaining);
+			while ((ISPTarget_TransferByte(0x00) == PollValue) && !(TimeoutExpired));
 
-			if (!(TimeoutTicksRemaining))
+			if (TimeoutExpired)
 			 ProgrammingStatus = STATUS_CMD_TOUT;
 
 			break;

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -38,13 +38,13 @@
  */
 
 /** \ingroup Group_USBClassMS
- *  @defgroup Group_USBClassMassStorageHost Mass Storage Class Host Mode Driver
+ *  \defgroup Group_USBClassMassStorageHost Mass Storage Class Host Mode Driver
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - LUFA/Drivers/USB/Class/Host/MassStorage.c <i>(Makefile source module name: LUFA_SRC_USBCLASS)</i>
  *
- *  \section Module Description
+ *  \section Sec_ModDescription Module Description
  *  Host Mode USB Class driver framework interface, for the Mass Storage USB Class driver.
  *
  *  @{
@@ -67,10 +67,6 @@
 			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
 		#endif
 
-		#if defined(__INCLUDE_FROM_MASSSTORAGE_HOST_C) && defined(NO_STREAM_CALLBACKS)
-			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
-		#endif
-
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
 			/** Error code for some Mass Storage Host functions, indicating a logical (and not hardware) error. */
@@ -80,7 +76,7 @@
 			/** \brief Mass Storage Class Host Mode Configuration and State Structure.
 			 *
 			 *  Class state structure. An instance of this structure should be made within the user application,
-			 *  and passed to each of the Mass Storage class driver functions as the MSInterfaceInfo parameter. This
+			 *  and passed to each of the Mass Storage class driver functions as the \c MSInterfaceInfo parameter. This
 			 *  stores each Mass Storage interface's configuration and state information.
 			 */
 			typedef struct
@@ -131,6 +127,7 @@
 				MS_ENUMERROR_NoError                    = 0, /**< Configuration Descriptor was processed successfully. */
 				MS_ENUMERROR_InvalidConfigDescriptor    = 1, /**< The device returned an invalid Configuration Descriptor. */
 				MS_ENUMERROR_NoCompatibleInterfaceFound = 2, /**< A compatible Mass Storage interface was not found in the device's Configuration Descriptor. */
+				MS_ENUMERROR_PipeConfigurationFailed    = 3, /**< One or more pipes for the specified interface could not be configured correctly. */
 			};
 
 		/* Function Prototypes: */
@@ -247,7 +244,7 @@
 			 *
 			 *  \param[in,out] MSInterfaceInfo  Pointer to a structure containing a MS Class host configuration and state.
 			 *  \param[in]     LUNIndex         LUN index within the device the command is being issued to.
-			 *  \param[in]     PreventRemoval   Boolean true if the device should be locked from removal, false otherwise.
+			 *  \param[in]     PreventRemoval   Boolean \c true if the device should be locked from removal, \c false otherwise.
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum or \ref MS_ERROR_LOGICAL_CMD_FAILED if not ready.
 			 */

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -38,9 +38,9 @@
  */
 
 /** \ingroup Group_USBClassAudio
- *  @defgroup Group_USBClassAudioCommon  Common Class Definitions
+ *  \defgroup Group_USBClassAudioCommon  Common Class Definitions
  *
- *  \section Module Description
+ *  \section Sec_ModDescription Module Description
  *  Constants, Types and Enum definitions that are common to both Device and Host modes for the USB
  *  Audio 1.0 Class.
  *
@@ -51,9 +51,7 @@
 #define _AUDIO_CLASS_COMMON_H_
 
 	/* Includes: */
-		#include "../../HighLevel/StdDescriptors.h"
-
-		#include <string.h>
+		#include "../../Core/StdDescriptors.h"
 
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -206,7 +204,7 @@
 		 *
 		 *  \param[in] freq  Required audio sampling frequency in HZ
 		 */
-		#define AUDIO_SAMPLE_FREQ(freq)           {((uint32_t)freq & 0x00FFFF), (((uint32_t)freq >> 16) & 0x0000FF)}
+		#define AUDIO_SAMPLE_FREQ(freq)           {.Byte1 = (freq & 0x0000FF), .Byte2 = ((freq >> 8) & 0xFF), .Byte3 = ((freq >> 16) & 0xFF)}
 
 		/** Mask for the attributes parameter of an Audio class-specific Endpoint descriptor, indicating that the endpoint
 		 *  accepts only filled endpoint packets of audio samples.
@@ -288,16 +286,16 @@
 			                                  */
 
 			uint8_t                 TerminalID; /**< ID value of this terminal unit - must be a unique value within the device. */
-			uint16_t                TerminalType; /**< Type of terminal, a TERMINAL_* mask. */
+			uint16_t                TerminalType; /**< Type of terminal, a \c TERMINAL_* mask. */
 			uint8_t                 AssociatedOutputTerminal; /**< ID of associated output terminal, for physically grouped terminals
 			                                                   *   such as the speaker and microphone of a phone handset.
 			                                                   */
 			uint8_t                 TotalChannels; /**< Total number of separate audio channels within this interface (right, left, etc.) */
-			uint16_t                ChannelConfig; /**< CHANNEL_* masks indicating what channel layout is supported by this terminal. */
+			uint16_t                ChannelConfig; /**< \c CHANNEL_* masks indicating what channel layout is supported by this terminal. */
 
 			uint8_t                 ChannelStrIndex; /**< Index of a string descriptor describing this channel within the device. */
 			uint8_t                 TerminalStrIndex; /**< Index of a string descriptor describing this descriptor within the device. */
-		} USB_Audio_Descriptor_InputTerminal_t;
+		} ATTR_PACKED USB_Audio_Descriptor_InputTerminal_t;
 
 		/** \brief Audio class-specific Input Terminal Descriptor (USB-IF naming conventions).
 		 *
@@ -319,16 +317,16 @@
 			                              *   must be \ref AUDIO_DSUBTYPE_CSInterface_InputTerminal.
 			                              */
 			uint8_t  bTerminalID; /**< ID value of this terminal unit - must be a unique value within the device. */
-			uint16_t wTerminalType; /**< Type of terminal, a TERMINAL_* mask. */
+			uint16_t wTerminalType; /**< Type of terminal, a \c TERMINAL_* mask. */
 			uint8_t  bAssocTerminal; /**< ID of associated output terminal, for physically grouped terminals
 			                          *   such as the speaker and microphone of a phone handset.
 			                          */
 			uint8_t  bNrChannels; /**< Total number of separate audio channels within this interface (right, left, etc.) */
-			uint16_t wChannelConfig; /**< CHANNEL_* masks indicating what channel layout is supported by this terminal. */
+			uint16_t wChannelConfig; /**< \c CHANNEL_* masks indicating what channel layout is supported by this terminal. */
 
 			uint8_t  iChannelNames; /**< Index of a string descriptor describing this channel within the device. */
 			uint8_t  iTerminal; /**< Index of a string descriptor describing this descriptor within the device. */
-		} USB_Audio_StdDescriptor_InputTerminal_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_InputTerminal_t;
 
 		/** \brief Audio class-specific Output Terminal Descriptor (LUFA naming conventions).
 		 *
@@ -346,14 +344,14 @@
 			                                  */
 
 			uint8_t                 TerminalID; /**< ID value of this terminal unit - must be a unique value within the device. */
-			uint16_t                TerminalType; /**< Type of terminal, a TERMINAL_* mask. */
+			uint16_t                TerminalType; /**< Type of terminal, a \c TERMINAL_* mask. */
 			uint8_t                 AssociatedInputTerminal; /**< ID of associated input terminal, for physically grouped terminals
 			                                                    *   such as the speaker and microphone of a phone handset.
 			                                                    */
 			uint8_t                 SourceID; /**< ID value of the unit this terminal's audio is sourced from. */
 
 			uint8_t                 TerminalStrIndex; /**< Index of a string descriptor describing this descriptor within the device. */
-		} USB_Audio_Descriptor_OutputTerminal_t;
+		} ATTR_PACKED USB_Audio_Descriptor_OutputTerminal_t;
 
 		/** \brief Audio class-specific Output Terminal Descriptor (USB-IF naming conventions).
 		 *
@@ -375,14 +373,14 @@
 			                              *   a value from the \ref Audio_CSInterface_AC_SubTypes_t enum.
 			                              */
 			uint8_t  bTerminalID; /**< ID value of this terminal unit - must be a unique value within the device. */
-			uint16_t wTerminalType; /**< Type of terminal, a TERMINAL_* mask. */
+			uint16_t wTerminalType; /**< Type of terminal, a \c TERMINAL_* mask. */
 			uint8_t  bAssocTerminal; /**< ID of associated input terminal, for physically grouped terminals
 			                          *   such as the speaker and microphone of a phone handset.
 			                          */
 			uint8_t  bSourceID; /**< ID value of the unit this terminal's audio is sourced from. */
 
 			uint8_t  iTerminal; /**< Index of a string descriptor describing this descriptor within the device. */
-		} USB_Audio_StdDescriptor_OutputTerminal_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_OutputTerminal_t;
 
 		/** \brief Audio class-specific Interface Descriptor (LUFA naming conventions).
 		 *
@@ -404,7 +402,7 @@
 
 			uint8_t                 InCollection; /**< Total number of Audio Streaming interfaces linked to this Audio Control interface (must be 1). */
 			uint8_t                 InterfaceNumber; /**< Interface number of the associated Audio Streaming interface. */
-		} USB_Audio_Descriptor_Interface_AC_t;
+		} ATTR_PACKED USB_Audio_Descriptor_Interface_AC_t;
 
 		/** \brief Audio class-specific Interface Descriptor (USB-IF naming conventions).
 		 *
@@ -431,7 +429,7 @@
 
 			uint8_t  bInCollection; /**< Total number of Audio Streaming interfaces linked to this Audio Control interface (must be 1). */
 			uint8_t  bInterfaceNumbers; /**< Interface number of the associated Audio Streaming interface. */
-		} USB_Audio_StdDescriptor_Interface_AC_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_Interface_AC_t;
 
 		/** \brief Audio class-specific Feature Unit Descriptor (LUFA naming conventions).
 		 *
@@ -451,11 +449,11 @@
 			uint8_t                 UnitID; /**< ID value of this feature unit - must be a unique value within the device. */
 			uint8_t                 SourceID; /**< Source ID value of the audio source input into this feature unit. */
 
-			uint8_t                 ControlSize; /**< Size of each element in the ChanelControlls array. */
+			uint8_t                 ControlSize; /**< Size of each element in the \c ChanelControlls array. */
 			uint8_t                 ChannelControls[3]; /**< Feature masks for the control channel, and each separate audio channel. */
 
 			uint8_t                 FeatureUnitStrIndex; /**< Index of a string descriptor describing this descriptor within the device. */
-		} USB_Audio_Descriptor_FeatureUnit_t;
+		} ATTR_PACKED USB_Audio_Descriptor_FeatureUnit_t;
 
 		/** \brief Audio class-specific Feature Unit Descriptor (USB-IF naming conventions).
 		 *
@@ -480,11 +478,11 @@
 			uint8_t bUnitID; /**< ID value of this feature unit - must be a unique value within the device. */
 			uint8_t bSourceID; /**< Source ID value of the audio source input into this feature unit. */
 
-			uint8_t bControlSize; /**< Size of each element in the ChanelControlls array. */
+			uint8_t bControlSize; /**< Size of each element in the \c ChanelControlls array. */
 			uint8_t bmaControls[3]; /**< Feature masks for the control channel, and each separate audio channel. */
 
 			uint8_t iFeature; /**< Index of a string descriptor describing this descriptor within the device. */
-		} USB_Audio_StdDescriptor_FeatureUnit_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_FeatureUnit_t;
 
 		/** \brief Audio class-specific Streaming Audio Interface Descriptor (LUFA naming conventions).
 		 *
@@ -504,7 +502,7 @@
 
 			uint8_t                 FrameDelay; /**< Delay in frames resulting from the complete sample processing from input to output. */
 			uint16_t                AudioFormat; /**< Format of the audio stream, see Audio Device Formats specification. */
-		} USB_Audio_Descriptor_Interface_AS_t;
+		} ATTR_PACKED USB_Audio_Descriptor_Interface_AS_t;
 
 		/** \brief Audio class-specific Streaming Audio Interface Descriptor (USB-IF naming conventions).
 		 *
@@ -529,7 +527,7 @@
 
 			uint8_t  bDelay; /**< Delay in frames resulting from the complete sample processing from input to output. */
 			uint16_t wFormatTag; /**< Format of the audio stream, see Audio Device Formats specification. */
-		} USB_Audio_StdDescriptor_Interface_AS_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_Interface_AS_t;
 
 		/** \brief 24-Bit Audio Frequency Structure.
 		 *
@@ -538,9 +536,10 @@
 		 */
 		typedef struct
 		{
-			uint16_t LowWord; /**< Low 16 bits of the 24-bit value. */
-			uint8_t  HighByte; /**< Upper 8 bits of the 24-bit value. */
-		} USB_Audio_SampleFreq_t;
+			uint8_t Byte1; /**< Lowest 8 bits of the 24-bit value. */
+			uint8_t Byte2; /**< Middle 8 bits of the 24-bit value. */
+			uint8_t Byte3; /**< Upper 8 bits of the 24-bit value. */
+		} ATTR_PACKED USB_Audio_SampleFreq_t;
 
 		/** \brief Audio class-specific Format Descriptor (LUFA naming conventions).
 		 *
@@ -565,7 +564,7 @@
 
 			uint8_t                 SampleFrequencyType; /**< Total number of sample frequencies supported by the device. */
 			USB_Audio_SampleFreq_t  SampleFrequencies[AUDIO_TOTAL_SAMPLE_RATES]; /**< Sample frequencies supported by the device (must be 24-bit). */
-		} USB_Audio_Descriptor_Format_t;
+		} ATTR_PACKED USB_Audio_Descriptor_Format_t;
 
 		/** \brief Audio class-specific Format Descriptor (USB-IF naming conventions).
 		 *
@@ -595,7 +594,7 @@
 
 			uint8_t bSampleFrequencyType; /**< Total number of sample frequencies supported by the device. */
 			uint8_t SampleFrequencies[AUDIO_TOTAL_SAMPLE_RATES * 3]; /**< Sample frequencies supported by the device (must be 24-bit). */
-		} USB_Audio_StdDescriptor_Format_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_Format_t;
 
 		/** \brief Audio class-specific Streaming Endpoint Descriptor (LUFA naming conventions).
 		 *
@@ -610,7 +609,7 @@
 
 			uint8_t                   Refresh; /**< Always set to zero for Audio class devices. */
 			uint8_t                   SyncEndpointNumber; /**< Endpoint address to send synchronization information to, if needed (zero otherwise). */
-		} USB_Audio_Descriptor_StreamEndpoint_Std_t;
+		} ATTR_PACKED USB_Audio_Descriptor_StreamEndpoint_Std_t;
 
 		/** \brief Audio class-specific Streaming Endpoint Descriptor (USB-IF naming conventions).
 		 *
@@ -629,8 +628,8 @@
 			uint8_t  bEndpointAddress; /**< Logical address of the endpoint within the device for the current
 			                            *   configuration, including direction mask.
 			                            */
-			uint8_t  bmAttributes; /**< Endpoint attributes, comprised of a mask of the endpoint type (EP_TYPE_*)
-			                        *   and attributes (ENDPOINT_ATTR_*) masks.
+			uint8_t  bmAttributes; /**< Endpoint attributes, comprised of a mask of the endpoint type (\c EP_TYPE_*)
+			                        *   and attributes (\c ENDPOINT_ATTR_*) masks.
 			                        */
 			uint16_t wMaxPacketSize; /**< Size of the endpoint bank, in bytes. This indicates the maximum packet size
 			                          *   that the endpoint can receive at a time.
@@ -641,7 +640,7 @@
 
 			uint8_t  bRefresh; /**< Always set to zero for Audio class devices. */
 			uint8_t  bSynchAddress; /**< Endpoint address to send synchronization information to, if needed (zero otherwise). */
-		} USB_Audio_StdDescriptor_StreamEndpoint_Std_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_StreamEndpoint_Std_t;
 
 		/** \brief Audio class-specific Extended Endpoint Descriptor (LUFA naming conventions).
 		 *
@@ -658,11 +657,11 @@
 			                                  *   a value from the \ref Audio_CSEndpoint_SubTypes_t enum.
 			                                  */
 
-			uint8_t                 Attributes; /**< Audio class-specific endpoint attributes, such as ACCEPTS_SMALL_PACKETS. */
+			uint8_t                 Attributes; /**< Audio class-specific endpoint attributes, such as \ref AUDIO_EP_FULL_PACKETS_ONLY. */
 
 			uint8_t                 LockDelayUnits; /**< Units used for the LockDelay field, see Audio class specification. */
 			uint16_t                LockDelay; /**< Time required to internally lock endpoint's internal clock recovery circuitry. */
-		} USB_Audio_Descriptor_StreamEndpoint_Spc_t;
+		} ATTR_PACKED USB_Audio_Descriptor_StreamEndpoint_Spc_t;
 
 		/** \brief Audio class-specific Extended Endpoint Descriptor (USB-IF naming conventions).
 		 *
@@ -684,11 +683,11 @@
 			                              *   a value from the \ref Audio_CSEndpoint_SubTypes_t enum.
 			                              */
 
-			uint8_t  bmAttributes; /**< Audio class-specific endpoint attributes, such as ACCEPTS_SMALL_PACKETS. */
+			uint8_t  bmAttributes; /**< Audio class-specific endpoint attributes, such as \ref AUDIO_EP_FULL_PACKETS_ONLY. */
 
 			uint8_t  bLockDelayUnits; /**< Units used for the LockDelay field, see Audio class specification. */
 			uint16_t wLockDelay; /**< Time required to internally lock endpoint's internal clock recovery circuitry. */
-		} USB_Audio_StdDescriptor_StreamEndpoint_Spc_t;
+		} ATTR_PACKED USB_Audio_StdDescriptor_StreamEndpoint_Spc_t;
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

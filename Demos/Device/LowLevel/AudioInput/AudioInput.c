@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -37,7 +37,8 @@
 #include "AudioInput.h"
 
 /** Flag to indicate if the streaming audio alternative interface has been selected by the host. */
-bool StreamingAudioInterfaceSelected = false;
+static bool StreamingAudioInterfaceSelected = false;
+
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -179,7 +180,7 @@ ISR(TIMER0_COMPA_vect, ISR_BLOCK)
 		#endif
 
 		/* Write the sample to the buffer */
-		Endpoint_Write_Word_LE(AudioSample);
+		Endpoint_Write_16_LE(AudioSample);
 
 		/* Check to see if the bank is now full */
 		if (!(Endpoint_IsReadWriteAllowed()))

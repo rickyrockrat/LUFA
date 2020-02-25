@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -37,10 +37,10 @@
 #include "GenericHID.h"
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
-uint8_t PrevHIDReportBuffer[GENERIC_REPORT_SIZE];
+static uint8_t PrevHIDReportBuffer[GENERIC_REPORT_SIZE];
 
 /** Structure to contain reports from the host, so that they can be echoed back upon request */
-struct
+static struct
 {
 	uint8_t  ReportID;
 	uint16_t ReportSize;
@@ -65,6 +65,7 @@ USB_ClassInfo_HID_Device_t Generic_HID_Interface =
 				.PrevReportINBufferSize       = sizeof(PrevHIDReportBuffer),
 			},
 	};
+
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.

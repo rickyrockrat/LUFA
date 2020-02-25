@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -30,20 +30,17 @@
 
 /** \file
  *  \brief Board specific Dataflash driver header for the Atmel EVK527.
- *
- *  Board specific Dataflash driver header for the Atmel EVK527.
+ *  \copydetails Group_Dataflash_EVK527
  *
  *  \note This file should not be included directly. It is automatically included as needed by the dataflash driver
  *        dispatch header located in LUFA/Drivers/Board/Dataflash.h.
  */
 
 /** \ingroup Group_Dataflash
- *  @defgroup Group_Dataflash_EVK527 EVK527
+ *  \defgroup Group_Dataflash_EVK527 EVK527
+ *  \brief Board specific Dataflash driver header for the Atmel EVK527.
  *
  *  Board specific Dataflash driver header for the Atmel EVK527.
- *
- *  \note This file should not be included directly. It is automatically included as needed by the dataflash driver
- *        dispatch header located in LUFA/Drivers/Board/Dataflash.h.
  *
  *  @{
  */
@@ -52,7 +49,7 @@
 #define __DATAFLASH_EVK527_H__
 
 	/* Includes: */
-		#include "AT45DB321C.h"
+		#include "../../Misc/AT45DB321C.h"
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_DATAFLASH_H)
@@ -86,7 +83,7 @@
 
 		/* Inline Functions: */
 			/** Initialises the dataflash driver so that commands and data may be sent to an attached dataflash IC.
-			 *  The AVR's SPI driver MUST be initialized before any of the dataflash commands are used.
+			 *  The microcontroller's SPI driver MUST be initialized before any of the dataflash commands are used.
 			 */
 			static inline void Dataflash_Init(void)
 			{

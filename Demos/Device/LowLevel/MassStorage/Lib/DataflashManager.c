@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -127,22 +127,22 @@ void DataflashManager_WriteBlocks(const uint32_t BlockAddress,
 			}
 
 			/* Write one 16-byte chunk of data to the Dataflash */
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
-			Dataflash_SendByte(Endpoint_Read_Byte());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
+			Dataflash_SendByte(Endpoint_Read_8());
 
 			/* Increment the Dataflash page 16 byte block counter */
 			CurrDFPageByteDiv16++;
@@ -240,22 +240,22 @@ void DataflashManager_ReadBlocks(const uint32_t BlockAddress,
 			}
 
 			/* Read one 16-byte chunk of data from the Dataflash */
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
-			Endpoint_Write_Byte(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
+			Endpoint_Write_8(Dataflash_ReceiveByte());
 
 			/* Increment the Dataflash page 16 byte block counter */
 			CurrDFPageByteDiv16++;

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -51,10 +51,10 @@
 			USB_Descriptor_Configuration_Header_t Config;
 			USB_Descriptor_Interface_t            HID1_KeyboardInterface;
 			USB_HID_Descriptor_HID_t              HID1_KeyboardHID;
-	        USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;
+			USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;
 			USB_Descriptor_Interface_t            HID2_MouseInterface;
 			USB_HID_Descriptor_HID_t              HID2_MouseHID;
-	        USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
+			USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Macros: */

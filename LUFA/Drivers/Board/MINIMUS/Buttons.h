@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
               
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this 
   software and its documentation for any purpose is hereby granted
@@ -30,20 +30,17 @@
 
 /** \file
  *  \brief Board specific Buttons driver header for the MINIMUS.
- *
- *  Board specific Buttons driver header for the MINIMUS.
+ *  \copydetails Group_Buttons_MINIMUS
  *
  *  \note This file should not be included directly. It is automatically included as needed by the Buttons driver
  *        dispatch header located in LUFA/Drivers/Board/Buttons.h.
  */
  
 /** \ingroup Group_Buttons
- *  @defgroup Group_Buttons_MINIMUS MINIMUS
+ *  \defgroup Group_Buttons_MINIMUS MINIMUS
+ *  \brief Board specific Buttons driver header for the MINIMUS.
  *
  *  Board specific Buttons driver header for the MINIMUS.
- *
- *  \note This file should not be included directly. It is automatically included as needed by the Buttons driver
- *        dispatch header located in LUFA/Drivers/Board/Buttons.h.
  *
  *  @{
  */
@@ -52,9 +49,6 @@
 #define __BUTTONS_MINIMUS_H__
 
 	/* Includes: */
-		#include <avr/io.h>
-		#include <stdbool.h>
-
 		#include "../../../Common/Common.h"
 
 	/* Enable C linkage for C++ Compilers: */
@@ -70,7 +64,7 @@
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
 			/** Button mask for the first button on the board. */
-			#define BUTTONS_BUTTON1      (1 << 8)
+			#define BUTTONS_BUTTON1      (1 << 7)
 	
 		/* Inline Functions: */
 		#if !defined(__DOXYGEN__)

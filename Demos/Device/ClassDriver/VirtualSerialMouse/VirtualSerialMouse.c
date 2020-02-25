@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -61,7 +61,7 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
 	};
 
 /** Buffer to hold the previously generated Mouse HID report, for comparison purposes inside the HID class driver. */
-uint8_t PrevMouseHIDReportBuffer[sizeof(USB_MouseReport_Data_t)];
+static uint8_t PrevMouseHIDReportBuffer[sizeof(USB_MouseReport_Data_t)];
 
 /** LUFA HID Class driver interface configuration and state information. This structure is
  *  passed to all HID Class driver functions, so that multiple instances of the same class
@@ -81,6 +81,7 @@ USB_ClassInfo_HID_Device_t Mouse_HID_Interface =
 				.PrevReportINBufferSize         = sizeof(PrevMouseHIDReportBuffer),
 			},
 	};
+
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -145,7 +146,7 @@ void CheckJoystickMovement(void)
 	{
 		ActionSent = true;
 
-		CDC_Device_SendString(&VirtualSerial_CDC_Interface, ReportString, strlen(ReportString));
+		CDC_Device_SendString(&VirtualSerial_CDC_Interface, ReportString);
 	}
 }
 
@@ -166,8 +167,8 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 {
 	bool ConfigSuccess = true;
 
-	ConfigSuccess &= CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC_Interface);
 	ConfigSuccess &= HID_Device_ConfigureEndpoints(&Mouse_HID_Interface);
+	ConfigSuccess &= CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC_Interface);
 
 	USB_Device_EnableSOFEvents();
 

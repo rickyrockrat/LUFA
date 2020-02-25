@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -219,8 +219,8 @@
 			uint32_t               SequenceNumber; /**< Data sequence number of the packet */
 			uint32_t               AcknowledgmentNumber; /**< Data acknowledgment number of the packet */
 
-			unsigned char          Reserved   : 4; /**< Reserved, must be all 0 */
-			unsigned char          DataOffset : 4; /**< Offset of the data from the start of the header, in 4 byte chunks */
+			unsigned               Reserved   : 4; /**< Reserved, must be all 0 */
+			unsigned               DataOffset : 4; /**< Offset of the data from the start of the header, in 4 byte chunks */
 			uint8_t                Flags; /**< TCP packet flags */
 			uint16_t               WindowSize; /**< Current data window size (bytes remaining in reception buffer) */
 

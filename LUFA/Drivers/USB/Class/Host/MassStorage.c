@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -29,7 +29,8 @@
 */
 
 #define  __INCLUDE_FROM_USB_DRIVER
-#include "../../HighLevel/USBMode.h"
+#include "../../Core/USBMode.h"
+
 #if defined(USB_CAN_BE_HOST)
 
 #define  __INCLUDE_FROM_MS_DRIVER
@@ -79,21 +80,41 @@ uint8_t MS_Host_ConfigurePipes(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo,
 
 	for (uint8_t PipeNum = 1; PipeNum < PIPE_TOTAL_PIPES; PipeNum++)
 	{
+		uint16_t Size;
+		uint8_t  Type;
+		uint8_t  Token;
+		uint8_t  EndpointAddress;
+		bool     DoubleBanked;
+
 		if (PipeNum == MSInterfaceInfo->Config.DataINPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_BULK, PIPE_TOKEN_IN,
-			                   DataINEndpoint->EndpointAddress, DataINEndpoint->EndpointSize,
-			                   MSInterfaceInfo->Config.DataINPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
+			Size            = DataINEndpoint->EndpointSize;
+			EndpointAddress = DataINEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_IN;
+			Type            = EP_TYPE_BULK;
+			DoubleBanked    = MSInterfaceInfo->Config.DataINPipeDoubleBank;
 
 			MSInterfaceInfo->State.DataINPipeSize = DataINEndpoint->EndpointSize;
 		}
 		else if (PipeNum == MSInterfaceInfo->Config.DataOUTPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_BULK, PIPE_TOKEN_OUT,
-			                   DataOUTEndpoint->EndpointAddress, DataOUTEndpoint->EndpointSize,
-			                   MSInterfaceInfo->Config.DataOUTPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
-
+			Size            = DataOUTEndpoint->EndpointSize;
+			EndpointAddress = DataOUTEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_OUT;
+			Type            = EP_TYPE_BULK;
+			DoubleBanked    = MSInterfaceInfo->Config.DataOUTPipeDoubleBank;
+			
 			MSInterfaceInfo->State.DataOUTPipeSize = DataOUTEndpoint->EndpointSize;
+		}
+		else
+		{
+			continue;
+		}
+
+		if (!(Pipe_ConfigurePipe(PipeNum, Type, Token, EndpointAddress, Size,
+		                         DoubleBanked ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE)))
+		{
+			return MS_ENUMERROR_PipeConfigurationFailed;
 		}
 	}
 
@@ -161,7 +182,7 @@ static uint8_t MS_Host_SendCommand(USB_ClassInfo_MS_Host_t* const MSInterfaceInf
 	Pipe_Unfreeze();
 
 	if ((ErrorCode = Pipe_Write_Stream_LE(SCSICommandBlock, sizeof(MS_CommandBlockWrapper_t),
-	                                      NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+	                                      NULL)) != PIPE_RWSTREAM_NoError)
 	  return ErrorCode;
 
 	Pipe_ClearOUT();
@@ -252,7 +273,7 @@ static uint8_t MS_Host_SendReceiveData(USB_ClassInfo_MS_Host_t* const MSInterfac
 		Pipe_SelectPipe(MSInterfaceInfo->Config.DataINPipeNumber);
 		Pipe_Unfreeze();
 
-		if ((ErrorCode = Pipe_Read_Stream_LE(BufferPtr, BytesRem, NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+		if ((ErrorCode = Pipe_Read_Stream_LE(BufferPtr, BytesRem, NULL)) != PIPE_RWSTREAM_NoError)
 		  return ErrorCode;
 
 		Pipe_ClearIN();
@@ -262,7 +283,7 @@ static uint8_t MS_Host_SendReceiveData(USB_ClassInfo_MS_Host_t* const MSInterfac
 		Pipe_SelectPipe(MSInterfaceInfo->Config.DataOUTPipeNumber);
 		Pipe_Unfreeze();
 
-		if ((ErrorCode = Pipe_Write_Stream_LE(BufferPtr, BytesRem, NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+		if ((ErrorCode = Pipe_Write_Stream_LE(BufferPtr, BytesRem, NULL)) != PIPE_RWSTREAM_NoError)
 		  return ErrorCode;
 
 		Pipe_ClearOUT();
@@ -291,7 +312,7 @@ static uint8_t MS_Host_GetReturnedStatus(USB_ClassInfo_MS_Host_t* const MSInterf
 	Pipe_Unfreeze();
 
 	if ((ErrorCode = Pipe_Read_Stream_LE(SCSICommandStatus, sizeof(MS_CommandStatusWrapper_t),
-	                                     NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+	                                     NULL)) != PIPE_RWSTREAM_NoError)
 	{
 		return ErrorCode;
 	}

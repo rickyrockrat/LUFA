@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2010.
+#     Copyright (C) Dean Camera, 2011.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
@@ -25,6 +25,9 @@ all:
 
 	$(MAKE) -C Magstripe clean
 	$(MAKE) -C Magstripe all
+
+	$(MAKE) -C MIDIToneGenerator clean
+	$(MAKE) -C MIDIToneGenerator all
 
 	$(MAKE) -C MissileLauncher clean
 	$(MAKE) -C MissileLauncher all

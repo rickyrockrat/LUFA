@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -38,9 +38,9 @@
  */
 
 /** \ingroup Group_USBClassRNDIS
- *  @defgroup Group_USBClassRNDISCommon  Common Class Definitions
+ *  \defgroup Group_USBClassRNDISCommon  Common Class Definitions
  *
- *  \section Module Description
+ *  \section Sec_ModDescription Module Description
  *  Constants, Types and Enum definitions that are common to both Device and Host modes for the USB
  *  RNDIS Class.
  *
@@ -54,10 +54,8 @@
 		#define __INCLUDE_FROM_CDC_DRIVER
 
 	/* Includes: */
-		#include "../../HighLevel/StdDescriptors.h"
+		#include "../../Core/StdDescriptors.h"
 		#include "CDC.h"
-
-		#include <string.h>
 
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -70,6 +68,9 @@
 		#endif
 
 	/* Macros: */
+		/** Additional error code for RNDIS functions when a device returns a logical command failure. */
+		#define RNDIS_ERROR_LOGICAL_CMD_FAILED        0x80
+
 		/** Implemented RNDIS Version Major. */
 		#define REMOTE_NDIS_VERSION_MAJOR             0x01
 
@@ -193,7 +194,7 @@
 		/** Enum for the RNDIS class specific notification requests that can be issued by a RNDIS device to a host. */
 		enum RNDIS_ClassNotifications_t
 		{
-			RNDIS_NOTIF_ResponseAvailable             = 0x01, /**< Notification request value for a RNDIS Response Available notification. */
+			RNDIS_NOTIF_ResponseAvailable = 0x01, /**< Notification request value for a RNDIS Response Available notification. */
 		};
 
 		/** Enum for the NDIS hardware states. */
@@ -207,25 +208,25 @@
 		};
 
 	/* Type Defines: */
+		/** \brief Ethernet Frame Packet Information Structure.
+		 *
+		 *  Type define for an Ethernet frame buffer data and information structure. This can be used to conveniently
+		 *  store both the size and data in an Ethernet frame.
+		 */
+		typedef struct
+		{
+			uint8_t  FrameData[ETHERNET_FRAME_SIZE_MAX]; /**< Ethernet frame contents. */
+			uint16_t FrameLength; /**< Length in bytes of the Ethernet frame stored in the buffer. */
+		} Ethernet_Frame_Info_t;
+
 		/** \brief MAC Address Structure.
 		 *
 		 *  Type define for a physical MAC address of a device on a network.
 		 */
 		typedef struct
 		{
-			uint8_t       Octets[6]; /**< Individual bytes of a MAC address */
-		} MAC_Address_t;
-
-		/** \brief RNDIS Ethernet Frame Packet Information Structure.
-		 *
-		 *  Type define for an Ethernet frame buffer data and information structure.
-		 */
-		typedef struct
-		{
-			uint8_t       FrameData[ETHERNET_FRAME_SIZE_MAX]; /**< Ethernet frame contents. */
-			uint16_t      FrameLength; /**< Length in bytes of the Ethernet frame stored in the buffer. */
-			bool          FrameInBuffer; /**< Indicates if a frame is currently stored in the buffer. */
-		} Ethernet_Frame_Info_t;
+			uint8_t Octets[6]; /**< Individual bytes of a MAC address */
+		} ATTR_PACKED MAC_Address_t;
 
 		/** \brief RNDIS Common Message Header Structure.
 		 *
@@ -233,9 +234,9 @@
 		 */
 		typedef struct
 		{
-			uint32_t MessageType; /**< RNDIS message type, a REMOTE_NDIS_*_MSG constant */
+			uint32_t MessageType; /**< RNDIS message type, a \c REMOTE_NDIS_*_MSG constant */
 			uint32_t MessageLength; /**< Total length of the RNDIS message, in bytes */
-		} RNDIS_Message_Header_t;
+		} ATTR_PACKED RNDIS_Message_Header_t;
 
 		/** \brief RNDIS Message Structure.
 		 *
@@ -254,7 +255,7 @@
 			uint32_t PerPacketInfoLength;
 			uint32_t VcHandle;
 			uint32_t Reserved;
-		} RNDIS_Packet_Message_t;
+		} ATTR_PACKED RNDIS_Packet_Message_t;
 
 		/** \brief RNDIS Initialization Message Structure.
 		 *
@@ -269,7 +270,7 @@
 			uint32_t MajorVersion;
 			uint32_t MinorVersion;
 			uint32_t MaxTransferSize;
-		} RNDIS_Initialize_Message_t;
+		} ATTR_PACKED RNDIS_Initialize_Message_t;
 
 		/** \brief RNDIS Initialize Complete Message Structure.
 		 *
@@ -291,7 +292,7 @@
 			uint32_t PacketAlignmentFactor;
 			uint32_t AFListOffset;
 			uint32_t AFListSize;
-		} RNDIS_Initialize_Complete_t;
+		} ATTR_PACKED RNDIS_Initialize_Complete_t;
 
 		/** \brief RNDIS Keep Alive Message Structure.
 		 *
@@ -302,7 +303,7 @@
 			uint32_t MessageType;
 			uint32_t MessageLength;
 			uint32_t RequestId;
-		} RNDIS_KeepAlive_Message_t;
+		} ATTR_PACKED RNDIS_KeepAlive_Message_t;
 
 		/** \brief RNDIS Keep Alive Complete Message Structure.
 		 *
@@ -314,7 +315,7 @@
 			uint32_t MessageLength;
 			uint32_t RequestId;
 			uint32_t Status;
-		} RNDIS_KeepAlive_Complete_t;
+		} ATTR_PACKED RNDIS_KeepAlive_Complete_t;
 
 		/** \brief RNDIS Reset Complete Message Structure.
 		 *
@@ -327,7 +328,7 @@
 			uint32_t Status;
 
 			uint32_t AddressingReset;
-		} RNDIS_Reset_Complete_t;
+		} ATTR_PACKED RNDIS_Reset_Complete_t;
 
 		/** \brief RNDIS OID Property Set Message Structure.
 		 *
@@ -343,7 +344,7 @@
 			uint32_t InformationBufferLength;
 			uint32_t InformationBufferOffset;
 			uint32_t DeviceVcHandle;
-		} RNDIS_Set_Message_t;
+		} ATTR_PACKED RNDIS_Set_Message_t;
 
 		/** \brief RNDIS OID Property Set Complete Message Structure.
 		 *
@@ -355,7 +356,7 @@
 			uint32_t MessageLength;
 			uint32_t RequestId;
 			uint32_t Status;
-		} RNDIS_Set_Complete_t;
+		} ATTR_PACKED RNDIS_Set_Complete_t;
 
 		/** \brief RNDIS OID Property Query Message Structure.
 		 *
@@ -371,7 +372,7 @@
 			uint32_t InformationBufferLength;
 			uint32_t InformationBufferOffset;
 			uint32_t DeviceVcHandle;
-		} RNDIS_Query_Message_t;
+		} ATTR_PACKED RNDIS_Query_Message_t;
 
 		/** \brief RNDIS OID Property Query Complete Message Structure.
 		 *
@@ -386,7 +387,7 @@
 
 			uint32_t InformationBufferLength;
 			uint32_t InformationBufferOffset;
-		} RNDIS_Query_Complete_t;
+		} ATTR_PACKED RNDIS_Query_Complete_t;
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

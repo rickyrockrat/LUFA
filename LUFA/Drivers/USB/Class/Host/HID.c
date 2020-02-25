@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -29,7 +29,8 @@
 */
 
 #define  __INCLUDE_FROM_USB_DRIVER
-#include "../../HighLevel/USBMode.h"
+#include "../../Core/USBMode.h"
+
 #if defined(USB_CAN_BE_HOST)
 
 #define  __INCLUDE_FROM_HID_DRIVER
@@ -88,32 +89,59 @@ uint8_t HID_Host_ConfigurePipes(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo
 		USB_Descriptor_Endpoint_t* EndpointData = DESCRIPTOR_PCAST(ConfigDescriptorData, USB_Descriptor_Endpoint_t);
 
 		if (EndpointData->EndpointAddress & ENDPOINT_DESCRIPTOR_DIR_IN)
-		  DataINEndpoint = EndpointData;
+		  DataINEndpoint  = EndpointData;
 		else
 		  DataOUTEndpoint = EndpointData;
 	}
 
 	for (uint8_t PipeNum = 1; PipeNum < PIPE_TOTAL_PIPES; PipeNum++)
 	{
+		uint16_t Size;
+		uint8_t  Type;
+		uint8_t  Token;
+		uint8_t  EndpointAddress;
+		uint8_t  InterruptPeriod;
+		bool     DoubleBanked;
+
 		if (PipeNum == HIDInterfaceInfo->Config.DataINPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_INTERRUPT, PIPE_TOKEN_IN,
-			                   DataINEndpoint->EndpointAddress, DataINEndpoint->EndpointSize,
-			                   HIDInterfaceInfo->Config.DataINPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
-			Pipe_SetInterruptPeriod(DataINEndpoint->PollingIntervalMS);
+			Size            = DataINEndpoint->EndpointSize;
+			EndpointAddress = DataINEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_IN;
+			Type            = EP_TYPE_INTERRUPT;
+			DoubleBanked    = HIDInterfaceInfo->Config.DataINPipeDoubleBank;
+			InterruptPeriod = DataINEndpoint->PollingIntervalMS;
 
-			HIDInterfaceInfo->State.DataINPipeSize = DataINEndpoint->EndpointSize;
+			HIDInterfaceInfo->State.DataINPipeSize   = DataINEndpoint->EndpointSize;
 		}
 		else if (PipeNum == HIDInterfaceInfo->Config.DataOUTPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_INTERRUPT, PIPE_TOKEN_OUT,
-			                   DataOUTEndpoint->EndpointAddress, DataOUTEndpoint->EndpointSize,
-			                   HIDInterfaceInfo->Config.DataOUTPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
-			Pipe_SetInterruptPeriod(DataOUTEndpoint->PollingIntervalMS);
+			if (DataOUTEndpoint == NULL)
+			  continue;
+		
+			Size            = DataOUTEndpoint->EndpointSize;
+			EndpointAddress = DataOUTEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_OUT;
+			Type            = EP_TYPE_INTERRUPT;
+			DoubleBanked    = HIDInterfaceInfo->Config.DataOUTPipeDoubleBank;
+			InterruptPeriod = DataOUTEndpoint->PollingIntervalMS;
 
-			HIDInterfaceInfo->State.DataOUTPipeSize = DataOUTEndpoint->EndpointSize;
+			HIDInterfaceInfo->State.DataOUTPipeSize   = DataOUTEndpoint->EndpointSize;
 			HIDInterfaceInfo->State.DeviceUsesOUTPipe = true;
 		}
+		else
+		{
+			continue;
+		}
+
+		if (!(Pipe_ConfigurePipe(PipeNum, Type, Token, EndpointAddress, Size,
+		                         DoubleBanked ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE)))
+		{
+			return HID_ENUMERROR_PipeConfigurationFailed;
+		}
+		
+		if (InterruptPeriod)
+		  Pipe_SetInterruptPeriod(InterruptPeriod);
 	}
 
 	HIDInterfaceInfo->State.InterfaceNumber      = HIDInterface->InterfaceNumber;
@@ -212,7 +240,7 @@ uint8_t HID_Host_ReceiveReport(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo,
 
 		if (HIDInterfaceInfo->Config.HIDParserData->UsingReportIDs)
 		{
-			ReportID = Pipe_Read_Byte();
+			ReportID = Pipe_Read_8();
 			*(BufferPos++) = ReportID;
 		}
 
@@ -224,7 +252,7 @@ uint8_t HID_Host_ReceiveReport(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo,
 		ReportSize = Pipe_BytesInPipe();
 	}
 
-	if ((ErrorCode = Pipe_Read_Stream_LE(BufferPos, ReportSize, NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+	if ((ErrorCode = Pipe_Read_Stream_LE(BufferPos, ReportSize, NULL)) != PIPE_RWSTREAM_NoError)
 	  return ErrorCode;
 
 	Pipe_ClearIN();
@@ -253,9 +281,9 @@ uint8_t HID_Host_SendReportByID(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo
 		Pipe_Unfreeze();
 
 		if (ReportID)
-		  Pipe_Write_Stream_LE(&ReportID, sizeof(ReportID), NO_STREAM_CALLBACK);
+		  Pipe_Write_Stream_LE(&ReportID, sizeof(ReportID), NULL);
 
-		if ((ErrorCode = Pipe_Write_Stream_LE(Buffer, ReportSize, NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+		if ((ErrorCode = Pipe_Write_Stream_LE(Buffer, ReportSize, NULL)) != PIPE_RWSTREAM_NoError)
 		  return ErrorCode;
 
 		Pipe_ClearOUT();

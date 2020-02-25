@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -42,23 +42,23 @@
 		#include <LUFA/Drivers/USB/USB.h>
 
 	/* Macros: */
-		/** Endpoint number of the first CDC interface's device-to-host notification IN endpoint. */
-		#define CDC1_NOTIFICATION_EPNUM        3
-
 		/** Endpoint number of the first CDC interface's device-to-host data IN endpoint. */
 		#define CDC1_TX_EPNUM                  1
 
 		/** Endpoint number of the first CDC interface's host-to-device data OUT endpoint. */
 		#define CDC1_RX_EPNUM                  2
 
-		/** Endpoint number of the second CDC interface's device-to-host notification IN endpoint. */
-		#define CDC2_NOTIFICATION_EPNUM        4
+		/** Endpoint number of the first CDC interface's device-to-host notification IN endpoint. */
+		#define CDC1_NOTIFICATION_EPNUM        3
 
 		/** Endpoint number of the second CDC interface's device-to-host data IN endpoint. */
-		#define CDC2_TX_EPNUM                  5
+		#define CDC2_TX_EPNUM                  4
 
 		/** Endpoint number of the second CDC interface's host-to-device data OUT endpoint. */
-		#define CDC2_RX_EPNUM                  6
+		#define CDC2_RX_EPNUM                  5
+
+		/** Endpoint number of the second CDC interface's device-to-host notification IN endpoint. */
+		#define CDC2_NOTIFICATION_EPNUM        6
 
 		/** Size in bytes of the CDC device-to-host notification IN endpoints. */
 		#define CDC_NOTIFICATION_EPSIZE        8

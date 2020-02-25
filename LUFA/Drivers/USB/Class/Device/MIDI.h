@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -38,13 +38,13 @@
  */
 
 /** \ingroup Group_USBClassMIDI
- *  @defgroup Group_USBClassMIDIDevice MIDI Class Device Mode Driver
+ *  \defgroup Group_USBClassMIDIDevice MIDI Class Device Mode Driver
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - LUFA/Drivers/USB/Class/Device/MIDI.c <i>(Makefile source module name: LUFA_SRC_USBCLASS)</i>
  *
- *  \section Module Description
+ *  \section Sec_ModDescription Module Description
  *  Device Mode USB Class driver framework interface, for the MIDI USB Class driver.
  *
  *  @{
@@ -57,8 +57,6 @@
 		#include "../../USB.h"
 		#include "../Common/MIDI.h"
 
-		#include <string.h>
-
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
@@ -69,17 +67,13 @@
 			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
 		#endif
 
-		#if defined(__INCLUDE_FROM_MIDI_DEVICE_C) && defined(NO_STREAM_CALLBACKS)
-			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
-		#endif
-
 	/* Public Interface - May be used in end-application: */
 		/* Type Define: */
 			/** \brief MIDI Class Device Mode Configuration and State Structure.
 			 *
 			 *  Class state structure. An instance of this structure should be made for each MIDI interface
 			 *  within the user application, and passed to each of the MIDI class driver functions as the
-			 *  MIDIInterfaceInfo parameter. This stores each MIDI interface's configuration and state information.
+			 *  \c MIDIInterfaceInfo parameter. This stores each MIDI interface's configuration and state information.
 			 */
 			typedef struct
 			{
@@ -97,6 +91,7 @@
 				} Config; /**< Config data for the USB class interface within the device. All elements in this section
 				           *   <b>must</b> be set or the interface will fail to enumerate and operate correctly.
 				           */
+				
 				struct
 				{
 					// No state information for this class
@@ -116,7 +111,7 @@
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
 			 *
-			 *  \return Boolean true if the endpoints were successfully configured, false otherwise.
+			 *  \return Boolean \c true if the endpoints were successfully configured, \c false otherwise.
 			 */
 			bool MIDI_Device_ConfigureEndpoints(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
@@ -161,7 +156,7 @@
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
 			 *  \param[out]    Event              Pointer to a USB_MIDI_EventPacket_t structure where the received MIDI event is to be placed.
 			 *
-			 *  \return Boolean true if a MIDI event packet was received, false otherwise.
+			 *  \return Boolean \c true if a MIDI event packet was received, \c false otherwise.
 			 */
 			bool MIDI_Device_ReceiveEventPacket(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo,
 			                                    MIDI_EventPacket_t* const Event) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
               
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this 
   software and its documentation for any purpose is hereby granted
@@ -30,20 +30,17 @@
 
 /** \file
  *  \brief Board specific LED driver header for the MINIMUS.
- *
- *  Board specific LED driver header for the Minimus USB (http://www.minimususb.com/).
+ *  \copydetails Group_LEDs_MINIMUS
  *
  *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver
  *        dispatch header located in LUFA/Drivers/Board/LEDs.h.
  */
 
 /** \ingroup Group_LEDs
- *  @defgroup Group_LEDs_MINIMUS MINIMUS
+ *  \defgroup Group_LEDs_MINIMUS MINIMUS
+ *  \brief Board specific LED driver header for the MINIMUS.
  *
  *  Board specific LED driver header for the Minimus USB (http://www.minimususb.com/).
- *
- *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver
- *        dispatch header located in LUFA/Drivers/Board/LEDs.h.
  *
  *  @{
  */
@@ -52,8 +49,6 @@
 #define __LEDS_MINIMUS_H__
 
 	/* Includes: */
-		#include <avr/io.h>
-
 		#include "../../../Common/Common.h"
 
 	/* Enable C linkage for C++ Compilers: */
@@ -84,23 +79,23 @@
 		#if !defined(__DOXYGEN__)
 			static inline void LEDs_Init(void)
 			{
-				DDRD  |=  LEDS_ALL_LEDS;
-				PORTD &= ~LEDS_ALL_LEDS;
+				DDRD  |= LEDS_ALL_LEDS;
+				PORTD |= LEDS_ALL_LEDS;
 			}
 			
 			static inline void LEDs_TurnOnLEDs(const uint8_t LEDMask)
 			{
-				PORTD |= LEDMask;
+				PORTD &= ~LEDMask;
 			}
 
 			static inline void LEDs_TurnOffLEDs(const uint8_t LEDMask)
 			{
-				PORTD &= ~LEDMask;
+				PORTD |=  LEDMask;
 			}
 
 			static inline void LEDs_SetAllLEDs(const uint8_t LEDMask)
 			{
-				PORTD = ((PORTD & ~LEDS_ALL_LEDS) | LEDMask);
+				PORTD = ((PORTD | LEDS_ALL_LEDS) & ~LEDMask);
 			}
 			
 			static inline void LEDs_ChangeLEDs(const uint8_t LEDMask,
@@ -111,7 +106,7 @@
 			
 			static inline void LEDs_ToggleLEDs(const uint8_t LEDMask)
 			{
-				PORTD = (PORTD ^ (LEDMask & LEDS_ALL_LEDS));
+				PORTD ^= LEDMask;
 			}
 			
 			static inline uint8_t LEDs_GetLEDs(void) ATTR_WARN_UNUSED_RESULT;

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -38,14 +38,13 @@
  */
 
 /** \ingroup Group_USBClassHID
- *  @defgroup Group_USBClassHIDHost HID Class Host Mode Driver
+ *  \defgroup Group_USBClassHIDHost HID Class Host Mode Driver
  *
  *  \section Sec_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - LUFA/Drivers/USB/Class/Host/HID.c <i>(Makefile source module name: LUFA_SRC_USBCLASS)</i>
- *    - LUFA/Drivers/USB/Class/Host/HIDParser.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
  *
- *  \section Module Description
+ *  \section Sec_ModDescription Module Description
  *  Host Mode USB Class driver framework interface, for the HID USB Class driver.
  *
  *  @{
@@ -57,7 +56,6 @@
 	/* Includes: */
 		#include "../../USB.h"
 		#include "../Common/HID.h"
-		#include "HIDParser.h"
 
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -69,11 +67,6 @@
 			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
 		#endif
 
-		#if defined(__INCLUDE_FROM_HID_HOST_C) && defined(NO_STREAM_CALLBACKS)
-			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
-		#endif
-
-
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
 			/** Error code for some HID Host functions, indicating a logical (and not hardware) error. */
@@ -83,7 +76,7 @@
 			/** \brief HID Class Host Mode Configuration and State Structure.
 			 *
 			 *  Class state structure. An instance of this structure should be made within the user application,
-			 *  and passed to each of the HID class driver functions as the HIDInterfaceInfo parameter. This
+			 *  and passed to each of the HID class driver functions as the \c HIDInterfaceInfo parameter. This
 			 *  stores each HID interface's configuration and state information.
 			 */
 			typedef struct
@@ -104,7 +97,7 @@
 					HID_ReportInfo_t* HIDParserData; /**< HID parser data to store the parsed HID report data, when boot protocol
 					                                  *   is not used.
 													  *
-					                                  *  \note When the HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined,
+					                                  *  \note When the \c HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined,
 					                                  *        this method is unavailable.
 					                                  */
 					#endif
@@ -145,6 +138,7 @@
 				HID_ENUMERROR_NoError                    = 0, /**< Configuration Descriptor was processed successfully. */
 				HID_ENUMERROR_InvalidConfigDescriptor    = 1, /**< The device returned an invalid Configuration Descriptor. */
 				HID_ENUMERROR_NoCompatibleInterfaceFound = 2, /**< A compatible HID interface was not found in the device's Configuration Descriptor. */
+				HID_ENUMERROR_PipeConfigurationFailed    = 3, /**< One or more pipes for the specified interface could not be configured correctly. */
 			};
 
 		/* Function Prototypes: */
@@ -195,7 +189,7 @@
 			 *  \pre This function must only be called when the Host state machine is in the \ref HOST_STATE_Configured state or the
 			 *       call will fail.
 			 *
-			 *  \note When the HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, this method is unavailable.
+			 *  \note When the \c HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, this method is unavailable.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state.
 			 *  \param[in]     ReportID          Report ID of the received report if ControlRequest is false, set by the to the Report ID to fetch.
@@ -214,7 +208,7 @@
 			 *  \pre This function must only be called when the Host state machine is in the \ref HOST_STATE_Configured state or the
 			 *       call will fail.
 			 *
-			 *  \note When the HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, the ReportID parameter is removed
+			 *  \note When the \c HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, the ReportID parameter is removed
 			 *        from the parameter list of this function.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state.
@@ -246,13 +240,13 @@
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state.
 			 *
-			 *  \return Boolean true if a report has been received, false otherwise.
+			 *  \return Boolean \c true if a report has been received, \c false otherwise.
 			 */
 			bool HID_Host_IsReportReceived(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Switches the attached HID device's reporting protocol over to the Boot Report protocol mode, on supported devices.
 			 *
-			 *  \note When the HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, this method must still be called
+			 *  \note When the \c HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, this method must still be called
 			 *        to explicitly place the attached device into boot protocol mode before use.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state.
@@ -270,7 +264,7 @@
 			 *        Report Parser this function references <b>must</b> be implemented in the user code.
 			 *        \n\n
 			 *
-			 *  \note When the HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, this method is unavailable.
+			 *  \note When the \c HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, this method is unavailable.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state.
 			 *

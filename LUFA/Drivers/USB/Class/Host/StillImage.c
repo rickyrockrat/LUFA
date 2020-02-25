@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -29,7 +29,8 @@
 */
 
 #define  __INCLUDE_FROM_USB_DRIVER
-#include "../../HighLevel/USBMode.h"
+#include "../../Core/USBMode.h"
+
 #if defined(USB_CAN_BE_HOST)
 
 #define  __INCLUDE_FROM_SI_DRIVER
@@ -50,7 +51,7 @@ uint8_t SI_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
 	if (DESCRIPTOR_TYPE(ConfigDescriptorData) != DTYPE_Configuration)
 	  return SI_ENUMERROR_InvalidConfigDescriptor;
 
-	while (!(DataINEndpoint) || !(DataOUTEndpoint))
+	while (!(DataINEndpoint) || !(DataOUTEndpoint) || !(EventsEndpoint))
 	{
 		if (!(StillImageInterface) ||
 		    USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
@@ -88,31 +89,59 @@ uint8_t SI_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
 
 	for (uint8_t PipeNum = 1; PipeNum < PIPE_TOTAL_PIPES; PipeNum++)
 	{
+		uint16_t Size;
+		uint8_t  Type;
+		uint8_t  Token;
+		uint8_t  EndpointAddress;
+		uint8_t  InterruptPeriod;
+		bool     DoubleBanked;
+
 		if (PipeNum == SIInterfaceInfo->Config.DataINPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_BULK, PIPE_TOKEN_IN,
-			                   DataINEndpoint->EndpointAddress, DataINEndpoint->EndpointSize,
-			                   SIInterfaceInfo->Config.DataINPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
+			Size            = DataINEndpoint->EndpointSize;
+			EndpointAddress = DataINEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_IN;
+			Type            = EP_TYPE_BULK;
+			DoubleBanked    = SIInterfaceInfo->Config.DataINPipeDoubleBank;
+			InterruptPeriod = 0;
 
 			SIInterfaceInfo->State.DataINPipeSize = DataINEndpoint->EndpointSize;
 		}
 		else if (PipeNum == SIInterfaceInfo->Config.DataOUTPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_BULK, PIPE_TOKEN_OUT,
-			                   DataOUTEndpoint->EndpointAddress, DataOUTEndpoint->EndpointSize,
-			                   SIInterfaceInfo->Config.DataOUTPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
+			Size            = DataOUTEndpoint->EndpointSize;
+			EndpointAddress = DataOUTEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_OUT;
+			Type            = EP_TYPE_BULK;
+			DoubleBanked    = SIInterfaceInfo->Config.DataOUTPipeDoubleBank;
+			InterruptPeriod = 0;
 
 			SIInterfaceInfo->State.DataOUTPipeSize = DataOUTEndpoint->EndpointSize;
 		}
 		else if (PipeNum == SIInterfaceInfo->Config.EventsPipeNumber)
 		{
-			Pipe_ConfigurePipe(PipeNum, EP_TYPE_INTERRUPT, PIPE_TOKEN_IN,
-			                   EventsEndpoint->EndpointAddress, EventsEndpoint->EndpointSize,
-			                   SIInterfaceInfo->Config.EventsPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
-			Pipe_SetInterruptPeriod(EventsEndpoint->PollingIntervalMS);
+			Size            = EventsEndpoint->EndpointSize;
+			EndpointAddress = EventsEndpoint->EndpointAddress;
+			Token           = PIPE_TOKEN_IN;
+			Type            = EP_TYPE_INTERRUPT;
+			DoubleBanked    = SIInterfaceInfo->Config.EventsPipeDoubleBank;
+			InterruptPeriod = EventsEndpoint->PollingIntervalMS;
 
 			SIInterfaceInfo->State.EventsPipeSize = EventsEndpoint->EndpointSize;
 		}
+		else
+		{
+			continue;
+		}
+		
+		if (!(Pipe_ConfigurePipe(PipeNum, Type, Token, EndpointAddress, Size,
+		                         DoubleBanked ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE)))
+		{
+			return SI_ENUMERROR_PipeConfigurationFailed;
+		}
+		
+		if (InterruptPeriod)
+		  Pipe_SetInterruptPeriod(InterruptPeriod);
 	}
 
 	SIInterfaceInfo->State.InterfaceNumber = StillImageInterface->InterfaceNumber;
@@ -178,14 +207,14 @@ uint8_t SI_Host_SendBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
 	Pipe_SelectPipe(SIInterfaceInfo->Config.DataOUTPipeNumber);
 	Pipe_Unfreeze();
 
-	if ((ErrorCode = Pipe_Write_Stream_LE(PIMAHeader, PIMA_COMMAND_SIZE(0), NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+	if ((ErrorCode = Pipe_Write_Stream_LE(PIMAHeader, PIMA_COMMAND_SIZE(0), NULL)) != PIPE_RWSTREAM_NoError)
 	  return ErrorCode;
 
 	uint8_t ParamBytes = (PIMAHeader->DataLength - PIMA_COMMAND_SIZE(0));
 
 	if (ParamBytes)
 	{
-		if ((ErrorCode = Pipe_Write_Stream_LE(&PIMAHeader->Params, ParamBytes, NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
+		if ((ErrorCode = Pipe_Write_Stream_LE(&PIMAHeader->Params, ParamBytes, NULL)) != PIPE_RWSTREAM_NoError)
 		  return ErrorCode;
 	}
 
@@ -243,14 +272,14 @@ uint8_t SI_Host_ReceiveBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 		  return PIPE_RWSTREAM_DeviceDisconnected;
 	}
 
-	Pipe_Read_Stream_LE(PIMAHeader, PIMA_COMMAND_SIZE(0), NO_STREAM_CALLBACK);
+	Pipe_Read_Stream_LE(PIMAHeader, PIMA_COMMAND_SIZE(0), NULL);
 
 	if (PIMAHeader->Type == PIMA_CONTAINER_ResponseBlock)
 	{
 		uint8_t ParamBytes = (PIMAHeader->DataLength - PIMA_COMMAND_SIZE(0));
 
 		if (ParamBytes)
-		  Pipe_Read_Stream_LE(&PIMAHeader->Params, ParamBytes, NO_STREAM_CALLBACK);
+		  Pipe_Read_Stream_LE(&PIMAHeader->Params, ParamBytes, NULL);
 
 		Pipe_ClearIN();
 	}
@@ -272,7 +301,7 @@ uint8_t SI_Host_SendData(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
 	Pipe_SelectPipe(SIInterfaceInfo->Config.DataOUTPipeNumber);
 	Pipe_Unfreeze();
 
-	ErrorCode = Pipe_Write_Stream_LE(Buffer, Bytes, NO_STREAM_CALLBACK);
+	ErrorCode = Pipe_Write_Stream_LE(Buffer, Bytes, NULL);
 
 	Pipe_ClearOUT();
 	Pipe_Freeze();
@@ -292,7 +321,7 @@ uint8_t SI_Host_ReadData(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
 	Pipe_SelectPipe(SIInterfaceInfo->Config.DataINPipeNumber);
 	Pipe_Unfreeze();
 
-	ErrorCode = Pipe_Read_Stream_LE(Buffer, Bytes, NO_STREAM_CALLBACK);
+	ErrorCode = Pipe_Read_Stream_LE(Buffer, Bytes, NULL);
 
 	Pipe_Freeze();
 
@@ -328,7 +357,7 @@ uint8_t SI_Host_ReceiveEventHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 	Pipe_SelectPipe(SIInterfaceInfo->Config.EventsPipeNumber);
 	Pipe_Unfreeze();
 
-	ErrorCode = Pipe_Read_Stream_LE(PIMAHeader, sizeof(PIMA_Container_t), NO_STREAM_CALLBACK);
+	ErrorCode = Pipe_Read_Stream_LE(PIMAHeader, sizeof(PIMA_Container_t), NULL);
 
 	Pipe_ClearIN();
 	Pipe_Freeze();
@@ -339,7 +368,7 @@ uint8_t SI_Host_ReceiveEventHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 uint8_t SI_Host_OpenSession(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnected;
+	  return PIPE_RWSTREAM_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 
@@ -371,7 +400,7 @@ uint8_t SI_Host_OpenSession(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
 uint8_t SI_Host_CloseSession(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnected;
+	  return PIPE_RWSTREAM_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 
@@ -403,7 +432,7 @@ uint8_t SI_Host_SendCommand(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
                             uint32_t* const Params)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnected;
+	  return PIPE_RWSTREAM_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 
@@ -428,7 +457,7 @@ uint8_t SI_Host_ReceiveResponse(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
 	PIMA_Container_t PIMABlock;
 
 	if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnected;
+	  return PIPE_RWSTREAM_DeviceDisconnected;
 
 	if ((ErrorCode = SI_Host_ReceiveBlockHeader(SIInterfaceInfo, &PIMABlock)) != PIPE_RWSTREAM_NoError)
 	  return ErrorCode;

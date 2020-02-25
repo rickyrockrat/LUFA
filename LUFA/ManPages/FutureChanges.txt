@@ -15,17 +15,18 @@
   *  - Code Features
   *      -# Add hub support when in Host mode for multiple devices
   *      -# Investigate virtual hubs when in device mode instead of composite devices
-  *      -# Add ability to get number of bytes not written with pipe/endpoint write routines after an error
   *      -# Change makefiles to allow for absolute LUFA location to be used
   *      -# Re-add interrupt Pipe/Endpoint support
-  *      -# Add HID report macros to make HID report editing easier
-  *      -# Investigate dynamically created device descriptors
+  *      -# Add makefile includes to reduce boilerplate in user makefiles
+  *      -# Update stream APIs to use DMA transfers on supported architectures
+  *      -# Pull out third party libraries into a seperate folder and reference them as required
+  *      -# Add a LUFA_YIELD macro for integration into a third-party RTOS
+  *      -# Abstract out Mass Storage byte send/receive to prevent low level API use in projects
   *  - Documentation/Support
   *      -# Add detailed overviews of how each demo works
   *      -# Add board overviews
   *      -# Write LUFA tutorials
   *  - Demos/Projects
-  *      -# Multiple-Report HID device
   *      -# Device/Host USB bridge
   *      -# Alternative (USB-IF endorsed) USB-CDC Ethernet Class
   *      -# Finish Test and Measurement Class demo
@@ -35,7 +36,6 @@
   *      -# Arduino Uno compatible USB-MIDI, USB-HID
   *      -# Make Webserver project work in RNDIS device mode
   *  - Ports
-  *      -# AVR32 UC3B series microcontrollers
   *      -# Atmel ARM7 series microcontrollers
   *      -# Other (commercial) C compilers
   */

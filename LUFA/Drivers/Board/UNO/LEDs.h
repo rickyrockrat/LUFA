@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2010.
+     Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -30,29 +30,26 @@
 
 /** \file
  *  \brief Board specific LED driver header for the Arduino Uno.
- *
- *  Board specific LED driver header for the Arduino Uno (http://arduino.cc/en/Main/ArduinoBoardUno).
+ *  \copydetails Group_LEDs_UNO
  *
  *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver
  *        dispatch header located in LUFA/Drivers/Board/LEDs.h.
  */
 
 /** \ingroup Group_LEDs
- *  @defgroup Group_LEDs_UNO UNO
+ *  \defgroup Group_LEDs_UNO UNO
+ *  \brief Board specific LED driver header for the Arduino Uno.
  *
  *  Board specific LED driver header for the Arduino Uno (http://arduino.cc/en/Main/ArduinoBoardUno).
- *
- *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver
- *        dispatch header located in LUFA/Drivers/Board/LEDs.h.
  *
  *  @{
  */
 
-#ifndef __LEDS_BENITO_H__
-#define __LEDS_BENITO_H__
+#ifndef __LEDS_UNO_H__
+#define __LEDS_UNO_H__
 
 	/* Includes: */
-		#include <avr/io.h>
+		#include "../../../Common/Common.h"
 
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -60,7 +57,7 @@
 		#endif
 
 	/* Preprocessor Checks: */
-		#if !defined(INCLUDE_FROM_LEDS_H)
+		#if !defined(__INCLUDE_FROM_LEDS_H)
 			#error Do not include this file directly. Include LUFA/Drivers/Board/LEDS.h instead.
 		#endif
 
