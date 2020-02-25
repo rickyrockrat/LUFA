@@ -133,10 +133,9 @@ SRC = $(TARGET).c                                                 \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/LowLevel.c           \
  	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Pipe.c               \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/Events.c            \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/StdDescriptors.c    \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/USBTask.c           \
-	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/ConfigDescriptor.c      \
+	  $(LUFA_PATH)/LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c  \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/Class/HIDParser.c             \
  
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -504,7 +503,7 @@ sizeafter:
 checkhooks: build
 	@echo
 	@echo ------- Unhooked LUFA Events -------
-	@$(shell) (grep -s '^Event.*LUFA/.*\\.o' $(TARGET).map | \
+	@$(shell) (grep -s '^EVENT_.*LUFA/.*\\.o' $(TARGET).map | \
 	           cut -d' ' -f1 | cut -d'_' -f2- | grep ".*") || \
 			   echo "(None)"
 	@echo ------------------------------------

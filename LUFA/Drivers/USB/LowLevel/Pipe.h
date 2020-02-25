@@ -158,90 +158,6 @@
 			 */
 			#define PIPE_EPSIZE_MASK                0x7FF
 
-			/** Interrupt definition for the pipe IN interrupt (for INTERRUPT type pipes). Should be used with
-			 *  the USB_INT_* macros located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on an INTERRUPT type pipe if the pipe interrupt period has
-			 *  elapsed and the pipe is ready for the next packet from the attached device to be read out from its
-			 *  FIFO buffer (if received).
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* pipe which requires it (after the pipe
-			 *        is selected), and will fire the common pipe interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 */
-			#define PIPE_INT_IN                     UPIENX, (1 << RXINE) , UPINTX, (1 << RXINI)
-
-			/** Interrupt definition for the pipe OUT interrupt (for INTERRUPT type pipes). Should be used with
-			 *  the USB_INT_* macros located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on an INTERRUPT type endpoint if a the pipe interrupt period
-			 *  has elapsed and the pipe is ready for a packet to be written to the pipe's FIFO buffer and sent
-			 *  to the attached device (if required).
-			 *  
-			 *  \note This interrupt must be enabled and cleared on *each* pipe which requires it (after the pipe
-			 *        is selected), and will fire the common pipe interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 */
-			#define PIPE_INT_OUT                   UPIENX, (1 << TXOUTE), UPINTX, (1 << TXOUTI)
-
-			/** Interrupt definition for the pipe SETUP bank ready interrupt (for CONTROL type pipes). Should be
-			 *  used with the USB_INT_* macros located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on an CONTROL type pipe when the pipe is ready for a new
-			 *  control request.
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* pipe which requires it (after the pipe
-			 *        is selected), and will fire the common pipe interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 */
-			#define PIPE_INT_SETUP                 UPIENX, (1 << TXSTPE) , UPINTX, (1 << TXSTPI)
-
-			/** Interrupt definition for the pipe error interrupt. Should be used with the USB_INT_* macros
-			 *  located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on a particular pipe if an error occurs on that pipe, such
-			 *  as a CRC mismatch error.
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* pipe which requires it (after the pipe
-			 *        is selected), and will fire the common pipe interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 *
-			 *  \see \ref Pipe_GetErrorFlags() for more information on the pipe errors.
-			 */
-			#define PIPE_INT_ERROR                 UPIENX, (1 << PERRE), UPINTX, (1 << PERRI)
-
-			/** Interrupt definition for the pipe NAK received interrupt. Should be used with the USB_INT_* macros
-			 *  located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on a particular pipe if an attached device returns a NAK in
-			 *  response to a sent packet.
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* pipe which requires it (after the pipe
-			 *        is selected), and will fire the common pipe interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 *
-			 *  \see \ref Pipe_IsNAKReceived() for more information on pipe NAKs.
-			 */
-			#define PIPE_INT_NAK                   UPIENX, (1 << NAKEDE), UPINTX, (1 << NAKEDI)
-
-			/** Interrupt definition for the pipe STALL received interrupt. Should be used with the USB_INT_* macros
-			 *  located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on a particular pipe if an attached device returns a STALL on the
-			 *  currently selected pipe. This will also fire if the pipe is an isochronous pipe and a CRC error occurs.
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* pipe which requires it (after the pipe
-			 *        is selected), and will fire the common pipe interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 */
-			#define PIPE_INT_STALL                 UPIENX, (1 << RXSTALLE), UPINTX, (1 << RXSTALLI)
-
 		/* Pseudo-Function Macros: */
 			#if defined(__DOXYGEN__)
 				/** Indicates the number of bytes currently stored in the current pipes's selected bank.
@@ -336,12 +252,6 @@
 				 *  \return Mask whose bits indicate which pipes have interrupted
 				 */
 				static inline uint8_t Pipe_GetPipeInterrupts(void);
-				
-				/** Clears the interrupt flag for the specified pipe number.
-				 *
-				 *  \param PipeNumber  Index of the pipe whose interrupt flag is to be cleared
-				 */
-				static inline void Pipe_ClearPipeInterrupt(uint8_t PipeNumber);
 				
 				/** Determines if the specified pipe number has interrupted (valid only for INTERRUPT type
 				 *  pipes).
@@ -503,8 +413,6 @@
 				#define Pipe_SetInterruptPeriod(ms)    MACROS{ UPCFG2X = ms; }MACROE
 
 				#define Pipe_GetPipeInterrupts()       UPINT
-
-				#define Pipe_ClearPipeInterrupt(n)     MACROS{ UPINT &= ~(1 << n); }MACROE
 
 				#define Pipe_HasPipeInterrupted(n)     ((UPINT & (1 << n)) ? true : false)
 
@@ -801,7 +709,8 @@
 		/* Function Prototypes: */
 			/** Configures the specified pipe number with the given pipe type, token, target endpoint number in the
 			 *  attached device, bank size and banking mode. Pipes should be allocated in ascending order by their
-			 *  address in the device (i.e. pipe 1 should be configured before pipe 2 and so on).
+			 *  address in the device (i.e. pipe 1 should be configured before pipe 2 and so on) to prevent fragmentation
+			 *  of the USB FIFO memory.
 			 *
 			 *  The pipe type may be one of the EP_TYPE_* macros listed in LowLevel.h, the token may be one of the
 			 *  PIPE_TOKEN_* masks.
@@ -813,6 +722,9 @@
 			 *  The banking mode may be either \ref PIPE_BANK_SINGLE or \ref PIPE_BANK_DOUBLE.
 			 *
 			 *  A newly configured pipe is frozen by default, and must be unfrozen before use via the \ref Pipe_Unfreeze() macro.
+			 *
+			 *  \note The default control pipe does not have to be manually configured, as it is automatically
+			 *  configured by the library internally.
 			 *
 			 *  \note This routine will select the specified pipe, and the pipe will remain selected once the
 			 *        routine completes regardless of if the pipe configuration succeeds.
@@ -837,9 +749,9 @@
 			 *  \ref Pipe_ClearOUT() macro. Between each USB packet, the given stream callback function is
 			 *  executed repeatedly until the next packet is ready, allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \ingroup Group_PipeRW
 			 *
@@ -851,7 +763,7 @@
 			 */
 			uint8_t Pipe_Write_Stream_LE(const void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                             , uint8_t (* const Callback)(void)
+			                             , StreamCallbackPtr_t Callback
 			#endif
 			                             ) ATTR_NON_NULL_PTR_ARG(1);				
 
@@ -861,9 +773,9 @@
 			 *  \ref Pipe_ClearOUT() macro. Between each USB packet, the given stream callback function is
 			 *  executed repeatedly until the next packet is ready, allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \ingroup Group_PipeRW
 			 *
@@ -875,7 +787,7 @@
 			 */
 			uint8_t Pipe_Write_Stream_BE(const void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                             , uint8_t (* const Callback)(void)
+			                             , StreamCallbackPtr_t Callback
 			#endif
 			                             ) ATTR_NON_NULL_PTR_ARG(1);
 
@@ -885,9 +797,9 @@
 			 *  Between each USB packet, the given stream callback function is executed repeatedly until the next packet is ready,
 			 *  allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \ingroup Group_PipeRW
 			 *
@@ -898,7 +810,7 @@
 			 */
 			uint8_t Pipe_Discard_Stream(uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                            , uint8_t (* const Callback)(void)
+			                            , StreamCallbackPtr_t Callback
 			#endif
 			                            );
 
@@ -908,9 +820,9 @@
 			 *  \ref Pipe_ClearIN() macro. Between each USB packet, the given stream callback function is
 			 *  executed repeatedly until the next packet is ready, allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \ingroup Group_PipeRW
 			 *
@@ -922,7 +834,7 @@
 			 */
 			uint8_t Pipe_Read_Stream_LE(void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                            , uint8_t (* const Callback)(void)
+			                            , StreamCallbackPtr_t Callback
 			#endif
 			                            ) ATTR_NON_NULL_PTR_ARG(1);
 
@@ -932,9 +844,9 @@
 			 *  \ref Pipe_ClearIN() macro. Between each USB packet, the given stream callback function is
 			 *  executed repeatedly until the next packet is ready, allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \ingroup Group_PipeRW
 			 *
@@ -946,7 +858,7 @@
 			 */
 			uint8_t Pipe_Read_Stream_BE(void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                            , uint8_t (* const Callback)(void)
+			                            , StreamCallbackPtr_t Callback
 			#endif
 			                            ) ATTR_NON_NULL_PTR_ARG(1);
 			

@@ -45,7 +45,8 @@
 		#include <ctype.h>
 
 		#include "ConfigDescriptor.h"
-		#include "MassStoreCommands.h"
+
+		#include "Lib/MassStoreCommands.h"
 
 		#include <LUFA/Version.h>                                // Library Version Information
 		#include <LUFA/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
@@ -70,15 +71,14 @@
 
 	/* Task Definitions: */
 		TASK(USB_MassStore_Host);
-
-	/* Event Handlers: */
-		HANDLES_EVENT(USB_DeviceAttached);
-		HANDLES_EVENT(USB_DeviceUnattached);
-		HANDLES_EVENT(USB_DeviceEnumerationComplete);
-		HANDLES_EVENT(USB_HostError);
-		HANDLES_EVENT(USB_DeviceEnumerationFailed);
 				
 	/* Function Prototypes: */
+		void EVENT_USB_HostError(const uint8_t ErrorCode);
+		void EVENT_USB_DeviceAttached(void);
+		void EVENT_USB_DeviceUnattached(void);
+		void EVENT_USB_DeviceEnumerationFailed(const uint8_t ErrorCode, const uint8_t SubErrorCode);
+		void EVENT_USB_DeviceEnumerationComplete(void);
+
 		void ShowDiskReadError(char* CommandString, bool FailedAtSCSILayer, uint8_t ErrorCode);
 		void UpdateStatus(uint8_t CurrentStatus);		
 

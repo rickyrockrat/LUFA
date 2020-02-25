@@ -80,7 +80,7 @@ int main(void)
 /** Event handler for the USB_DeviceAttached event. This indicates that a device has been attached to the host, and
  *  starts the library USB task to begin the enumeration and USB management process.
  */
-EVENT_HANDLER(USB_DeviceAttached)
+void EVENT_USB_DeviceAttached(void)
 {
 	puts_P(PSTR("Device Attached.\r\n"));
 	UpdateStatus(Status_USBEnumerating);
@@ -92,7 +92,7 @@ EVENT_HANDLER(USB_DeviceAttached)
 /** Event handler for the USB_DeviceUnattached event. This indicates that a device has been removed from the host, and
  *  stops the library USB task management process.
  */
-EVENT_HANDLER(USB_DeviceUnattached)
+void EVENT_USB_DeviceUnattached(void)
 {
 	/* Stop HID and USB management task */
 	Scheduler_SetTaskMode(USB_USBTask, TASK_STOP);
@@ -105,7 +105,7 @@ EVENT_HANDLER(USB_DeviceUnattached)
 /** Event handler for the USB_DeviceEnumerationComplete event. This indicates that a device has been successfully
  *  enumerated by the host and is now ready to be used by the application.
  */
-EVENT_HANDLER(USB_DeviceEnumerationComplete)
+void EVENT_USB_DeviceEnumerationComplete(void)
 {
 	/* Start HID Host task */
 	Scheduler_SetTaskMode(USB_HID_Host, TASK_RUN);
@@ -115,7 +115,7 @@ EVENT_HANDLER(USB_DeviceEnumerationComplete)
 }
 
 /** Event handler for the USB_HostError event. This indicates that a hardware error occurred while in host mode. */
-EVENT_HANDLER(USB_HostError)
+void EVENT_USB_HostError(const uint8_t ErrorCode)
 {
 	USB_ShutDown();
 
@@ -129,7 +129,7 @@ EVENT_HANDLER(USB_HostError)
 /** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
  *  enumerating an attached USB device.
  */
-EVENT_HANDLER(USB_DeviceEnumerationFailed)
+void EVENT_USB_DeviceEnumerationFailed(const uint8_t ErrorCode, const uint8_t SubErrorCode)
 {
 	puts_P(PSTR(ESC_BG_RED "Dev Enum Error\r\n"));
 	printf_P(PSTR(" -- Error Code %d\r\n"), ErrorCode);
@@ -182,10 +182,8 @@ void ReadNextReport(void)
 	/* Check to see if a packet has been received */
 	if (!(Pipe_IsINReceived()))
 	{
-		#if !defined(INTERRUPT_DATA_PIPE)
 		/* Refreeze HID data IN pipe */
 		Pipe_Freeze();
-		#endif
 			
 		return;
 	}
@@ -208,10 +206,8 @@ void ReadNextReport(void)
 	/* Clear the IN endpoint, ready for next data packet */
 	Pipe_ClearIN();
 	
-	#if !defined(INTERRUPT_DATA_PIPE)
 	/* Refreeze HID data IN pipe */
 	Pipe_Freeze();
-	#endif
 }
 
 /** Writes a report to the attached device.
@@ -335,53 +331,13 @@ TASK(USB_HID_Host)
 				break;
 			}
 		
-			#if defined(INTERRUPT_DATA_PIPE)					
-			/* Select and unfreeze HID data IN pipe */
-			Pipe_SelectPipe(HID_DATA_IN_PIPE);
-			Pipe_Unfreeze();
-			#endif
-
 			puts_P(PSTR("HID Device Enumerated.\r\n"));
 					
 			USB_HostState = HOST_STATE_Ready;
 			break;
-		#if !defined(INTERRUPT_DATA_PIPE)
 		case HOST_STATE_Ready:
 			ReadNextReport();
 
 			break;
-		#endif
 	}
 }
-
-#if defined(INTERRUPT_DATA_PIPE)
-/** Interrupt handler for the Endpoint/Pipe interrupt vector. This interrupt fires each time an enabled
- *  pipe interrupt occurs on a pipe which has had that interrupt enabled.
- */
-ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
-{
-	/* Save previously selected pipe before selecting a new pipe */
-	uint8_t PrevSelectedPipe = Pipe_GetCurrentPipe();
-
-	/* Check to see if the HID data IN pipe has caused the interrupt */
-	if (Pipe_HasPipeInterrupted(HID_DATA_IN_PIPE))
-	{
-		/* Clear the pipe interrupt, and select the data IN pipe */
-		Pipe_ClearPipeInterrupt(HID_DATA_IN_PIPE);
-		Pipe_SelectPipe(HID_DATA_IN_PIPE);	
-
-		/* Check to see if the pipe IN interrupt has fired */
-		if (USB_INT_HasOccurred(PIPE_INT_IN) && USB_INT_IsEnabled(PIPE_INT_IN))
-		{
-			/* Clear interrupt flag */
-			USB_INT_Clear(PIPE_INT_IN);		
-
-			/* Read and process the next report from the device */
-			ReadNextReport();
-		}
-	}
-
-	/* Restore previously selected pipe */
-	Pipe_SelectPipe(PrevSelectedPipe);
-}
-#endif

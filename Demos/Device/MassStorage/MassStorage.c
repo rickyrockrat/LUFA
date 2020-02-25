@@ -85,21 +85,8 @@ int main(void)
 	Scheduler_Start();
 }
 
-/** Event handler for the USB_Reset event. This fires when the USB interface is reset by the USB host, before the
- *  enumeration process begins, and enables the control endpoint interrupt so that control requests can be handled
- *  asynchronously when they arrive rather than when the control endpoint is polled manually.
- */
-EVENT_HANDLER(USB_Reset)
-{
-	/* Select the control endpoint */
-	Endpoint_SelectEndpoint(ENDPOINT_CONTROLEP);
-
-	/* Enable the endpoint SETUP interrupt ISR for the control endpoint */
-	USB_INT_Enable(ENDPOINT_INT_SETUP);
-}
-
 /** Event handler for the USB_Connect event. This indicates that the device is enumerating via the status LEDs. */
-EVENT_HANDLER(USB_Connect)
+void EVENT_USB_Connect(void)
 {
 	/* Indicate USB enumerating */
 	UpdateStatus(Status_USBEnumerating);
@@ -111,7 +98,7 @@ EVENT_HANDLER(USB_Connect)
 /** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
  *  the status LEDs and stops the Mass Storage management task.
  */
-EVENT_HANDLER(USB_Disconnect)
+void EVENT_USB_Disconnect(void)
 {
 	/* Stop running mass storage task */
 	Scheduler_SetTaskMode(USB_MassStorage, TASK_STOP);
@@ -123,7 +110,7 @@ EVENT_HANDLER(USB_Disconnect)
 /** Event handler for the USB_ConfigurationChanged event. This is fired when the host set the current configuration
  *  of the USB device after enumeration - the device endpoints are configured and the Mass Storage management task started.
  */
-EVENT_HANDLER(USB_ConfigurationChanged)
+void EVENT_USB_ConfigurationChanged(void)
 {
 	/* Setup Mass Storage In and Out Endpoints */
 	Endpoint_ConfigureEndpoint(MASS_STORAGE_IN_EPNUM, EP_TYPE_BULK,
@@ -145,7 +132,7 @@ EVENT_HANDLER(USB_ConfigurationChanged)
  *  control requests that are not handled internally by the USB library (including the Mass Storage class-specific
  *  requests) so that they can be handled appropriately for the application.
  */
-EVENT_HANDLER(USB_UnhandledControlPacket)
+void EVENT_USB_UnhandledControlPacket(void)
 {
 	/* Process UFI specific control requests */
 	switch (USB_ControlRequest.bRequest)
@@ -262,6 +249,11 @@ TASK(USB_MassStorage)
 					/* Reset the data endpoint banks */
 					Endpoint_ResetFIFO(MASS_STORAGE_OUT_EPNUM);
 					Endpoint_ResetFIFO(MASS_STORAGE_IN_EPNUM);
+					
+					Endpoint_SelectEndpoint(MASS_STORAGE_OUT_EPNUM);
+					Endpoint_ClearStall();
+					Endpoint_SelectEndpoint(MASS_STORAGE_IN_EPNUM);
+					Endpoint_ClearStall();
 
 					/* Clear the abort transfer flag */
 					IsMassStoreReset = false;
@@ -291,7 +283,7 @@ static bool ReadInCommandBlock(void)
 
 	/* Read in command block header */
 	Endpoint_Read_Stream_LE(&CommandBlock, (sizeof(CommandBlock) - sizeof(CommandBlock.SCSICommandData)),
-	                        AbortOnMassStoreReset);
+	                        StreamCallback_AbortOnMassStoreReset);
 
 	/* Check if the current command is being aborted by the host */
 	if (IsMassStoreReset)
@@ -313,7 +305,7 @@ static bool ReadInCommandBlock(void)
 	/* Read in command block command data */
 	Endpoint_Read_Stream_LE(&CommandBlock.SCSICommandData,
 	                        CommandBlock.SCSICommandLength,
-	                        AbortOnMassStoreReset);
+	                        StreamCallback_AbortOnMassStoreReset);
 	  
 	/* Check if the current command is being aborted by the host */
 	if (IsMassStoreReset)
@@ -354,7 +346,7 @@ static void ReturnCommandStatus(void)
 	
 	/* Write the CSW to the endpoint */
 	Endpoint_Write_Stream_LE(&CommandStatus, sizeof(CommandStatus),
-	                          AbortOnMassStoreReset);
+	                          StreamCallback_AbortOnMassStoreReset);
 	
 	/* Check if the current command is being aborted by the host */
 	if (IsMassStoreReset)
@@ -367,7 +359,7 @@ static void ReturnCommandStatus(void)
 /** Stream callback function for the Endpoint stream read and write functions. This callback will abort the current stream transfer
  *  if a Mass Storage Reset request has been issued to the control endpoint.
  */
-STREAM_CALLBACK(AbortOnMassStoreReset)
+uint8_t StreamCallback_AbortOnMassStoreReset(void)
 {	
 	/* Abort if a Mass Storage reset command was received */
 	if (IsMassStoreReset)
@@ -375,25 +367,4 @@ STREAM_CALLBACK(AbortOnMassStoreReset)
 	
 	/* Continue with the current stream operation */
 	return STREAMCALLBACK_Continue;
-}
-
-/** ISR for the general Pipe/Endpoint interrupt vector. This ISR fires when a control request has been issued to the control endpoint,
- *  so that the request can be processed. As several elements of the Mass Storage implementation require asynchronous control requests
- *  (such as endpoint stall clearing and Mass Storage Reset requests during data transfers) this is done via interrupts rather than
- *  polling so that they can be processed regardless of the rest of the application's state.
- */
-ISR(ENDPOINT_PIPE_vect, ISR_BLOCK)
-{
-	/* Check if the control endpoint has received a request */
-	if (Endpoint_HasEndpointInterrupted(ENDPOINT_CONTROLEP))
-	{
-		/* Clear the endpoint interrupt */
-		Endpoint_ClearEndpointInterrupt(ENDPOINT_CONTROLEP);
-
-		/* Process the control request */
-		USB_USBTask();
-
-		/* Handshake the endpoint setup interrupt - must be after the call to USB_USBTask() */
-		USB_INT_Clear(ENDPOINT_INT_SETUP);
-	}
 }

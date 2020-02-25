@@ -6,6 +6,32 @@
    
  /** \page Page_ChangeLog Project Changelog
   *
+  *  \section Sec_ChangeLog090605 Version 090605
+  *
+  *  - Fixed bug in RNDISEthernet and DualCDC demos not using the correct USB_ControlRequest structure for control request data
+  *  - Fixed documentation showing incorrect USB mode support on the supported AVRs list
+  *  - Fixed RNDISEthernet not working under Linux due to Linux requiring an "optional" RNDIS request which was unhandled
+  *  - Fixed Mouse and Keyboard device demos not acting in accordance with the HID specification for idle periods (thanks to Brian Dickman)
+  *  - Removed support for endpoint/pipe non-control interrupts; these did not act in the way users expected, and had many subtle issues
+  *  - Fixed Device Mode not handling Set Feature and Clear Feature Chapter 9 requests that are addressed to the device (thanks to Brian Dickman)
+  *  - Moved control endpoint interrupt handling into the library itself, enable via the new INTERRUPT_CONTROL_ENDPOINT token
+  *  - Fixed CDCHost not clearing configured pipes and resetting configured pipes mask when a partially enumerated invalid CDC
+  *    interface is skipped
+  *  - Clarified the size of library tokens which accept integer values in the Compile Time Tokens page, values now use the smallest datatype
+  *    inside the library that is able to hold their defined value to save space
+  *  - Removed DESCRIPTOR_ADDRESS() macro as it was largely supurflous and only served to obfuscate code
+  *  - Rewritten event system to remove all macros, to make user code clearer
+  *  - Fixed incorrect ENDPOINT_EPNUM_MASK mask preventing endpoints above EP3 from being selected (thanks to Jonathan Oakley)
+  *  - Removed STREAM_CALLBACK() macro - callbacks now use regular function definitions to clarify user code
+  *  - Removed DESCRIPTOR_COMPARATOR() macro - comparators should now use regular function definitions to clarify user code
+  *  - USB_IsConnected is now cleared before the USB_Disconnect() event is fired in response to VBUS being removed
+  *  - Fixed incorrect PID value being used in the USBtoSerial project (thanks to Phill)
+  *  - Deleted StdDescriptors.c, renamed USB_GetDescriptor() to CALLBACK_USB_GetDescriptor, moved ConfigDescriptor.c/.h from the
+  *    LUFA/Drivers/USB/Class/ directory to LUFA/Drivers/USB/HighLevel/ in preperation for the new USB class APIs
+  *  - Moved out each demos' functionality library files (e.g. Ring Buffer library) to /Lib directories for a better directory structure
+  *  - Removed Tx interrupt from the USBtoSerial demo; now sends characters via polling to ensure more time for the Rx interrupt
+  *
+  *
   *  \section Sec_ChangeLog090510 Version 090510
   *
   *  - Added new GenericHIDHost demo

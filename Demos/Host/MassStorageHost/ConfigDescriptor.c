@@ -49,7 +49,6 @@ uint8_t ProcessConfigurationDescriptor(void)
 {
 	uint8_t* ConfigDescriptorData;
 	uint16_t ConfigDescriptorSize;
-	uint8_t  ErrorCode;
 	uint8_t  FoundEndpoints = 0;
 	
 	/* Get Configuration Descriptor size from the device */
@@ -71,8 +70,8 @@ uint8_t ProcessConfigurationDescriptor(void)
 	  return InvalidConfigDataReturned;
 	
 	/* Get the mass storage interface from the configuration descriptor */
-	if ((ErrorCode = USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
-	                                                NextMassStorageInterface)))
+	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+	                              DComp_NextMassStorageInterface) != DESCRIPTOR_SEARCH_COMP_Found)
 	{
 		/* Descriptor not found, error out */
 		return NoInterfaceFound;
@@ -82,8 +81,8 @@ uint8_t ProcessConfigurationDescriptor(void)
 	while (FoundEndpoints != ((1 << MASS_STORE_DATA_IN_PIPE) | (1 << MASS_STORE_DATA_OUT_PIPE)))
 	{
 		/* Fetch the next bulk endpoint from the current mass storage interface */
-		if ((ErrorCode = USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
-		                                                NextInterfaceBulkDataEndpoint)))
+		if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+		                              DComp_NextInterfaceBulkDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
 		{
 			/* Descriptor not found, error out */
 			return NoEndpointFound;
@@ -128,7 +127,7 @@ uint8_t ProcessConfigurationDescriptor(void)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextMassStorageInterface)
+uint8_t DComp_NextMassStorageInterface(void* CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
@@ -153,7 +152,7 @@ DESCRIPTOR_COMPARATOR(NextMassStorageInterface)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextInterfaceBulkDataEndpoint)
+uint8_t DComp_NextInterfaceBulkDataEndpoint(void* CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Endpoint)
 	{

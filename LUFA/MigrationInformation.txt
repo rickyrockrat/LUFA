@@ -10,6 +10,37 @@
  *  to the next version released. It does not indicate all new additions to the library in each version change, only
  *  areas relevant to making older projects compatible with the API changes of each new release.
  *
+ * \section Sec_Migration090605 Migrating from 090510 to 090605
+ *
+ *  <b>Device Mode</b>
+ *    - Support for non-control data endpoint interrupts has been dropped due to many issues in the implementation. All existing
+ *      projects using interrupts on non-control endpoints should switch to polling. For control interrupts, the library can
+ *      manage the control endpoint via interrupts automatically by compiling with the INTERRUPT_CONTROL_ENDPOINT token defined.
+ *    - The Endpoint_ClearEndpointInterrupt() macro has been deleted and references to it should be removed.
+ *    - The DESCRIPTOR_ADDRESS() macro has been removed. User applications should use normal casts to obtain a descriptor's memory
+ *      address.
+ *    - The library events system has been rewritten, so that all macros have been removed to allow for clearer user code. See
+ *      \ref Group_Events for new API details.
+ *    - The STREAM_CALLBACK() macro has been removed. User applications should replace all instances of the macro with regular
+ *      function signatures of a function accepting no arguments and returning a uint8_t value.
+ *    - The Event_DeviceError() event no longer exists, as its sole caller (unlinked USB_GetDescriptor() function) now produces a
+ *      compilation error rather than a runtime error. The StdDescriptors.c file no longer exists as a result, and should be removed
+ *      from project makefiles.
+ *    - The USB_GetDescriptor() function has been renamed to CALLBACK_USB_GetDescriptor() to be in line with the new CALLBACK_ function
+ *      prefixes for functions which *must* be implemented in the user application.
+ *
+ *  <b>Host Mode</b>
+ *    - Support for non-control data pipe interrupts has been dropped due to many issues in the implementation. All existing
+ *      projects using interrupts on non-control pipes should switch to polling.
+ *    - The Pipe_ClearPipeInterrupt() macro has been deleted and references to it should be removed.
+ *    - The library events system has been rewritten, so that all macros have been removed to allow for clearer user code. See
+ *      \ref Group_Events for new API details.
+ *    - The STREAM_CALLBACK() macro has been removed. User applications should replace all instances of the macro with regular
+ *      function signatures of a function accepting no arguments and returning a uint8_t value.
+ *    - The DESCRIPTOR_COMPARATOR() macro has been removed. User applications should replace all instances of the macro with
+ *      regular function signatures of a function accepting a pointer to the descriptor to test, and returning a uint8_t value.
+ *
+ *
  * \section Sec_Migration090510 Migrating from 090401 to 090510
  *
  *  <b>All</b>

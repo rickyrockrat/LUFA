@@ -43,8 +43,9 @@
 		#include <stdio.h>
 		
 		#include "ConfigDescriptor.h"
-		#include "PIMACodes.h"
-		#include "StillImageCommands.h"
+
+		#include "Lib/PIMACodes.h"
+		#include "Lib/StillImageCommands.h"
 
 		#include <LUFA/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
 		#include <LUFA/Drivers/USB/USB.h>                        // USB Functionality
@@ -68,14 +69,13 @@
 	/* Task Definitions: */
 		TASK(USB_SImage_Host);
 
-	/* Event Handlers: */
-		HANDLES_EVENT(USB_DeviceAttached);
-		HANDLES_EVENT(USB_DeviceUnattached);
-		HANDLES_EVENT(USB_DeviceEnumerationComplete);
-		HANDLES_EVENT(USB_HostError);
-		HANDLES_EVENT(USB_DeviceEnumerationFailed);
-		
 	/* Function Prototypes: */
+		void EVENT_USB_HostError(const uint8_t ErrorCode);
+		void EVENT_USB_DeviceAttached(void);
+		void EVENT_USB_DeviceUnattached(void);
+		void EVENT_USB_DeviceEnumerationFailed(const uint8_t ErrorCode, const uint8_t SubErrorCode);
+		void EVENT_USB_DeviceEnumerationComplete(void);
+
 		void UnicodeToASCII(uint8_t* restrict UnicodeString, char* restrict Buffer);
 		void ShowCommandError(uint8_t ErrorCode, bool ResponseCodeError);
 		void UpdateStatus(uint8_t CurrentStatus);

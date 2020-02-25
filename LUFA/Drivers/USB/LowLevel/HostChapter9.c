@@ -153,9 +153,13 @@ End_Of_Control_Send:
 
 static uint8_t USB_Host_Wait_For_Setup_IOS(const uint8_t WaitType)
 {
+	#if (USB_HOST_TIMEOUT_MS < 0xFF)
+	uint8_t  TimeoutCounter = USB_HOST_TIMEOUT_MS;	
+	#else
 	uint16_t TimeoutCounter = USB_HOST_TIMEOUT_MS;
+	#endif
 	
-	while (!(((WaitType == USB_HOST_WAITFOR_SetupSent)  && Pipe_IsSETUPSent())       ||
+	while (!(((WaitType == USB_HOST_WAITFOR_SetupSent)  && Pipe_IsSETUPSent())  ||
 	         ((WaitType == USB_HOST_WAITFOR_InReceived) && Pipe_IsINReceived()) ||
 	         ((WaitType == USB_HOST_WAITFOR_OutReady)   && Pipe_IsOUTReady())))
 	{

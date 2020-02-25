@@ -83,7 +83,7 @@ int main(void)
 /** Event handler for the USB_Connect event. This indicates that the device is enumerating via the status LEDs and
  *  starts the library USB task to begin the enumeration and USB management process.
  */
-EVENT_HANDLER(USB_Connect)
+void EVENT_USB_Connect(void)
 {
 	/* Start USB management task */
 	Scheduler_SetTaskMode(USB_USBTask, TASK_RUN);
@@ -95,7 +95,7 @@ EVENT_HANDLER(USB_Connect)
 /** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
  *  the status LEDs and stops all the relevant tasks.
  */
-EVENT_HANDLER(USB_Disconnect)
+void EVENT_USB_Disconnect(void)
 {
 	/* Stop running TCP/IP and USB management tasks */
 	Scheduler_SetTaskMode(RNDIS_Task, TASK_STOP);
@@ -110,19 +110,19 @@ EVENT_HANDLER(USB_Disconnect)
 /** Event handler for the USB_ConfigurationChanged event. This is fired when the host sets the current configuration
  *  of the USB device after enumeration, and configures the RNDIS device endpoints and starts the relevant tasks.
  */
-EVENT_HANDLER(USB_ConfigurationChanged)
+void EVENT_USB_ConfigurationChanged(void)
 {
 	/* Setup CDC Notification, Rx and Tx Endpoints */
-	Endpoint_ConfigureEndpoint(CDC_NOTIFICATION_EPNUM, EP_TYPE_INTERRUPT,
-		                       ENDPOINT_DIR_IN, CDC_NOTIFICATION_EPSIZE,
-	                           ENDPOINT_BANK_SINGLE);
-
 	Endpoint_ConfigureEndpoint(CDC_TX_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_IN, CDC_TXRX_EPSIZE,
 	                           ENDPOINT_BANK_SINGLE);
 
 	Endpoint_ConfigureEndpoint(CDC_RX_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_OUT, CDC_TXRX_EPSIZE,
+	                           ENDPOINT_BANK_SINGLE);
+
+	Endpoint_ConfigureEndpoint(CDC_NOTIFICATION_EPNUM, EP_TYPE_INTERRUPT,
+		                       ENDPOINT_DIR_IN, CDC_NOTIFICATION_EPSIZE,
 	                           ENDPOINT_BANK_SINGLE);
 
 	/* Indicate USB connected and ready */
@@ -138,17 +138,8 @@ EVENT_HANDLER(USB_ConfigurationChanged)
  *  control requests that are not handled internally by the USB library (including the RNDIS control commands,
  *  which set up the USB RNDIS network adapter), so that they can be handled appropriately for the application.
  */
-EVENT_HANDLER(USB_UnhandledControlPacket)
+void EVENT_USB_UnhandledControlPacket(void)
 {
-	/* Discard the unused wValue parameter */
-	Endpoint_Discard_Word();
-
-	/* Discard the unused wIndex parameter */
-	Endpoint_Discard_Word();
-
-	/* Read in the wLength parameter */
-	uint16_t wLength = Endpoint_Read_Word_LE();
-
 	/* Process RNDIS class commands */
 	switch (USB_ControlRequest.bRequest)
 	{
@@ -159,7 +150,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 				Endpoint_ClearSETUP();
 				
 				/* Read in the RNDIS message into the message buffer */
-				Endpoint_Read_Control_Stream_LE(RNDISMessageBuffer, wLength);
+				Endpoint_Read_Control_Stream_LE(RNDISMessageBuffer, USB_ControlRequest.wLength);
 
 				/* Finalize the stream transfer to clear the last packet from the host */
 				Endpoint_ClearIN();

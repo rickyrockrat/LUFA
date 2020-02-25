@@ -108,7 +108,7 @@
 			/** Endpoint number mask, for masking against endpoint addresses to retrieve the endpoint's
 			 *  numerical address in the device.
 			 */
-			#define ENDPOINT_EPNUM_MASK                   0x03
+			#define ENDPOINT_EPNUM_MASK                   0x07
 
 			/** Endpoint bank size mask, for masking against endpoint addresses to retrieve the endpoint's
 			 *  bank size in the device.
@@ -140,47 +140,6 @@
 			#else
 				#define ENDPOINT_TOTAL_ENDPOINTS              1
 			#endif
-
-			/** Interrupt definition for the endpoint SETUP interrupt (for CONTROL type endpoints). Should be
-			 *  used with the USB_INT_* macros located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on a CONTROL type endpoint if a new control packet is
-			 *  received from the host.
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* endpoint which requires it (after the
-			 *        endpoint is selected), and will fire the common endpoint interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 */
-			#define ENDPOINT_INT_SETUP                    UEIENX, (1 << RXSTPE), UEINTX, (1 << RXSTPI)
-
-			/** Interrupt definition for the endpoint IN interrupt (for INTERRUPT type endpoints). Should be
-			 *  used with the USB_INT_* macros located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on an INTERRUPT type endpoint if a the endpoint interrupt
-			 *  period has elapsed and the endpoint is ready for a new packet to be written to its FIFO buffer
-			 *  (if required).
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* endpoint which requires it (after the
-			 *        endpoint is selected), and will fire the common endpoint interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 */
-			#define ENDPOINT_INT_IN                       UEIENX, (1 << TXINE) , UEINTX, (1 << TXINI)
-
-			/** Interrupt definition for the endpoint OUT interrupt (for INTERRUPT type endpoints). Should be
-			 *  used with the USB_INT_* macros located in USBInterrupt.h.
-			 *
-			 *  This interrupt will fire if enabled on an INTERRUPT type endpoint if a the endpoint interrupt
-			 *  period has elapsed and the endpoint is ready for a packet from the host to be read from its
-			 *  FIFO buffer (if received).
-			 *
-			 *  \note This interrupt must be enabled and cleared on *each* endpoint which requires it (after the
-			 *        endpoint is selected), and will fire the common endpoint interrupt vector.
-			 *
-			 *  \see \ref ENDPOINT_PIPE_vect for more information on the common pipe and endpoint interrupt vector.
-			 */
-			#define ENDPOINT_INT_OUT                      UEIENX, (1 << RXOUTE), UEINTX, (1 << RXOUTI)
 			
 		/* Pseudo-Function Macros: */
 			#if defined(__DOXYGEN__)
@@ -264,13 +223,6 @@
 				 *  \return Mask whose bits indicate which endpoints have interrupted
 				 */
 				static inline uint8_t Endpoint_GetEndpointInterrupts(void);
-				
-				/** Clears the endpoint interrupt flag. This clears the specified endpoint number's interrupt
-				 *  mask in the endpoint interrupt flag register.
-				 *
-				 *  \param EndpointNumber  Index of the endpoint whose interrupt flag should be cleared
-				 */
-				static inline void Endpoint_ClearEndpointInterrupt(uint8_t EndpointNumber);
 				
 				/** Determines if the specified endpoint number has interrupted (valid only for INTERRUPT type
 				 *  endpoints).
@@ -397,8 +349,6 @@
 				#define Endpoint_IsConfigured()               ((UESTA0X & (1 << CFGOK)) ? true : false)
 
 				#define Endpoint_GetEndpointInterrupts()      UEINT
-
-				#define Endpoint_ClearEndpointInterrupt(n)    MACROS{ UEINT &= ~(1 << n); }MACROE
 
 				#define Endpoint_HasEndpointInterrupted(n)    ((UEINT & (1 << n)) ? true : false)
 				
@@ -721,7 +671,8 @@
 		/* Function Prototypes: */
 			/** Configures the specified endpoint number with the given endpoint type, direction, bank size
 			 *  and banking mode. Endpoints should be allocated in ascending order by their address in the
-			 *  device (i.e. endpoint 1 should be configured before endpoint 2 and so on).
+			 *  device (i.e. endpoint 1 should be configured before endpoint 2 and so on) to prevent fragmentation
+			 *  of the USB FIFO memory.
 			 *
 			 *  The endpoint type may be one of the EP_TYPE_* macros listed in LowLevel.h and the direction
 			 *  may be either \ref ENDPOINT_DIR_OUT or \ref ENDPOINT_DIR_IN.
@@ -732,7 +683,8 @@
 			 *
 			 *  The banking mode may be either \ref ENDPOINT_BANK_SINGLE or \ref ENDPOINT_BANK_DOUBLE.
 			 *
-			 *  The success of this routine can be determined via the \ref Endpoint_IsConfigured() macro.
+			 *  \note The default control endpoint does not have to be manually configured, as it is automatically
+			 *  configured by the library internally.
 			 *
 			 *  \note This routine will select the specified endpoint, and the endpoint will remain selected
 			 *        once the routine completes regardless of if the endpoint configuration succeeds.
@@ -762,9 +714,9 @@
 			 *  each USB packet, the given stream callback function is executed repeatedly until the next
 			 *  packet is ready, allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \note This routine should not be used on CONTROL type endpoints.
 			 *
@@ -777,7 +729,7 @@
 			 */
 			uint8_t Endpoint_Discard_Stream(uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                                , uint8_t (* const Callback)(void)
+			                                , StreamCallbackPtr_t Callback
 			#endif
 			                                );
 
@@ -788,9 +740,9 @@
 			 *  is executed repeatedly until the endpoint is ready to accept the next packet, allowing for early
 			 *  aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \note This routine should not be used on CONTROL type endpoints.
 			 *
@@ -804,7 +756,7 @@
 			 */
 			uint8_t Endpoint_Write_Stream_LE(const void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                                 , uint8_t (* const Callback)(void)
+			                                 , StreamCallbackPtr_t Callback
 			#endif
 			                                 ) ATTR_NON_NULL_PTR_ARG(1);
 
@@ -815,9 +767,9 @@
 			 *  is executed repeatedly until the endpoint is ready to accept the next packet, allowing for early
 			 *  aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \note This routine should not be used on CONTROL type endpoints.
 			 *
@@ -831,7 +783,7 @@
 			 */
 			uint8_t Endpoint_Write_Stream_BE(const void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                                 , uint8_t (* const Callback)(void)
+			                                 , StreamCallbackPtr_t Callback
 			#endif
 			                                 ) ATTR_NON_NULL_PTR_ARG(1);
 
@@ -842,9 +794,9 @@
 			 *  each USB packet, the given stream callback function is executed repeatedly until the endpoint
 			 *  is ready to accept the next packet, allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \note This routine should not be used on CONTROL type endpoints.
 			 *
@@ -858,7 +810,7 @@
 			 */
 			uint8_t Endpoint_Read_Stream_LE(void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                                , uint8_t (* const Callback)(void)
+			                                , StreamCallbackPtr_t Callback
 			#endif
 			                                ) ATTR_NON_NULL_PTR_ARG(1);
 
@@ -869,9 +821,9 @@
 			 *  each USB packet, the given stream callback function is executed repeatedly until the endpoint
 			 *  is ready to accept the next packet, allowing for early aborts of stream transfers.
 			 *
-			 *	The callback routine should be created using the \ref STREAM_CALLBACK() macro. If the token
-			 *  NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are disabled
-			 *  and this function has the Callback parameter omitted.
+			 *	The callback routine should be created according to the information in \ref Group_StreamCallbacks.
+			 *  If the token NO_STREAM_CALLBACKS is passed via the -D option to the compiler, stream callbacks are
+			 *  disabled and this function has the Callback parameter omitted.
 			 *
 			 *  \note This routine should not be used on CONTROL type endpoints.
 			 *
@@ -885,7 +837,7 @@
 			 */
 			uint8_t Endpoint_Read_Stream_BE(void* Buffer, uint16_t Length
 			#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
-			                                , uint8_t (* const Callback)(void)
+			                                , StreamCallbackPtr_t Callback
 			#endif
 			                                ) ATTR_NON_NULL_PTR_ARG(1);
 

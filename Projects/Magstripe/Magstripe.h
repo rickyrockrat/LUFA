@@ -46,8 +46,9 @@
 		#include <string.h>
 
 		#include "Descriptors.h"
-		#include "MagstripeHW.h"
-		#include "CircularBitBuffer.h"
+
+		#include "Lib/MagstripeHW.h"
+		#include "Lib/CircularBitBuffer.h"
 
 		#include <LUFA/Version.h>                    // Library Version Information
 		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
@@ -99,23 +100,13 @@
 			uint8_t Reserved; /**< Reserved for OEM use, always set to 0 */
 			uint8_t KeyCode; /**< Key code array for pressed keys - up to six can be given simultaneously */
 		} USB_KeyboardReport_Data_t;
-
-	/* Event Handlers: */
-		/** Indicates that this module will catch the USB_Connect event when thrown by the library. */
-		HANDLES_EVENT(USB_Connect);
-
-		/** Indicates that this module will catch the USB_Disconnect event when thrown by the library. */
-		HANDLES_EVENT(USB_Disconnect);
-
-		/** Indicates that this module will catch the USB_ConfigurationChanged event when thrown by the library. */
-		HANDLES_EVENT(USB_ConfigurationChanged);
-
-		/** Indicates that this module will catch the USB_UnhandledControlPacket event when thrown by the library. */
-		HANDLES_EVENT(USB_UnhandledControlPacket);
-		
+	
 	/* Function Prototypes: */
+		void EVENT_USB_Connect(void);
+		void EVENT_USB_Disconnect(void);
+		void EVENT_USB_ConfigurationChanged(void);
+		void EVENT_USB_UnhandledControlPacket(void);
+	
 		bool GetNextReport(USB_KeyboardReport_Data_t* ReportData);
-		void SendKey(USB_KeyboardReport_Data_t* KeyboardReportData, uint8_t Key);
-		void Send(USB_KeyboardReport_Data_t* KeyboardReportData, bool SendReport);
 		
 #endif

@@ -271,7 +271,7 @@ USB_Descriptor_String_t PROGMEM ProductString =
  *  is called so that the descriptor details can be passed back and the appropriate descriptor sent back to the
  *  USB host.
  */
-uint16_t USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
+uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
 {
 	const uint8_t  DescriptorType   = (wValue >> 8);
 	const uint8_t  DescriptorNumber = (wValue & 0xFF);
@@ -282,26 +282,26 @@ uint16_t USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** c
 	switch (DescriptorType)
 	{
 		case DTYPE_Device:
-			Address = DESCRIPTOR_ADDRESS(DeviceDescriptor);
+			Address = (void*)&DeviceDescriptor;
 			Size    = sizeof(USB_Descriptor_Device_t);
 			break;
 		case DTYPE_Configuration:
-			Address = DESCRIPTOR_ADDRESS(ConfigurationDescriptor);
+			Address = (void*)&ConfigurationDescriptor;
 			Size    = sizeof(USB_Descriptor_Configuration_t);
 			break;
 		case DTYPE_String: 
 			switch (DescriptorNumber)
 			{
 				case 0x00:
-					Address = DESCRIPTOR_ADDRESS(LanguageString);
+					Address = (void*)&LanguageString;
 					Size    = pgm_read_byte(&LanguageString.Header.Size);
 					break;
 				case 0x01: 
-					Address = DESCRIPTOR_ADDRESS(ManufacturerString);
+					Address = (void*)&ManufacturerString;
 					Size    = pgm_read_byte(&ManufacturerString.Header.Size);
 					break;
 				case 0x02: 
-					Address = DESCRIPTOR_ADDRESS(ProductString);
+					Address = (void*)&ProductString;
 					Size    = pgm_read_byte(&ProductString.Header.Size);
 					break;
 			}

@@ -42,8 +42,9 @@
 		#include <avr/power.h>
 
 		#include "Descriptors.h"
-		#include "SCSI.h"
-		#include "DataflashManager.h"
+
+		#include "Lib/SCSI.h"
+		#include "Lib/DataflashManager.h"
 
 		#include <LUFA/Version.h>                    // Library Version Information
 		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
@@ -130,31 +131,19 @@
 	/* Task Definitions: */
 		TASK(USB_MassStorage);
 		
-	/* Stream Callbacks: */
-		STREAM_CALLBACK(AbortOnMassStoreReset);
-
-	/* Event Handlers: */
-		/** Indicates that this module will catch the USB_Reset event when thrown by the library. */
-		HANDLES_EVENT(USB_Reset);
-
-		/** Indicates that this module will catch the USB_Connect event when thrown by the library. */
-		HANDLES_EVENT(USB_Connect);
-
-		/** Indicates that this module will catch the USB_Disconnect event when thrown by the library. */
-		HANDLES_EVENT(USB_Disconnect);
-
-		/** Indicates that this module will catch the USB_ConfigurationChanged event when thrown by the library. */
-		HANDLES_EVENT(USB_ConfigurationChanged);
-
-		/** Indicates that this module will catch the USB_UnhandledControlPacket event when thrown by the library. */
-		HANDLES_EVENT(USB_UnhandledControlPacket);
-
 	/* Function Prototypes: */
+		void EVENT_USB_Connect(void);
+		void EVENT_USB_Disconnect(void);
+		void EVENT_USB_ConfigurationChanged(void);
+		void EVENT_USB_UnhandledControlPacket(void);
+
 		void UpdateStatus(uint8_t CurrentStatus);
 
 		#if defined(INCLUDE_FROM_MASSSTORAGE_C)
 			static bool ReadInCommandBlock(void);
 			static void ReturnCommandStatus(void);
 		#endif
+
+		uint8_t StreamCallback_AbortOnMassStoreReset(void);
 
 #endif

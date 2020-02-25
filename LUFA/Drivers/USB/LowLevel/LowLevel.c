@@ -92,7 +92,7 @@ void USB_Init(
 	}
 	else
 	{
-		RAISE_EVENT(USB_InitFailure, USB_INITERROR_NoUSBModeSpecified);
+		EVENT_USB_InitFailure(USB_INITERROR_NoUSBModeSpecified);
 		return;
 	}
 	#endif
@@ -111,7 +111,7 @@ void USB_Init(
 void USB_ShutDown(void)
 {
 	if (USB_IsConnected)
-	  RAISE_EVENT(USB_Disconnect);
+	  EVENT_USB_Disconnect();
 
 	USB_Detach();
 
@@ -206,7 +206,7 @@ void USB_ResetInterface(void)
 	{
 		USB_Descriptor_Device_t* DeviceDescriptorPtr;
 
-		if (USB_GetDescriptor((DTYPE_Device << 8), 0, (void*)&DeviceDescriptorPtr) != NO_DESCRIPTOR)
+		if (CALLBACK_USB_GetDescriptor((DTYPE_Device << 8), 0, (void*)&DeviceDescriptorPtr) != NO_DESCRIPTOR)
 		{		  
 			#if defined(USE_RAM_DESCRIPTORS)
 				USB_ControlEndpointSize = DeviceDescriptorPtr->Endpoint0Size;

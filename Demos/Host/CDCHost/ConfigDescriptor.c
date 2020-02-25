@@ -70,7 +70,8 @@ uint8_t ProcessConfigurationDescriptor(void)
 	  return InvalidConfigDataReturned;
 	
 	/* Get the CDC control interface from the configuration descriptor */
-	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCControlInterface))
+	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+	                              DComp_NextCDCControlInterface) != DESCRIPTOR_SEARCH_COMP_Found)
 	{
 		/* Descriptor not found, error out */
 		return NoCDCInterfaceFound;
@@ -81,13 +82,14 @@ uint8_t ProcessConfigurationDescriptor(void)
 	{
 		/* Fetch the next bulk or interrupt endpoint from the current CDC interface */
 		if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
-		                                   NextInterfaceCDCDataEndpoint))
+		                              DComp_NextInterfaceCDCDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
 		{
 			/* Check to see if the control interface's notification pipe has been found, if so search for the data interface */
 			if (FoundEndpoints & (1 << CDC_NOTIFICATIONPIPE))
 			{
 				/* Get the next CDC data interface from the configuration descriptor (CDC class has two CDC interfaces) */
-				if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCDataInterface))
+				if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, 
+				                              DComp_NextCDCDataInterface) != DESCRIPTOR_SEARCH_COMP_Found)
 				{
 					/* Descriptor not found, error out */
 					return NoCDCInterfaceFound;
@@ -95,8 +97,20 @@ uint8_t ProcessConfigurationDescriptor(void)
 			}
 			else
 			{
+				/* Clear the found endpoints mask, since any already processed endpoints aren't in the CDC interface we need */
+				FoundEndpoints = 0;
+
+				/* Disable any already configured pipes from the invalid CDC interfaces */
+				Pipe_SelectPipe(CDC_NOTIFICATIONPIPE);
+				Pipe_DisablePipe();
+				Pipe_SelectPipe(CDC_DATAPIPE_IN);
+				Pipe_DisablePipe();
+				Pipe_SelectPipe(CDC_DATAPIPE_OUT);
+				Pipe_DisablePipe();
+			
 				/* Get the next CDC control interface from the configuration descriptor (CDC class has two CDC interfaces) */
-				if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextCDCControlInterface))
+				if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+				                              DComp_NextCDCControlInterface) != DESCRIPTOR_SEARCH_COMP_Found)
 				{
 					/* Descriptor not found, error out */
 					return NoCDCInterfaceFound;
@@ -105,7 +119,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 
 			/* Fetch the next bulk or interrupt endpoint from the current CDC interface */
 			if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
-											   NextInterfaceCDCDataEndpoint))
+			                              DComp_NextInterfaceCDCDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
 			{
 				/* Descriptor not found, error out */
 				return NoEndpointFound;
@@ -172,7 +186,7 @@ uint8_t ProcessConfigurationDescriptor(void)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextCDCControlInterface)
+uint8_t DComp_NextCDCControlInterface(void* CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
@@ -196,7 +210,7 @@ DESCRIPTOR_COMPARATOR(NextCDCControlInterface)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextCDCDataInterface)
+uint8_t DComp_NextCDCDataInterface(void* CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
 	{
@@ -222,7 +236,7 @@ DESCRIPTOR_COMPARATOR(NextCDCDataInterface)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextInterfaceCDCDataEndpoint)
+uint8_t DComp_NextInterfaceCDCDataEndpoint(void* CurrentDescriptor)
 {
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Endpoint)
 	{

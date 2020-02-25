@@ -69,7 +69,8 @@ uint8_t ProcessConfigurationDescriptor(void)
 	  return InvalidConfigDataReturned;
 	
 	/* Get the mouse interface from the configuration descriptor */
-	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData, NextMouseInterface))
+	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
+	                              DComp_NextMouseInterface) != DESCRIPTOR_SEARCH_COMP_Found)
 	{
 		/* Descriptor not found, error out */
 		return NoHIDInterfaceFound;
@@ -77,7 +78,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 
 	/* Get the mouse interface's data endpoint descriptor */
 	if (USB_GetNextDescriptorComp(&ConfigDescriptorSize, &ConfigDescriptorData,
-	                              NextInterfaceMouseDataEndpoint))
+	                              DComp_NextInterfaceMouseDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
 	{
 		/* Descriptor not found, error out */
 		return NoEndpointFound;
@@ -91,13 +92,6 @@ uint8_t ProcessConfigurationDescriptor(void)
 	                   EndpointData->EndpointAddress, EndpointData->EndpointSize, PIPE_BANK_SINGLE);
 
 	Pipe_SetInfiniteINRequests();
-
-	#if defined(INTERRUPT_DATA_PIPE)
-	Pipe_SetInterruptPeriod(EndpointData->PollingIntervalMS);
-
-	/* Enable the pipe IN interrupt for the data pipe */
-	USB_INT_Enable(PIPE_INT_IN);	
-	#endif
 			
 	/* Valid data found, return success */
 	return SuccessfulConfigRead;
@@ -111,7 +105,7 @@ uint8_t ProcessConfigurationDescriptor(void)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextMouseInterface)
+uint8_t DComp_NextMouseInterface(void* CurrentDescriptor)
 {
 	/* Determine if the current descriptor is an interface descriptor */
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Interface)
@@ -138,7 +132,7 @@ DESCRIPTOR_COMPARATOR(NextMouseInterface)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-DESCRIPTOR_COMPARATOR(NextInterfaceMouseDataEndpoint)
+uint8_t DComp_NextInterfaceMouseDataEndpoint(void* CurrentDescriptor)
 {
 	/* Determine the type of the current descriptor */
 	if (DESCRIPTOR_TYPE(CurrentDescriptor) == DTYPE_Endpoint)
