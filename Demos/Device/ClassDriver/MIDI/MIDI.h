@@ -33,8 +33,8 @@
  *  Header file for MIDI.c.
  */
 
-#ifndef _AUDIO_OUTPUT_H_
-#define _AUDIO_OUTPUT_H_
+#ifndef _MIDI_H_
+#define _MIDI_H_
 
 	/* Includes: */
 		#include <avr/io.h>
