@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -55,6 +55,11 @@
 			extern "C" {
 		#endif
 
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_RNDIS_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/Class/RNDIS.h instead.
+		#endif
+		
 	/* Public Interface - May be used in end-application: */
 		/* Type Defines: */					 
 			/** Class state structure. An instance of this structure should be made for each RNDIS interface
@@ -131,7 +136,7 @@
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Function Prototypes: */
-		#if defined(INCLUDE_FROM_RNDIS_CLASS_DEVICE_C)
+		#if defined(__INCLUDE_FROM_RNDIS_CLASS_DEVICE_C)
 			static void RNDIS_Device_ProcessRNDISControlMessage(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo)
 			                                                    ATTR_NON_NULL_PTR_ARG(1);
 			static bool RNDIS_Device_ProcessNDISQuery(USB_ClassInfo_RNDIS_Device_t* const RNDISInterfaceInfo, 

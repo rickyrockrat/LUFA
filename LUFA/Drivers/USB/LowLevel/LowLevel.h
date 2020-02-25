@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -70,13 +70,18 @@
 		#endif
 
 	/* Preprocessor Checks and Defines: */
+		#if !defined(__INCLUDE_FROM_USB_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+		#endif
+
 		#if !defined(F_CLOCK)
 			#error F_CLOCK is not defined. You must define F_CLOCK to the frequency of the unprescaled input clock in your project makefile.
 		#endif
 	
 		#if (F_CLOCK == 8000000)
 			#if (defined(__AVR_AT90USB82__) || defined(__AVR_AT90USB162__) || \
-			     defined(__AVR_ATMEGA8U2__) || defined(__AVR_ATMEGA16U2__))
+			     defined(__AVR_ATmega8U2__) || defined(__AVR_ATmega16U2__) || \
+				 defined(__AVR_ATmega32U2__))
 				#define USB_PLL_PSC                0
 			#elif (defined(__AVR_ATmega16U4__) || defined(__AVR_ATmega32U4__))
 				#define USB_PLL_PSC                0
@@ -87,7 +92,8 @@
 			#endif
 		#elif (F_CLOCK == 16000000)
 			#if (defined(__AVR_AT90USB82__) || defined(__AVR_AT90USB162__) || \
-			     defined(__AVR_ATMEGA8U2__) || defined(__AVR_ATMEGA16U2__))
+			     defined(__AVR_ATmega8U2__) || defined(__AVR_ATmega16U2__) || \
+				 defined(__AVR_ATmega32U2__))
 				#define USB_PLL_PSC                (1 << PLLP0)
 			#elif (defined(__AVR_ATmega16U4__) || defined(__AVR_ATmega32U4__))
 				#define USB_PLL_PSC                (1 << PINDIV)

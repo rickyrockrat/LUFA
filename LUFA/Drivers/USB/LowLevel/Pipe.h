@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -91,6 +91,11 @@
 			extern "C" {
 		#endif
 
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_USB_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+		#endif
+		
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
 			/** Mask for \ref Pipe_GetErrorFlags(), indicating that an overflow error occurred in the pipe on the received data. */
@@ -174,6 +179,11 @@
 			 *  numerical address in the attached device.
 			 */
 			#define PIPE_EPNUM_MASK                 0x0F
+
+			/** Endpoint direction mask, for masking against endpoint addresses to retrieve the endpoint's
+			 *  direction for comparing with the ENDPOINT_DESCRIPTOR_DIR_* masks.
+			 */
+			#define PIPE_EPDIR_MASK                 0x80
 
 		/* Pseudo-Function Macros: */
 			#if defined(__DOXYGEN__)
@@ -805,9 +815,10 @@
 			/** Determines if a pipe has been bound to the given device endpoint address. If a pipe which is bound to the given
 			 *  endpoint is found, it is automatically selected.
 			 *
-			 *  \param[in] EndpointAddress Address of the endpoint within the attached device to check
+			 *  \param[in] EndpointAddress Address and direction mask of the endpoint within the attached device to check
 			 *
-			 *  \return Boolean true if a pipe bound to the given endpoint address is found, false otherwise
+			 *  \return Boolean true if a pipe bound to the given endpoint address of the specified direction is found, false
+			 *          otherwise
 			 */
 			bool Pipe_IsEndpointBound(const uint8_t EndpointAddress);
 		

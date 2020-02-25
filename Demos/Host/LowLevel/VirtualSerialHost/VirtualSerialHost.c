@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -35,52 +35,6 @@
  */
  
 #include "VirtualSerialHost.h"
-
-#if 0
-/* NOTE: Here you can set up a standard stream using the created virtual serial port, so that the standard stream functions in
- *       <stdio.h> can be used on the virtual serial port (e.g. fprintf(&USBSerial, "Test"); to print a string).
- */
-	
-static int CDC_putchar(char c, FILE *stream)
-{	  
-	Pipe_SelectPipe(CDC_DATAPIPE_OUT);
-	
-	if (Pipe_WaitUntilReady())
-	  return -1;
-
-	Pipe_Write_Byte(c);
-	Pipe_ClearIN();
-	
-	return 0;
-}
-
-static int CDC_getchar(FILE *stream)
-{
-	int c;
-
-	Pipe_SelectPipe(CDC_DATAPIPE_IN);
-	
-	for (;;)
-	{
-		if (Pipe_WaitUntilReady())
-		  return -1;
-	
-		if (!(Pipe_BytesInPipe()))
-		{
-			Pipe_ClearOUT();
-		}
-		else
-		{
-			c = Pipe_Read_Byte();
-			break;
-		}
-	}
-	
-	return c;
-}
-
-static FILE USBSerial = FDEV_SETUP_STREAM(CDC_putchar, CDC_getchar, _FDEV_SETUP_RW);
-#endif
 
 /** Main program entry point. This routine configures the hardware required by the application, then
  *  enters a loop to run the application tasks in sequence.
@@ -218,7 +172,6 @@ void CDC_Host_Task(void)
 		case HOST_STATE_Configured:
 			/* Select the data IN pipe */
 			Pipe_SelectPipe(CDC_DATAPIPE_IN);
-			Pipe_SetPipeToken(PIPE_TOKEN_IN);
 			Pipe_Unfreeze();
 
 			/* Check to see if a packet has been received */

@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -79,8 +79,6 @@ void DiskHost_USBTask(void)
 			return;
 		}
 		
-		USB_HostState = HOST_STATE_Configured;
-		
 		uint8_t MaxLUNIndex;
 		if (MS_Host_GetMaxLUN(&DiskHost_MS_Interface, &MaxLUNIndex))
 		{
@@ -96,6 +94,10 @@ void DiskHost_USBTask(void)
 			return;
 		}
 		
+		USB_HostState = HOST_STATE_Configured;
+		
+		/* Note: For the RequestSense call to work, the host state machine must be in the 
+		 *       Configured state, or the call will be aborted */
 		SCSI_Request_Sense_Response_t SenseData;
 		if (MS_Host_RequestSense(&DiskHost_MS_Interface, 0, &SenseData) != 0)
 		{

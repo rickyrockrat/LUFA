@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2009.
+#     Copyright (C) Dean Camera, 2010.
 #              
 #  dean [at] fourwalledcubicle [dot] com
 #      www.fourwalledcubicle.com
@@ -51,7 +51,7 @@ clean_list:
 
 doxygen:
 	@echo Generating Library Documentation...
-	@doxygen Doxygen.conf
+	( cat Doxygen.conf ; echo "PROJECT_NUMBER=`grep LUFA_VERSION_STRING Version.h | cut -d'"' -f2`" ) | doxygen -
 	@echo Documentation Generation Complete.
 
 clean_doxygen:

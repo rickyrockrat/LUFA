@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -145,10 +145,6 @@ uint8_t ProcessConfigurationDescriptor(void)
 			/* Check if the endpoint is a bulk IN or bulk OUT endpoint */
 			if (EndpointData->EndpointAddress & ENDPOINT_DESCRIPTOR_DIR_IN)
 			{
-				/* Kill the configured OUT pipe if the data endpoints are bidirectional */
-				if (Pipe_IsEndpointBound(EndpointData->EndpointAddress))
-				  Pipe_DisablePipe();
-
 				/* Configure the data IN pipe */
 				Pipe_ConfigurePipe(CDC_DATAPIPE_IN, EP_TYPE_BULK, PIPE_TOKEN_IN,
 								   EndpointData->EndpointAddress, EndpointData->EndpointSize, PIPE_BANK_SINGLE);
@@ -158,13 +154,9 @@ uint8_t ProcessConfigurationDescriptor(void)
 			}
 			else
 			{
-				/* Only configure the OUT data pipe if the data endpoints haev not shown to be bidirectional */
-				if (!(Pipe_IsEndpointBound(EndpointData->EndpointAddress)))
-				{
-					/* Configure the data OUT pipe */
-					Pipe_ConfigurePipe(CDC_DATAPIPE_OUT, EP_TYPE_BULK, PIPE_TOKEN_OUT,
-									   EndpointData->EndpointAddress, EndpointData->EndpointSize, PIPE_BANK_SINGLE);
-				}
+				/* Configure the data OUT pipe */
+				Pipe_ConfigurePipe(CDC_DATAPIPE_OUT, EP_TYPE_BULK, PIPE_TOKEN_OUT,
+								   EndpointData->EndpointAddress, EndpointData->EndpointSize, PIPE_BANK_SINGLE);
 				
 				/* Set the flag indicating that the data OUT pipe has been found */
 				FoundEndpoints |= (1 << CDC_DATAPIPE_OUT);

@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -53,9 +53,12 @@
 			extern "C" {
 		#endif
 
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_PRINTER_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/Class/Printer.h instead.
+		#endif
+
 	/* Public Interface - May be used in end-application: */
-		/* Macros: */
-	
 		/* Type Defines: */
 			/** Class state structure. An instance of this structure should be made within the user application,
 			 *  and passed to each of the Printer class driver functions as the PRNTInterfaceInfo parameter. This
@@ -100,15 +103,6 @@
 			};
 	
 		/* Function Prototypes: */
-			/** General management task for a given Printer host class interface, required for the correct operation of
-			 *  the interface. This should be called frequently in the main program loop, before the master USB management task
-			 *  \ref USB_USBTask().
-			 *
-			 *  \param[in,out] PRNTInterfaceInfo  Pointer to a structure containing a Printer Class host configuration and state
-			 */
-			void PRNT_Host_USBTask(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			
-
 			/** Host interface configuration routine, to configure a given Printer host interface instance using the
 			 *  Configuration Descriptor read from an attached USB device. This function automatically updates the given Printer
 			 *  instance's state values and configures the pipes required to communicate with the interface if it is found within
@@ -156,6 +150,9 @@
 			 *  printer is able to understand - for example, PCL data. Not all printers accept all printer languages; see
 			 *  \ref PRNT_Host_GetDeviceID() for details on determining acceptable languages for an attached printer.
 			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] PRNTInterfaceInfo  Pointer to a structure containing a Printer Class host configuration and state
 			 *  \param[in] PrinterCommands  Pointer to a buffer containing the raw command stream to send to the printer
 			 *  \param[in] CommandSize  Size in bytes of the command stream to be sent
@@ -181,6 +178,19 @@
 			uint8_t PRNT_Host_GetDeviceID(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo, char* DeviceIDString,
 			                              uint16_t BufferSize) ATTR_NON_NULL_PTR_ARG(1);
 
+		/* Inline Functions: */
+			/** General management task for a given Printer host class interface, required for the correct operation of
+			 *  the interface. This should be called frequently in the main program loop, before the master USB management task
+			 *  \ref USB_USBTask().
+			 *
+			 *  \param[in,out] PRNTInterfaceInfo  Pointer to a structure containing a Printer Class host configuration and state
+			 */
+			static inline void PRNT_Host_USBTask(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo);
+			static inline void PRNT_Host_USBTask(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo)
+			{
+				(void)PRNTInterfaceInfo;
+			}
+
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Macros: */
@@ -196,7 +206,7 @@
 			#define PRNT_FOUND_DATAPIPE_OUT        (1 << 1)
 			
 		/* Function Prototypes: */
-			#if defined(INCLUDE_FROM_PRINTER_CLASS_HOST_C)		
+			#if defined(__INCLUDE_FROM_PRINTER_CLASS_HOST_C)		
 				static uint8_t DComp_NextPRNTInterface(void* const CurrentDescriptor);
 				static uint8_t DComp_NextPRNTInterfaceEndpoint(void* const CurrentDescriptor);
 			#endif

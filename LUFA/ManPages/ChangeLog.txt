@@ -6,6 +6,62 @@
 
  /** \page Page_ChangeLog Project Changelog
   *
+  *  \section Sec_ChangeLog100219 Version 100219
+  *
+  *  <b>New:</b>
+  *  - Added TPI programming support for 6-pin ATTINY devices to the AVRISP programmer project (thanks to Tom Light)
+  *  - Added command timeout counter to the AVRISP project so that the device no longer freezes when incorrectly connected
+  *    to a target
+  *  - Added new TemperatureDataLogger application, a USB data logger which writes to the device's dataflash and appears to
+  *    the host as a standard Mass Storage device when inserted
+  *  - Added MIDI event packing support to the MIDI Device and Host mode Class drivers, allowing for multiple MIDI events to
+  *    sent or received in packed form in a single USB packet
+  *  - Added new MIDI send buffer flush routines to the MIDI Device and Host mode Class drivers, to flush packed events
+  *  - Added master mode hardware TWI driver for easy TWI peripheral control
+  *  - Added ADC MUX masks for the standard ADC input channels on all AVR models with an ADC, altered demos to use these masks
+  *    as on some models, the channel number is not identical to its single-ended ADC MUX mask
+  *  - New Webserver project, a RNDIS host USB webserver using the open source uIP TCP/IP network stack and FatFS library
+  *  - New BOARD value option BOARD_NONE (equivelent to not specifying BOARD) which will remove all board hardware drivers which
+  *    do not adversely affect the code operation (currently only the LEDs driver)
+  *  - Added keyboard modifier masks (HID_KEYBOARD_MODIFER_*) and LED report masks (KEYBOARD_LED_*) to the HID class driver and
+  *    Keyboard demos
+  *  - Added .5MHz recovery clock to the AVRISP programmer project when in ISP programming mode to correct mis-set fuses
+  *
+  *  <b>Changed:</b>
+  *  - Slowed down software USART carried PDI programming in the AVRISP project to prevent transmission errors
+  *  - Renamed the AVRISP project folder to AVRISP-MKII to reduce confusion
+  *  - Renamed the RESET_LINE_* makefile tokens in the AVRISP MKII Project to AUX_LINE_*, as they are not always used for target
+  *    reset
+  *  - Changed over the MassStorageKeyboard Class driver device demo to use Start of Frame events rather than a timer to keep track
+  *    of elapsed milliseconds
+  *  - Inlined currently unused (but standardized) maintenance functions in the Device and Host Class drivers to save space
+  *  - The XPLAINBridge project now selects between a USB to Serial bridge and a PDI programmer on startup, reading the JTAG port's
+  *    TDI pin to determine which mode to use
+  *  - Removed the stream example code from the Low Level VirtualSerial demos, as they were buggy and only served to add clutter
+  *
+  *  <b>Fixed:</b>
+  *  - Fixed AVRISP project not able to enter programming mode when ISP protocol is used
+  *  - Fixed AVRISP PDI race condition where the guard time between direction changes could be interpreted as a start bit
+  *  - Fixed ADC_IsReadingComplete() returning an inverted result
+  *  - Fixed blocking CDC streams not aborting when the host is disconnected
+  *  - Fixed XPLAIN board Dataflash driver broken due to incorrect preprocessor commands
+  *  - Fixed inverted XPLAIN LED driver output (LED turned on when it was supposed to be turned off, and vice-versa)
+  *  - Fixed Class Driver struct interface numbers in the KeyboardMouse and VirtualSerialMouse demos (thanks to Renaud Cerrato)
+  *  - Fixed invalid USB controller PLL prescaler values for the ATMEGAxxU2 controllers
+  *  - Fixed lack of support for the ATMEGA32U2 in the DFU and CDC class bootloaders
+  *  - Fixed Benito project not resetting the target AVR automatically when programming has completed
+  *  - Fixed DFU bootloader programming not discarding the correct number of filler bytes from the host when non-aligned programming
+  *    ranges are specified (thanks to Thomas Bleeker)
+  *  - Fixed CDC and RNDIS host demos and class drivers - bidirectional endpoints should use two seperate pipes, not one half-duplex pipe
+  *  - Fixed Pipe_IsEndpointBound() not taking the endpoint's direction into account
+  *  - Fixed EEPROM and FLASH ISP programming in the AVRISP project
+  *  - Fixed incorrect values of USB_CONFIG_ATTR_SELFPOWERED and USB_CONFIG_ATTR_REMOTEWAKEUP tokens (thanks to Claus Christensen)
+  *  - Fixed SerialStream driver blocking while waiting for characters to be received instead of returning EOF
+  *  - Fixed SerialStream driver not setting stdin to the created serial stream (thanks to Mike Alexander)
+  *  - Fixed USB_GetHIDReportSize() returning the number of bits in the specified report instead of bytes
+  *  - Fixed AVRISP project not extending the command delay after each successful page/word/byte program
+  *  - Fixed accuracy of the SERIAL_UBBRVAL() and SERIAL_2X_UBBRVAL() macros for higher baudrates (thanks to Renaud Cerrato)
+  *
   *  \section Sec_ChangeLog091223 Version 091223
   *
   *  <b>New:</b>
@@ -67,8 +123,9 @@
   *  - Fixed Still Image Host Class driver truncating the PIMA response code (thanks to Daniel Seibert)
   *  - Fixed USB_CurrentMode not being reset to USB_MODE_NONE when the USB interface is shut down and both Host and Device modes can be
   *    used (thanks to Daniel Levy)
-  *  - Fixed TeensyHID bootloader not enumerating to the host correctly
+  *  - Fixed TeensyHID bootloader not enumerating to the host correctly (thanks to Clint Fisher)
   *  - Fixed AVRISP project timeouts not checking for the correct timeout period (thanks to Carl Ott)
+  *  - Fixed STK525 Dataflash driver using incorrect bit-shifting for Dataflash addresses (thanks to Tim Mitchell)
   *
   *  \section Sec_ChangeLog091122 Version 091122
   *

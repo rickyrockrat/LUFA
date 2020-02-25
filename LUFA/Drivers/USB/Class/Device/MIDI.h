@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -47,13 +47,17 @@
 	/* Includes: */
 		#include "../../USB.h"
 		#include "../Common/MIDI.h"
-		#include "Audio.h"
 
 		#include <string.h>
 
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
+		#endif
+
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_MIDI_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/Class/MIDI.h instead.
 		#endif
 
 	/* Public Interface - May be used in end-application: */
@@ -104,14 +108,12 @@
 			 */		
 			void MIDI_Device_ProcessControlRequest(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
-			/** General management task for a given MIDI class interface, required for the correct operation of the interface. This should
-			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
+			/** Sends a MIDI event packet to the host. If no host is connected, the event packet is discarded. Events are queued into the
+			 *  endpoint bank until either the endpoint bank is full, or \ref MIDI_Device_Flush() is called. This allows for multiple
+			 *  MIDI events to be packed into a single endpoint packet, increasing data throughput.
 			 *
-			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state
-			 */
-			void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-
-			/** Sends a MIDI event packet to the host. If no host is connected, the event packet is discarded.
+			 *  \note This function must only be called when the Device state machine is in the DEVICE_STATE_Configured state or
+			 *        the call will fail.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state
 			 *  \param[in] Event  Pointer to a populated USB_MIDI_EventPacket_t structure containing the MIDI event to send
@@ -121,7 +123,21 @@
 			uint8_t MIDI_Device_SendEventPacket(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo,
 			                                    MIDI_EventPacket_t* const Event) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
-			/** Receives a MIDI event packet from the host.
+
+			/** Flushes the MIDI send buffer, sending any queued MIDI events to the host. This should be called to override the
+			 *  \ref MIDI_Device_SendEventPacket() function's packing behaviour, to flush queued events.
+			 *
+			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state
+			 *
+			 *  \return A value from the \ref Endpoint_WaitUntilReady_ErrorCodes_t enum
+			 */
+			uint8_t MIDI_Device_Flush(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo);
+
+			/** Receives a MIDI event packet from the host. Events are unpacked from the endpoint, thus if the endpoint bank contains
+			 *  multiple MIDI events from the host in the one packet, multiple calls to this function will return each individual event.
+			 *
+			 *  \note This function must only be called when the Device state machine is in the DEVICE_STATE_Configured state or
+			 *        the call will fail.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state
 			 *  \param[out] Event  Pointer to a USB_MIDI_EventPacket_t structure where the received MIDI event is to be placed
@@ -130,6 +146,18 @@
 			 */
 			bool MIDI_Device_ReceiveEventPacket(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo,
 			                                    MIDI_EventPacket_t* const Event) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
+
+		/* Inline Functions: */
+			/** General management task for a given MIDI class interface, required for the correct operation of the interface. This should
+			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
+			 *
+			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state
+			 */
+			static inline void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo);
+			static inline void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo)
+			{
+				(void)MIDIInterfaceInfo;
+			}		
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

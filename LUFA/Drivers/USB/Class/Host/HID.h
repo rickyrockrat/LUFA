@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -53,6 +53,11 @@
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
+		#endif
+
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_HID_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/Class/HID.h instead.
 		#endif
 
 	/* Public Interface - May be used in end-application: */
@@ -130,14 +135,6 @@
 			};
 	
 		/* Function Prototypes: */
-			/** General management task for a given Human Interface Class host class interface, required for the correct operation of
-			 *  the interface. This should be called frequently in the main program loop, before the master USB management task
-			 *  \ref USB_USBTask().
-			 *
-			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state
-			 */
-			void HID_Host_USBTask(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-
 			/** Host interface configuration routine, to configure a given HID host interface instance using the Configuration
 			 *  Descriptor read from an attached USB device. This function automatically updates the given HID Host instance's
 			 *  state values and configures the pipes required to communicate with the interface if it is found within the
@@ -159,6 +156,9 @@
 
 			/** Receives a HID IN report from the attached HID device, when a report has been received on the HID IN Data pipe.
 			 *  
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \note The destination buffer should be large enough to accommodate the largest report that the attached device
 			 *        can generate.
 			 *
@@ -172,6 +172,9 @@
 
 			#if !defined(HID_HOST_BOOT_PROTOCOL_ONLY)
 			/** Receives a HID IN report from the attached device, by the report ID.
+			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
 			 *
 			 *  \note When the HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, this method is unavailable.
 			 *
@@ -187,6 +190,9 @@
 			
 			/** Sends an OUT report to the currently attached HID device, using the device's OUT pipe if available or the device's
 			 *  Control pipe if not.
+			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
 			 *
 			 *  \note When the HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined, the ReportID parameter is removed
 			 *        from the parameter list of this function.
@@ -211,6 +217,9 @@
 			#endif
 
 			/** Determines if a HID IN report has been received from the attached device on the data IN pipe.
+			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
 			 *
 			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state
 			 *
@@ -249,6 +258,19 @@
 			uint8_t HID_Host_SetReportProtocol(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			#endif
 			
+		/* Inline Functions: */
+			/** General management task for a given Human Interface Class host class interface, required for the correct operation of
+			 *  the interface. This should be called frequently in the main program loop, before the master USB management task
+			 *  \ref USB_USBTask().
+			 *
+			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class host configuration and state
+			 */
+			static inline void HID_Host_USBTask(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo);
+			static inline void HID_Host_USBTask(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo)
+			{
+				(void)HIDInterfaceInfo;
+			}		
+
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Macros: */
@@ -258,7 +280,7 @@
 			#define HID_FOUND_DATAPIPE_OUT          (1 << 1)
 
 		/* Function Prototypes: */
-			#if defined(INCLUDE_FROM_HID_CLASS_HOST_C)
+			#if defined(__INCLUDE_FROM_HID_CLASS_HOST_C)
 				static uint8_t DComp_HID_Host_NextHIDInterface(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
 				static uint8_t DComp_NextHID(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
 				static uint8_t DComp_HID_Host_NextHIDInterfaceEndpoint(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);

@@ -1,22 +1,22 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
-  Copyright 2009  Denver Gingerich (denver [at] ossguy [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Denver Gingerich (denver [at] ossguy [dot] com)
 	  
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -72,13 +72,13 @@ USB_ClassInfo_HID_Device_t Mouse_HID_Interface =
 	{
 		.Config =
 			{
-				.InterfaceNumber         = 0,
+				.InterfaceNumber              = 1,
 
-				.ReportINEndpointNumber  = MOUSE_IN_EPNUM,
-				.ReportINEndpointSize    = HID_EPSIZE,
+				.ReportINEndpointNumber       = MOUSE_IN_EPNUM,
+				.ReportINEndpointSize         = HID_EPSIZE,
 
-				.PrevReportINBuffer      = PrevMouseHIDReportBuffer,
-				.PrevReportINBufferSize  = sizeof(PrevMouseHIDReportBuffer),
+				.PrevReportINBuffer           = PrevMouseHIDReportBuffer,
+				.PrevReportINBufferSize       = sizeof(PrevMouseHIDReportBuffer),
 			},		
 	};
 
@@ -180,6 +180,8 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 		if (!(ButtonStatus_LCL & BUTTONS_BUTTON1))
 		  return 0;
 		
+		KeyboardReport->Modifier = HID_KEYBOARD_MODIFER_LEFTSHIFT;
+
 		if (JoyStatus_LCL & JOY_UP)
 		  KeyboardReport->KeyCode[0] = 0x04; // A
 		else if (JoyStatus_LCL & JOY_DOWN)
@@ -215,7 +217,7 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 		  MouseReport->X =  1;
 
 		if (JoyStatus_LCL & JOY_PRESS)
-		  MouseReport->Button  = (1 << 0);
+		  MouseReport->Button |= (1 << 0);
 		
 		*ReportSize = sizeof(USB_MouseReport_Data_t);
 		return true;		
@@ -237,13 +239,13 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 		uint8_t  LEDMask   = LEDS_NO_LEDS;
 		uint8_t* LEDReport = (uint8_t*)ReportData;
 
-		if (*LEDReport & 0x01) // NUM Lock
+		if (*LEDReport & HID_KEYBOARD_LED_NUMLOCK)
 		  LEDMask |= LEDS_LED1;
 		
-		if (*LEDReport & 0x02) // CAPS Lock
+		if (*LEDReport & HID_KEYBOARD_LED_CAPSLOCK)
 		  LEDMask |= LEDS_LED3;
 
-		if (*LEDReport & 0x04) // SCROLL Lock
+		if (*LEDReport & HID_KEYBOARD_LED_SCROLLLOCK)
 		  LEDMask |= LEDS_LED4;
 		  
 		LEDs_SetAllLEDs(LEDMask);

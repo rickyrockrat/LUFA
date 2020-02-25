@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -53,6 +53,11 @@
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
+		#endif
+
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_HID_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/Class/HID.h instead.
 		#endif
 
 	/* Public Interface - May be used in end-application: */
@@ -131,15 +136,6 @@
 			 */
 			void HID_Device_USBTask(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			
-			/** Indicates that a millisecond of idle time has elapsed on the given HID interface, and the interface's idle count should be
-			 *  decremented. This should be called once per millisecond so that hardware key-repeats function correctly. It is recommended
-			 *  that this be called by the \ref EVENT_USB_Device_StartOfFrame() event, once SOF events have been enabled via
-			 *  \ref USB_Device_EnableSOFEvents();.
-			 *
-			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class configuration and state
-			 */
-			void HID_Device_MillisecondElapsed(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			
 			/** HID class driver callback for the user creation of a HID IN report. This callback may fire in response to either
 			 *  HID class control requests from the host, or by the normal HID endpoint polling procedure. Inside this callback the
 			 *  user is responsible for the creation of the next HID input report to be sent to the host.
@@ -173,6 +169,21 @@
 			                                          const void* ReportData, const uint16_t ReportSize) ATTR_NON_NULL_PTR_ARG(1)
 			                                          ATTR_NON_NULL_PTR_ARG(3);
 
+		/* Inline Functions: */
+			/** Indicates that a millisecond of idle time has elapsed on the given HID interface, and the interface's idle count should be
+			 *  decremented. This should be called once per millisecond so that hardware key-repeats function correctly. It is recommended
+			 *  that this be called by the \ref EVENT_USB_Device_StartOfFrame() event, once SOF events have been enabled via
+			 *  \ref USB_Device_EnableSOFEvents();.
+			 *
+			 *  \param[in,out] HIDInterfaceInfo  Pointer to a structure containing a HID Class configuration and state
+			 */
+			static inline void HID_Device_MillisecondElapsed(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo);
+			static inline void HID_Device_MillisecondElapsed(USB_ClassInfo_HID_Device_t* HIDInterfaceInfo)
+			{
+				if (HIDInterfaceInfo->State.IdleMSRemaining)
+				  HIDInterfaceInfo->State.IdleMSRemaining--;
+			}
+			
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			}

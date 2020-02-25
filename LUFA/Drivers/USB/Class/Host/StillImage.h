@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -53,6 +53,11 @@
 			extern "C" {
 		#endif
 
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_SI_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/Class/StillImage.h instead.
+		#endif
+		
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
 			/** Error code for some Still Image Host functions, indicating a logical (and not hardware) error */
@@ -108,15 +113,6 @@
 			};
 
 		/* Function Prototypes: */
-			/** General management task for a given Still Image host class interface, required for the correct operation of the
-			 *  interface. This should be called frequently in the main program loop, before the master USB management task
-			 *  \ref USB_USBTask().
-			 *
-			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
-			 */
-			void SImage_Host_USBTask(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-
-
 			/** Host interface configuration routine, to configure a given Still Image host interface instance using the
 			 *  Configuration Descriptor read from an attached USB device. This function automatically updates the given Still
 			 *  Image Host instance's state values and configures the pipes required to communicate with the interface if it is
@@ -134,7 +130,10 @@
 
 			/** Opens a new PIMA session with the attached device. This should be used before any session-orientated PIMA commands
 			 *  are issued to the device. Only one session can be open at the one time.
-			 *			 
+			 *	
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum, or \ref SI_ERROR_LOGICAL_CMD_FAILED if the device
@@ -144,7 +143,10 @@
 
 			/** Closes an already opened PIMA session with the attached device. This should be used after all session-orientated
 			 *  PIMA commands have been issued to the device.
-			 *			 
+			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum, or \ref SI_ERROR_LOGICAL_CMD_FAILED if the device
@@ -154,6 +156,9 @@
 
 			/** Sends a raw PIMA block header to the device, filling out the transaction ID automatically. This can be used to send
 			 *  arbitrary PIMA blocks to the device with or without parameters.
+			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
 			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *  \param[in] PIMAHeader  Pointer to a PIMA container structure that is to be sent
@@ -165,6 +170,9 @@
 			/** Receives a raw PIMA block header to the device. This can be used to receive arbitrary PIMA blocks from the device with
 			 *  or without parameters.
 			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *  \param[out] PIMAHeader  Pointer to a PIMA container structure where the received block is to be stored
 			 *
@@ -173,7 +181,10 @@
 			uint8_t SImage_Host_ReceiveBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, SI_PIMA_Container_t* const PIMAHeader);
 
 			/** Sends a given PIMA command to the attached device, filling out the PIMA command header's Transaction ID automatically.
-			 *			 
+			 *	
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *  \param[in] Operation  PIMA operation code to issue to the device
 			 *  \param[in] TotalParams  Total number of 32-bit parameters to send to the device in the issued command block
@@ -187,7 +198,10 @@
 
 			/** Receives and checks a response block from the attached PIMA device, once a command has been issued and all data
 			 *  associated with the command has been transferred.
-			 *			 
+			 *	
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *
 			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum, or \ref SI_ERROR_LOGICAL_CMD_FAILED if the device
@@ -197,6 +211,9 @@
 
 			/** Indicates if the device has issued a PIMA event block to the host via the asynchronous events pipe.
 			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *
 			 *  \return Boolean true if an event is waiting to be read, false otherwise
@@ -204,6 +221,9 @@
 			bool SImage_Host_IsEventReceived(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Receives an asynchronous event block from the device via the asynchronous events pipe.
+			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
 			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *  \param[out] PIMAHeader  Pointer to a PIMA container structure where the event should be stored
@@ -218,6 +238,9 @@
 			/** Sends arbitrary data to the attached device, for use in the data phase of PIMA commands which require data
 			 *  transfer beyond the regular PIMA command block parameters.
 			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *  \param[in] Buffer  Pointer to a buffer where the data to send has been stored
 			 *  \param[in] Bytes  Length in bytes of the data in the buffer to send to the attached device
@@ -230,6 +253,9 @@
 			/** Receives arbitrary data from the attached device, for use in the data phase of PIMA commands which require data
 			 *  transfer beyond the regular PIMA command block parameters.
 			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 *  \param[out] Buffer  Pointer to a buffer where the received data is to be stored
 			 *  \param[in] Bytes  Length in bytes of the data to read
@@ -238,7 +264,20 @@
 			 */
 			uint8_t SImage_Host_ReadData(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, void* Buffer,
 			                             const uint16_t Bytes) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
-			
+		
+		/* Inline Functions: */
+			/** General management task for a given Still Image host class interface, required for the correct operation of the
+			 *  interface. This should be called frequently in the main program loop, before the master USB management task
+			 *  \ref USB_USBTask().
+			 *
+			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
+			 */
+			static inline void SImage_Host_USBTask(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo);
+			static inline void SImage_Host_USBTask(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo)
+			{
+				(void)SIInterfaceInfo;
+			}		
+
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Macros: */
@@ -253,7 +292,7 @@
 			#define COMMAND_DATA_TIMEOUT_MS        10000
 		
 		/* Function Prototypes: */
-			#if defined(INCLUDE_FROM_SI_CLASS_HOST_C)
+			#if defined(__INCLUDE_FROM_SI_CLASS_HOST_C)
 				static uint8_t DComp_SI_Host_NextSIInterface(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
 				static uint8_t DComp_SI_Host_NextSIInterfaceEndpoint(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
 			#endif

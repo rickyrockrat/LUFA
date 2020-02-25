@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -28,10 +28,12 @@
   this software.
 */
 
+#define  __INCLUDE_FROM_USB_DRIVER
 #include "../../HighLevel/USBMode.h"
 #if defined(USB_CAN_BE_HOST)
 
-#define  INCLUDE_FROM_RNDIS_CLASS_HOST_C
+#define  __INCLUDE_FROM_RNDIS_CLASS_HOST_C
+#define  __INCLUDE_FROM_RNDIS_DRIVER
 #include "RNDIS.h"
 
 uint8_t RNDIS_Host_ConfigurePipes(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo, uint16_t ConfigDescriptorSize,
@@ -110,12 +112,6 @@ uint8_t RNDIS_Host_ConfigurePipes(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfa
 		{
 			if (EndpointData->EndpointAddress & ENDPOINT_DESCRIPTOR_DIR_IN)
 			{
-				if (Pipe_IsEndpointBound(EndpointData->EndpointAddress))
-				{
-					RNDISInterfaceInfo->State.BidirectionalDataEndpoints = true;
-					Pipe_DisablePipe();
-				}
-
 				Pipe_ConfigurePipe(RNDISInterfaceInfo->Config.DataINPipeNumber, EP_TYPE_BULK, PIPE_TOKEN_IN,
 				                   EndpointData->EndpointAddress, EndpointData->EndpointSize, 
 				                   RNDISInterfaceInfo->Config.DataINPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
@@ -125,17 +121,9 @@ uint8_t RNDIS_Host_ConfigurePipes(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfa
 			}
 			else
 			{
-				if (Pipe_IsEndpointBound(EndpointData->EndpointAddress))
-				{
-					RNDISInterfaceInfo->State.BidirectionalDataEndpoints = true;
-				}
-				else
-				{
-					Pipe_ConfigurePipe(RNDISInterfaceInfo->Config.DataOUTPipeNumber, EP_TYPE_BULK, PIPE_TOKEN_OUT,
-					                   EndpointData->EndpointAddress, EndpointData->EndpointSize, 
-					                   RNDISInterfaceInfo->Config.DataOUTPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
-				}
-				
+				Pipe_ConfigurePipe(RNDISInterfaceInfo->Config.DataOUTPipeNumber, EP_TYPE_BULK, PIPE_TOKEN_OUT,
+				                   EndpointData->EndpointAddress, EndpointData->EndpointSize, 
+				                   RNDISInterfaceInfo->Config.DataOUTPipeDoubleBank ? PIPE_BANK_DOUBLE : PIPE_BANK_SINGLE);
 				RNDISInterfaceInfo->State.DataOUTPipeSize = EndpointData->EndpointSize;
 				
 				FoundEndpoints |= RNDIS_FOUND_DATAPIPE_OUT;
@@ -192,7 +180,8 @@ static uint8_t DComp_RNDIS_Host_NextRNDISInterfaceEndpoint(void* const CurrentDe
 	
 		uint8_t EndpointType = (CurrentEndpoint->Attributes & EP_TYPE_MASK);
 	
-		if ((EndpointType == EP_TYPE_BULK) || (EndpointType == EP_TYPE_INTERRUPT))
+		if (((EndpointType == EP_TYPE_BULK) || (EndpointType == EP_TYPE_INTERRUPT)) &&
+		    !(Pipe_IsEndpointBound(CurrentEndpoint->EndpointAddress)))
 		{
 			return DESCRIPTOR_SEARCH_Found;
 		}
@@ -203,11 +192,6 @@ static uint8_t DComp_RNDIS_Host_NextRNDISInterfaceEndpoint(void* const CurrentDe
 	}
 
 	return DESCRIPTOR_SEARCH_NotFound;
-}
-
-void RNDIS_Host_USBTask(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo)
-{
-	(void)RNDISInterfaceInfo;
 }
 
 static uint8_t RNDIS_SendEncapsulatedCommand(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo,
@@ -417,6 +401,9 @@ uint8_t RNDIS_Host_ReadPacket(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceIn
 	
 	if (!(Pipe_IsReadWriteAllowed()))
 	{
+		if (Pipe_IsINReceived())
+		  Pipe_ClearIN();
+	
 		*PacketLength = 0;
 		Pipe_Freeze();
 		return PIPE_RWSTREAM_NoError;
@@ -436,7 +423,9 @@ uint8_t RNDIS_Host_ReadPacket(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceIn
 	                    NO_STREAM_CALLBACK);
 						
 	Pipe_Read_Stream_LE(Buffer, *PacketLength, NO_STREAM_CALLBACK);
-	Pipe_ClearIN();
+	
+	if (!(Pipe_BytesInPipe()))
+	  Pipe_ClearIN();
 
 	Pipe_Freeze();
 	
@@ -450,38 +439,27 @@ uint8_t RNDIS_Host_SendPacket(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceIn
 	if ((USB_HostState != HOST_STATE_Configured) || !(RNDISInterfaceInfo->State.IsActive))
 	  return PIPE_READYWAIT_DeviceDisconnected;
 
-	if (RNDISInterfaceInfo->State.BidirectionalDataEndpoints)
-	{
-		Pipe_SelectPipe(RNDISInterfaceInfo->Config.DataINPipeNumber);
-		Pipe_SetPipeToken(PIPE_TOKEN_OUT);
-	}
-	else
-	{
-		Pipe_SelectPipe(RNDISInterfaceInfo->Config.DataOUTPipeNumber);	
-	}
+	RNDIS_Packet_Message_t DeviceMessage;
 
+	memset(&DeviceMessage, 0, sizeof(RNDIS_Packet_Message_t));
+	DeviceMessage.MessageType   = REMOTE_NDIS_PACKET_MSG;
+	DeviceMessage.MessageLength = (sizeof(RNDIS_Packet_Message_t) + PacketLength);
+	DeviceMessage.DataOffset    = (sizeof(RNDIS_Packet_Message_t) - sizeof(RNDIS_Message_Header_t));
+	DeviceMessage.DataLength    = PacketLength;
+	
+	Pipe_SelectPipe(RNDISInterfaceInfo->Config.DataOUTPipeNumber);
 	Pipe_Unfreeze();
 
-	RNDIS_Packet_Message_t DeviceMessage;
-	
-	DeviceMessage.MessageType = REMOTE_NDIS_PACKET_MSG;
-	DeviceMessage.MessageLength = (sizeof(RNDIS_Packet_Message_t) + PacketLength);
-	DeviceMessage.DataOffset = (sizeof(RNDIS_Packet_Message_t) - sizeof(RNDIS_Message_Header_t));
-	DeviceMessage.DataLength = PacketLength;
-	
 	if ((ErrorCode = Pipe_Write_Stream_LE(&DeviceMessage, sizeof(RNDIS_Packet_Message_t),
 	                                      NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
 	{
 		return ErrorCode;
 	}
-	
+
 	Pipe_Write_Stream_LE(Buffer, PacketLength, NO_STREAM_CALLBACK);
 	Pipe_ClearOUT();
 
 	Pipe_Freeze();
-	
-	if (RNDISInterfaceInfo->State.BidirectionalDataEndpoints)
-	  Pipe_SetPipeToken(PIPE_TOKEN_IN);
 	
 	return PIPE_RWSTREAM_NoError;
 }

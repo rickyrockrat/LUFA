@@ -1,23 +1,23 @@
 /*
 			 LUFA Library
-	 Copyright (C) Dean Camera, 2009.
+	 Copyright (C) Dean Camera, 2010.
 			  
   dean [at] fourwalledcubicle [dot] com
 	  www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  David Prentice (david.prentice [at] farming [dot] uk)
-  Copyright 2009  Peter Danneger
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  David Prentice (david.prentice [at] farming [dot] uk)
+  Copyright 2010  Peter Danneger
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -35,12 +35,12 @@
 volatile uint8_t srx_done, stx_count;
 volatile uint8_t srx_data, srx_mask, srx_tmp, stx_data;
 
-unsigned char SoftUART_IsReady(void)
+uint8_t SoftUART_IsReady(void)
 {
 	return !(stx_count);
 }
 
-unsigned char SoftUART_TxByte(unsigned char c)
+uint8_t SoftUART_TxByte(uint8_t c)
 {
 	while (stx_count);
 
@@ -50,12 +50,12 @@ unsigned char SoftUART_TxByte(unsigned char c)
 	return c;
 }
 
-unsigned char SoftUART_IsReceived(void)
+uint8_t SoftUART_IsReceived(void)
 {
 	return srx_done;
 }
 
-unsigned char SoftUART_RxByte(void)
+uint8_t SoftUART_RxByte(void)
 {
 	while (!(srx_done));
 

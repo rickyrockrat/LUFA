@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -39,6 +39,11 @@
 /** \ingroup Group_Dataflash
  *  @defgroup Group_Dataflash_XPLAIN XPLAIN
  *
+ *  Board specific Dataflash driver header for the XPLAIN.
+ *
+ *  \note This file should not be included directly. It is automatically included as needed by the dataflash driver
+ *        dispatch header located in LUFA/Drivers/Board/Dataflash.h.
+ *
  *  @{
  */
 
@@ -49,7 +54,7 @@
 		#include "AT45DB642D.h"
 
 	/* Preprocessor Checks: */
-		#if !defined(INCLUDE_FROM_DATAFLASH_H)
+		#if !defined(__INCLUDE_FROM_DATAFLASH_H)
 			#error Do not include this file directly. Include LUFA/Drivers/Board/Dataflash.h instead.
 		#endif
 		
@@ -70,9 +75,9 @@
 			#define DATAFLASH_NO_CHIP                    DATAFLASH_CHIPCS_MASK
 
 			/** Mask for the first dataflash chip selected. */
-			#define DATAFLASH_CHIP1                      (1 << 5)
+			#define DATAFLASH_CHIP1                      0
 
-			#if BOAD == XPLAIN_REV1
+			#if (BOARD == BOARD_XPLAIN_REV1)
 				#define DATAFLASH_PAGE_SIZE              256
 
 				#define DATAFLASH_PAGES                  2048							
@@ -111,9 +116,7 @@
 			 *  \param[in] BufferByte   Address within the dataflash's buffer
 			 */
 			static inline void Dataflash_SendAddressBytes(uint16_t PageAddress, const uint16_t BufferByte)
-			{	
-				PageAddress >>= 1;
-				
+			{
 				Dataflash_SendByte(PageAddress >> 5);
 				Dataflash_SendByte((PageAddress << 3) | (BufferByte >> 8));
 				Dataflash_SendByte(BufferByte);

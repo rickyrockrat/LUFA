@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -56,6 +56,10 @@
 
 #ifndef __HIDPARSER_H__
 #define __HIDPARSER_H__
+
+	/* Macros: */
+		#define __INCLUDE_FROM_USB_DRIVER
+		#define __INCLUDE_FROM_HID_DRIVER
 
 	/* Includes: */
 		#include <string.h>
@@ -198,7 +202,7 @@
 			typedef struct
 			{
 				uint16_t                     BitOffset;      /**< Bit offset in the IN, OUT or FEATURE report of the item. */
-				uint8_t                      ItemType;       /**< Report item type, a value in HID_Types_t. */
+				uint8_t                      ItemType;       /**< Report item type, a value in HID_ReportItemTypes_t. */
 				uint16_t                     ItemFlags;      /**< Item data flags, such as constant/variable, etc. */
 				uint8_t                      ReportID;       /**< Report ID this item belongs to, or 0x00 if device has only one report */
 				HID_CollectionPath_t*        CollectionPath; /**< Collection path of the item. */
@@ -215,7 +219,7 @@
 			typedef struct
 			{
 				uint8_t                      ReportID; /** Report ID of the report within the HID interface */
-				uint8_t                      ReportSizeBits[3]; /** Total number of bits in each report type for the given Report ID,
+				uint16_t                     ReportSizeBits[3]; /** Total number of bits in each report type for the given Report ID,
 				                                                 *  indexed by the \ref HID_ReportItemTypes_t enum
 																 */
 			} HID_ReportSizeInfo_t;

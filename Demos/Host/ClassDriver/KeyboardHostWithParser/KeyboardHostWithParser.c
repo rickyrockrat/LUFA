@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -130,18 +130,16 @@ int main(void)
 					{
 						HID_ReportItem_t* ReportItem = &HIDReportInfo.ReportItems[ReportNumber];
 
-						/* Check if the current report item is a keyboard scancode */
+						/* Update the report item value if it is contained within the current report */
+						if (!(USB_GetHIDReportItemInfo(KeyboardReport, ReportItem)))
+						  continue;
+
+						/* Determine what report item is being tested, process updated value as needed */
 						if ((ReportItem->Attributes.Usage.Page      == USAGE_PAGE_KEYBOARD) &&
 							(ReportItem->Attributes.BitSize         == 8)                   &&
 							(ReportItem->Attributes.Logical.Maximum > 1)                    &&
 							(ReportItem->ItemType                   == REPORT_ITEM_TYPE_In))
 						{
-							/* Retrieve the keyboard scancode from the report data retrieved from the device if it is
-							 * contained within the current report, if not, skip to the next item in the parser list
-							 */
-							if (!(USB_GetHIDReportItemInfo(KeyboardReport, ReportItem)))
-							  continue;
-
 							/* Key code is an unsigned char in length, cast to the appropriate type */
 							uint8_t KeyCode = (uint8_t)ReportItem->Value;
 

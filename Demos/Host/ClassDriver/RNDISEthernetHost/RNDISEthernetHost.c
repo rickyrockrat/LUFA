@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -36,7 +36,7 @@
  
 #include "RNDISEthernetHost.h"
 
-/** Buffer to hold incomming and outgoing Ethernet packets. */
+/** Buffer to hold incoming and outgoing Ethernet packets. */
 uint8_t PacketBuffer[1024];
 
 /** LUFA RNDIS Class driver interface configuration and state information. This structure is
@@ -146,7 +146,7 @@ int main(void)
 				USB_HostState = HOST_STATE_Configured;
 				break;
 			case HOST_STATE_Configured:
-				PrintIncommingPackets();
+				PrintIncomingPackets();
 			
 				break;
 		}
@@ -156,8 +156,8 @@ int main(void)
 	}
 }
 
-/** Prints incomming packets from the attached RNDIS device to the serial port. */
-void PrintIncommingPackets(void)
+/** Prints incoming packets from the attached RNDIS device to the serial port. */
+void PrintIncomingPackets(void)
 {
 	if (RNDIS_Host_IsPacketReceived(&Ethernet_RNDIS_Interface))
 	{

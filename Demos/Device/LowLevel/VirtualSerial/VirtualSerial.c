@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -48,59 +48,6 @@ CDC_Line_Coding_t LineEncoding = { .BaudRateBPS = 0,
                                    .CharFormat  = OneStopBit,
                                    .ParityType  = Parity_None,
                                    .DataBits    = 8            };
-
-
-#if 0
-/* NOTE: Here you can set up a standard stream using the created virtual serial port, so that the standard stream functions in
- *       <stdio.h> can be used on the virtual serial port (e.g. fprintf(&USBSerial, "Test"); to print a string).
- */
-	
-static int CDC_putchar(char c, FILE *stream)
-{	  
-	Endpoint_SelectEndpoint(CDC_TX_EPNUM);
-
-	if (!(LineEncoding.BaudRateBPS))
-	  return -1;
-	
-	if (Endpoint_WaitUntilReady())
-	  return -1;
-
-	Endpoint_Write_Byte(c);
-	Endpoint_ClearIN();
-	
-	return 0;
-}
-
-static int CDC_getchar(FILE *stream)
-{
-	int c;
-
-	if (!(LineEncoding.BaudRateBPS))
-	  return -1;
-
-	Endpoint_SelectEndpoint(CDC_RX_EPNUM);
-	
-	for (;;)
-	{
-		if (Endpoint_WaitUntilReady())
-		  return -1;
-	
-		if (!(Endpoint_BytesInEndpoint()))
-		{
-			Endpoint_ClearOUT();
-		}
-		else
-		{
-			c = Endpoint_Read_Byte();
-			break;
-		}
-	}
-	
-	return c;
-}
-
-static FILE USBSerial = FDEV_SETUP_STREAM(CDC_putchar, CDC_getchar, _FDEV_SETUP_RW);
-#endif
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.

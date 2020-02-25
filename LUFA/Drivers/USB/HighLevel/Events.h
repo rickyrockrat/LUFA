@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -40,8 +40,8 @@
  *  listed here. If an event with no user-associated handler is fired within the library, it by default maps to an
  *  internal empty stub function.
  *
- *  Each event must only have one associated event handler, but can be raised by multiple sources by calling the event
- *  name just like any regular C function (with any required event parameters).
+ *  Each event must only have one associated event handler, but can be raised by multiple sources by calling the
+ *  event handler function (with any required event parameters).
  *
  *  @{
  */
@@ -60,9 +60,14 @@
 			extern "C" {
 		#endif
 
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_USB_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+		#endif
+		
 	/* Public Interface - May be used in end-application: */			
 		/* Pseudo-Functions for Doxygen: */
-		#if !defined(INCLUDE_FROM_EVENTS_C) || defined(__DOXYGEN__)
+		#if !defined(__INCLUDE_FROM_EVENTS_C) || defined(__DOXYGEN__)
 			/** Event for USB stack initialization failure. This event fires when the USB interface fails to
 			 *  initialize correctly due to a hardware or software fault.
 			 *
@@ -233,18 +238,24 @@
 			 *  \note This event does not exist if the USB_HOST_ONLY token is supplied to the compiler (see
 			 *        \ref Group_USBManagement documentation).
 			 *
+			 *  \note This event does not exist on the series 2 USB AVRs when the NO_LIMITED_CONTROLLER_CONNECT
+			 *        compile time token is not set - see \ref EVENT_USB_Device_Disconnect.
+			 *
 			 *  \see \ref EVENT_USB_Device_WakeUp() event for accompanying Wake Up event.
 			 */
 			void EVENT_USB_Device_Suspend(void);
 
 			/** Event for USB wake up. This event fires when a the USB interface is suspended while in device
 			 *  mode, and the host wakes up the device by supplying Start Of Frame pulses. This is generally
-			 *  hooked to pull the user application out of a lowe power state and back into normal operating
+			 *  hooked to pull the user application out of a low power state and back into normal operating
 			 *  mode. If the USB interface is enumerated with the \ref USB_OPT_AUTO_PLL option set, the library
 			 *  will automatically restart the USB PLL before the event is fired.
 			 *
 			 *  \note This event does not exist if the USB_HOST_ONLY token is supplied to the compiler (see
 			 *        \ref Group_USBManagement documentation).
+			 *
+			 *  \note This event does not exist on the series 2 USB AVRs when the NO_LIMITED_CONTROLLER_CONNECT
+			 *        compile time token is not set - see \ref EVENT_USB_Device_Connect.
 			 *
 			 *  \see \ref EVENT_USB_Device_Suspend() event for accompanying Suspend event.
 			 */
@@ -281,7 +292,7 @@
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Function Prototypes: */
-			#if defined(INCLUDE_FROM_EVENTS_C)
+			#if defined(__INCLUDE_FROM_EVENTS_C)
 				void USB_Event_Stub(void) ATTR_CONST;
 					
 				#if defined(USB_CAN_BE_BOTH)

@@ -60,10 +60,10 @@
 
 
 # MCU name
-MCU = at90usb162
+MCU = atmega32u2
 
 
-# Target board (see library "Board Types" documentation, USER or blank for projects not requiring
+# Target board (see library "Board Types" documentation, NONE for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called 
 # "Board" inside the application directory.
 BOARD  = USER
@@ -80,7 +80,7 @@ BOARD  = USER
 #     does not *change* the processor frequency - it should merely be updated to
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
-F_CPU = 8000000
+F_CPU = 16000000
 
 
 # Input clock frequency.

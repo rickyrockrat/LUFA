@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -58,6 +58,11 @@
 			extern "C" {
 		#endif
 
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_USB_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+		#endif
+		
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
 			/** Indicates that a given descriptor does not exist in the device. This can be used inside descriptors
@@ -124,14 +129,14 @@
 			 *  descriptor's ConfigAttributes value to indicate that the specified configuration can draw its power
 			 *  from the device's own power source.
 			 */
-			#define USB_CONFIG_ATTR_SELFPOWERED       0xC0
+			#define USB_CONFIG_ATTR_SELFPOWERED       0x40
 
 			/** Can be masked with other configuration descriptor attributes for a \ref USB_Descriptor_Configuration_Header_t
 			 *  descriptor's ConfigAttributes value to indicate that the specified configuration supports the
 			 *  remote wakeup feature of the USB standard, allowing a suspended USB device to wake up the host upon
 			 *  request.
 			 */
-			#define USB_CONFIG_ATTR_REMOTEWAKEUP      0xA0
+			#define USB_CONFIG_ATTR_REMOTEWAKEUP      0x20
 
 			/** Can be masked with other endpoint descriptor attributes for a \ref USB_Descriptor_Endpoint_t descriptor's
 			 *  Attributes value to indicate that the specified endpoint is not synchronized.

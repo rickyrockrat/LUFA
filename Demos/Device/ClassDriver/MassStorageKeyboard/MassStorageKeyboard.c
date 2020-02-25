@@ -1,22 +1,22 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
-  Copyright 2009  Matthias Hullin (lufa [at] matthias [dot] hullin [dot] net)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Matthias Hullin (lufa [at] matthias [dot] hullin [dot] net)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -118,12 +118,6 @@ void SetupHardware(void)
 
 	/* Clear Dataflash sector protections, if enabled */
 	DataflashManager_ResetDataflashProtections();
-
-	/* Millisecond timer initialization, with output compare interrupt enabled for the HID idle timing */
-	OCR0A  = ((F_CPU / 64) / 1000);
-	TCCR0A = (1 << WGM01);
-	TCCR0B = ((1 << CS01) | (1 << CS00));
-	TIMSK0 = (1 << OCIE0A);
 }
 
 /** Event handler for the library USB Connection event. */
@@ -145,8 +139,11 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 
 	if (!(MS_Device_ConfigureEndpoints(&Disk_MS_Interface)))
 	  LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+
 	if (!(HID_Device_ConfigureEndpoints(&Keyboard_HID_Interface)))
 	  LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+
+	USB_Device_EnableSOFEvents();
 }
 
 /** Event handler for the library USB Unhandled Control Request event. */
@@ -171,10 +168,10 @@ bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* MSInterfa
 	return CommandSuccess;
 }
 
-/** ISR to keep track of each millisecond interrupt, for determining the HID class idle period remaining when set. */
-ISR(TIMER0_COMPA_vect, ISR_BLOCK)
+/** Event handler for the USB device Start Of Frame event. */
+void EVENT_USB_Device_StartOfFrame(void)
 {
-	HID_Device_MillisecondElapsed(&Keyboard_HID_Interface);
+    HID_Device_MillisecondElapsed(&Keyboard_HID_Interface);
 }
 
 /** HID class driver callback function for the creation of HID reports to the host.
@@ -194,6 +191,8 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 	
 	uint8_t JoyStatus_LCL    = Joystick_GetStatus();
 	uint8_t ButtonStatus_LCL = Buttons_GetStatus();
+
+	KeyboardReport->Modifier = HID_KEYBOARD_MODIFER_LEFTSHIFT;
 
 	if (JoyStatus_LCL & JOY_UP)
 	  KeyboardReport->KeyCode[0] = 0x04; // A
@@ -228,13 +227,13 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 	uint8_t  LEDMask   = LEDS_NO_LEDS;
 	uint8_t* LEDReport = (uint8_t*)ReportData;
 
-	if (*LEDReport & 0x01) // NUM Lock
+	if (*LEDReport & HID_KEYBOARD_LED_NUMLOCK)
 	  LEDMask |= LEDS_LED1;
 	
-	if (*LEDReport & 0x02) // CAPS Lock
+	if (*LEDReport & HID_KEYBOARD_LED_CAPSLOCK)
 	  LEDMask |= LEDS_LED3;
 
-	if (*LEDReport & 0x04) // SCROLL Lock
+	if (*LEDReport & HID_KEYBOARD_LED_SCROLLLOCK)
 	  LEDMask |= LEDS_LED4;
 	  
 	LEDs_SetAllLEDs(LEDMask);

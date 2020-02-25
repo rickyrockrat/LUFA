@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -28,10 +28,12 @@
   this software.
 */
 
+#define  __INCLUDE_FROM_USB_DRIVER
 #include "../../HighLevel/USBMode.h"
 #if defined(USB_CAN_BE_DEVICE)
 
-#define  INCLUDE_FROM_CDC_CLASS_DEVICE_C
+#define  __INCLUDE_FROM_CDC_CLASS_DEVICE_C
+#define  __INCLUDE_FROM_CDC_DRIVER
 #include "CDC.h"
 
 void CDC_Device_Event_Stub(void)
@@ -190,10 +192,17 @@ uint16_t CDC_Device_BytesReceived(USB_ClassInfo_CDC_Device_t* const CDCInterface
 
 	Endpoint_SelectEndpoint(CDCInterfaceInfo->Config.DataOUTEndpointNumber);
 
-	if (Endpoint_IsOUTReceived() && !(Endpoint_BytesInEndpoint()))
-	  Endpoint_ClearOUT();
+	if (Endpoint_IsOUTReceived())
+	{
+		if (!(Endpoint_BytesInEndpoint()))
+		  Endpoint_ClearOUT();
 
-	return Endpoint_BytesInEndpoint();
+		return Endpoint_BytesInEndpoint();
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 uint8_t CDC_Device_ReceiveByte(USB_ClassInfo_CDC_Device_t* CDCInterfaceInfo)
@@ -263,6 +272,9 @@ static int CDC_Device_getchar_Blocking(FILE* Stream)
 {
 	while (!(CDC_Device_BytesReceived((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream))))
 	{
+		if (USB_DeviceState == DEVICE_STATE_Unattached)
+		  return _FDEV_EOF;
+	
 		CDC_Device_USBTask((USB_ClassInfo_CDC_Device_t*)fdev_get_udata(Stream));
 		USB_USBTask();
 	}

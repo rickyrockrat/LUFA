@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -57,6 +57,11 @@
 			extern "C" {
 		#endif
 
+	/* Preprocessor Checks: */
+		#if !defined(__INCLUDE_FROM_RNDIS_DRIVER)
+			#error Do not include this file directly. Include LUFA/Drivers/Class/RNDIS.h instead.
+		#endif
+
 	/* Public Interface - May be used in end-application: */
 		/* Type Defines: */
 			/** Class state structure. An instance of this structure should be made within the user application,
@@ -90,12 +95,8 @@
 				
 					uint16_t DataINPipeSize; /**< Size in bytes of the RNDIS interface's IN data pipe */
 					uint16_t DataOUTPipeSize;  /**< Size in bytes of the RNDIS interface's OUT data pipe */
-					uint16_t NotificationPipeSize;  /**< Size in bytes of the RNDIS interface's IN notification pipe, if used */
-					
-					bool BidirectionalDataEndpoints; /**< Indicates if the attached RNDIS interface uses bidirectional data endpoints,
-					                                  *   and this has only the IN pipe configured (with \ref Pipe_SetPipeToken()
-					                                  *   used to switch the pipe's direction)
-					                                  */
+					uint16_t NotificationPipeSize;  /**< Size in bytes of the RNDIS interface's IN notification pipe, if used */					
+
 					uint32_t DeviceMaxPacketSize; /**< Maximum size of a packet which can be buffered by the attached RNDIS device */
 					
 					uint32_t RequestID; /**< Request ID counter to give a unique ID for each command/response pair */
@@ -120,13 +121,6 @@
 			#define RNDIS_COMMAND_FAILED                  0xC0	
 
 		/* Function Prototypes: */
-			/** General management task for a given RNDIS host class interface, required for the correct operation of the interface. This should
-			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
-			 *
-			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing an RNDIS Class host configuration and state
-			 */
-			void RNDIS_Host_USBTask(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			
 			/** Host interface configuration routine, to configure a given RNDIS host interface instance using the Configuration
 			 *  Descriptor read from an attached USB device. This function automatically updates the given RNDIS Host instance's
 			 *  state values and configures the pipes required to communicate with the interface if it is found within the device.
@@ -190,6 +184,9 @@
 
 			/** Determines if a packet is currently waiting for the host to read in and process.
 			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing an RNDIS Class host configuration and state
 			 *
 			 *  \return Boolean true if a packet is waiting to be read in by the host, false otherwise
@@ -199,6 +196,9 @@
 			
 			/** Retrieves the next pending packet from the device, discarding the remainder of the RNDIS packet header to leave
 			 *  only the packet contents for processing by the host in the nominated buffer.
+			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
 			 *
 			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing an RNDIS Class host configuration and state
 			 *  \param[out] Buffer  Pointer to a buffer where the packer data is to be written to
@@ -211,6 +211,9 @@
 
 			/** Sends the given packet to the attached RNDIS device, after adding a RNDIS packet message header.
 			 *
+			 *  \note This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *        call will fail.
+			 *
 			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing an RNDIS Class host configuration and state
 			 *  \param[in] Buffer  Pointer to a buffer where the packer data is to be read from
 			 *  \param[in] PacketLength  Length in bytes of the packet to send
@@ -219,6 +222,18 @@
 			 */
 			uint8_t RNDIS_Host_SendPacket(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo, void* Buffer, uint16_t PacketLength)
 			                              ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
+
+		/* Inline Functions: */
+			/** General management task for a given RNDIS host class interface, required for the correct operation of the interface. This should
+			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
+			 *
+			 *  \param[in,out] RNDISInterfaceInfo  Pointer to a structure containing an RNDIS Class host configuration and state
+			 */
+			static inline void RNDIS_Host_USBTask(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo);
+			static inline void RNDIS_Host_USBTask(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo)
+			{
+				(void)RNDISInterfaceInfo;
+			}
 
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
@@ -235,7 +250,7 @@
 			#define RNDIS_FOUND_NOTIFICATION_IN       (1 << 2)
 
 		/* Function Prototypes: */
-			#if defined(INCLUDE_FROM_RNDIS_CLASS_HOST_C)
+			#if defined(__INCLUDE_FROM_RNDIS_CLASS_HOST_C)
 				static uint8_t RNDIS_SendEncapsulatedCommand(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo, 
 				                                             void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 				static uint8_t RNDIS_GetEncapsulatedResponse(USB_ClassInfo_RNDIS_Host_t* const RNDISInterfaceInfo,

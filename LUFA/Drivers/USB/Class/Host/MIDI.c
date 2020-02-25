@@ -1,21 +1,21 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2009.
+     Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
       www.fourwalledcubicle.com
 */
 
 /*
-  Copyright 2009  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, and distribute this software
-  and its documentation for any purpose and without fee is hereby
-  granted, provided that the above copyright notice appear in all
-  copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting
-  documentation, and that the name of the author not be used in
-  advertising or publicity pertaining to distribution of the
+  Permission to use, copy, modify, distribute, and sell this 
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in 
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting 
+  documentation, and that the name of the author not be used in 
+  advertising or publicity pertaining to distribution of the 
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -28,10 +28,12 @@
   this software.
 */
 
+#define  __INCLUDE_FROM_USB_DRIVER
 #include "../../HighLevel/USBMode.h"
 #if defined(USB_CAN_BE_HOST)
 
-#define  INCLUDE_FROM_MIDI_CLASS_HOST_C
+#define  __INCLUDE_FROM_MIDI_CLASS_HOST_C
+#define  __INCLUDE_FROM_MIDI_DRIVER
 #include "MIDI.h"
 
 uint8_t MIDI_Host_ConfigurePipes(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo, uint16_t ConfigDescriptorSize,
@@ -122,9 +124,24 @@ static uint8_t DComp_MIDI_Host_NextMIDIStreamingDataEndpoint(void* const Current
 	return DESCRIPTOR_SEARCH_NotFound;
 }
 
-void MIDI_Host_USBTask(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo)
+uint8_t MIDI_Host_Flush(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo)
 {
-	(void)MIDIInterfaceInfo;
+	if (USB_HostState != HOST_STATE_Configured)
+	  return PIPE_RWSTREAM_DeviceDisconnected;
+	
+	uint8_t ErrorCode;
+
+	Pipe_SelectPipe(MIDIInterfaceInfo->Config.DataOUTPipeNumber);
+
+	if (Pipe_BytesInPipe())
+	{
+		Pipe_ClearOUT();
+
+		if ((ErrorCode = Pipe_WaitUntilReady()) != PIPE_READYWAIT_NoError)
+		  return ErrorCode;
+	}
+
+	return PIPE_READYWAIT_NoError;
 }
 
 uint8_t MIDI_Host_SendEventPacket(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo, MIDI_EventPacket_t* const Event)
@@ -141,7 +158,8 @@ uint8_t MIDI_Host_SendEventPacket(USB_ClassInfo_MIDI_Host_t* const MIDIInterface
 		if ((ErrorCode = Pipe_Write_Stream_LE(Event, sizeof(MIDI_EventPacket_t), NO_STREAM_CALLBACK)) != PIPE_RWSTREAM_NoError)
 		  return ErrorCode;
 
-		Pipe_ClearOUT();
+		if (!(Pipe_IsReadWriteAllowed()))
+		  Pipe_ClearOUT();
 	}
 	
 	return PIPE_RWSTREAM_NoError;
@@ -158,7 +176,9 @@ bool MIDI_Host_ReceiveEventPacket(USB_ClassInfo_MIDI_Host_t* const MIDIInterface
 	  return false;
 
 	Pipe_Read_Stream_LE(Event, sizeof(MIDI_EventPacket_t), NO_STREAM_CALLBACK);
-	Pipe_ClearIN();
+
+	if (!(Pipe_IsReadWriteAllowed()))
+	  Pipe_ClearIN();
 	
 	return true;
 }
