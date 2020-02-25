@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2015.
+#     Copyright (C) Dean Camera, 2017.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
@@ -60,5 +60,6 @@ clean:
 
 .PHONY: all begin end testbootloaders clean
 
-# Include LUFA build script makefiles
-include $(LUFA_PATH)/Build/lufa_core.mk
+# Include common DMBS build system modules
+DMBS_PATH      ?= $(LUFA_PATH)/Build/DMBS/DMBS
+include $(DMBS_PATH)/core.mk
