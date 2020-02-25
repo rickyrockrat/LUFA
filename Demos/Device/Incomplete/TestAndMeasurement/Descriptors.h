@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -43,14 +43,20 @@
 		#include <LUFA/Drivers/USB/USB.h>
 
 	/* Macros: */
+		/** Endpoint number of the TMC notification IN endpoint. */
+		#define TMC_NOTIFICATION_EPNUM  2	
+
 		/** Endpoint number of the TMC device-to-host data IN endpoint. */
-		#define TMC_IN_EPNUM          3	
+		#define TMC_IN_EPNUM            3	
 
 		/** Endpoint number of the TMC host-to-device data OUT endpoint. */
-		#define TMC_OUT_EPNUM         4	
+		#define TMC_OUT_EPNUM           4	
 
 		/** Size in bytes of the TMC data endpoints. */
-		#define TMC_IO_EPSIZE         64
+		#define TMC_IO_EPSIZE           64
+
+		/** Size in bytes of the TMC notification endpoint. */
+		#define TMC_NOTIFICATION_EPSIZE 8
 
 	/* Type Defines: */
 		/** Type define for the device configuration descriptor structure. This must be defined in the
@@ -63,11 +69,14 @@
 			USB_Descriptor_Interface_t            Interface;
 			USB_Descriptor_Endpoint_t             DataOutEndpoint;
 			USB_Descriptor_Endpoint_t             DataInEndpoint;
+			USB_Descriptor_Endpoint_t             NotificationEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Function Prototypes: */
 		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 		                                    const uint8_t wIndex,
-		                                    void** const DescriptorAddress) ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
+		                                    const void** const DescriptorAddress)
+		                                    ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif
+

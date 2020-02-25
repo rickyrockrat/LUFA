@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -50,7 +50,9 @@
  *    - LUFA/Drivers/USB/HighLevel/ConfigDescriptor.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
  *    - LUFA/Drivers/USB/HighLevel/DeviceStandardReq.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
  *    - LUFA/Drivers/USB/HighLevel/Events.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
+ *    - LUFA/Drivers/USB/HighLevel/EndpointStream.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
  *    - LUFA/Drivers/USB/HighLevel/HostStandardReq.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
+ *    - LUFA/Drivers/USB/HighLevel/PipeStream.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
  *    - LUFA/Drivers/USB/HighLevel/USBTask.c <i>(Makefile source module name: LUFA_SRC_USB)</i>
  *
  *  \section Module Description
@@ -84,9 +86,9 @@
  *
  *  <table>
  *  <tr>
- *   <th width="100px">USB Class</th> 
- *   <th width="90px">Device Mode</th> 
- *   <th width="90px">Host Mode</th> 
+ *   <th width="100px">USB Class</th>
+ *   <th width="90px">Device Mode</th>
+ *   <th width="90px">Host Mode</th>
  *  </tr>
  *  <tr>
  *   <td>Audio</td>
@@ -139,10 +141,10 @@
  *
  *  \subsection SSec_ClassDriverDevice Device Mode Class Drivers
  *  Implementing a Device Mode Class Driver in a user application requires a number of steps to be followed. Firstly,
- *  the module configuration and state structure must be added to the project source. These structures are named in a 
+ *  the module configuration and state structure must be added to the project source. These structures are named in a
  *  similar manner between classes, that of <i>USB_ClassInfo_<b>{Class Name}</b>_Device_t</i>, and are used to hold the
- *  complete state and configuration for each class instance. Multiple class instances is where the power of the class 
- *  drivers lie; multiple interfaces of the same class simply require more instances of the Class Driver's ClassInfo 
+ *  complete state and configuration for each class instance. Multiple class instances is where the power of the class
+ *  drivers lie; multiple interfaces of the same class simply require more instances of the Class Driver's ClassInfo
  *  structure.
  *
  *  Inside the ClassInfo structure lies two sections, a <i>Config</i> section, and a <i>State</i> section. The Config
@@ -161,7 +163,7 @@
  *      .Config =
  *          {
  *              .StreamingInterfaceNumber = 1,
- *              
+ *
  *              .DataINEndpointNumber     = 1,
  *              .DataINEndpointSize       = 256,
  *          },
@@ -181,12 +183,12 @@
  *  void EVENT_USB_Device_ConfigurationChanged(void)
  *  {
  *  	LEDs_SetAllLEDs(LEDMASK_USB_READY);
- *  	
+ *
  *  	if (!(Audio_Device_ConfigureEndpoints(&My_Audio_Interface)))
  *  	  LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
  *  }
  *  \endcode
- * 
+ *
  *  Once initialized, it is important to maintain the class driver's state by repeatedly calling the Class Driver's
  *  <i><b>{Class Name}</b>_Device_USBTask()</i> function in the main program loop. The exact implementation of this
  *  function varies between class drivers, and can be used for any internal class driver purpose to maintain each
@@ -197,13 +199,13 @@
  *  int main(void)
  *  {
  *      SetupHardware();
- *  
+ *
  *      LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
- *  
+ *
  *      for (;;)
  *      {
  *          Create_And_Process_Samples();
- *      
+ *
  *          Audio_Device_USBTask(&My_Audio_Interface);
  *          USB_USBTask();
  *      }
@@ -212,14 +214,14 @@
  *
  *  The final standardized Device Class Driver function is the Control Request handler function
  *  <i><b>{Class Name}</b>_Device_ProcessControlRequest()</i>, which should be called when the
- *  \ref EVENT_USB_Device_UnhandledControlRequest() event fires. This function should also be
- *  called for each class driver instance, using the address of the instance to operate on as
- *  the function's parameter. The request handler will abort if it is determined that the current
- *  request is not targeted at the given class driver instance, thus these methods can safely be
- *  called one-after-another in the event handler with no form of error checking:
+ *  \ref EVENT_USB_Device_ControlRequest() event fires. This function should also be called for
+ *  each class driver instance, using the address of the instance to operate on as the function's
+ *  parameter. The request handler will abort if it is determined that the current request is not
+ *  targeted at the given class driver instance, thus these methods can safely be called
+ *  one-after-another in the event handler with no form of error checking:
  *
  *  \code
- *  void EVENT_USB_Device_UnhandledControlRequest(void)
+ *  void EVENT_USB_Device_ControlRequest(void)
  *  {
  *      Audio_Device_ProcessControlRequest(&My_Audio_Interface);
  *  }
@@ -238,10 +240,10 @@
  *
  *  \subsection SSec_ClassDriverHost Host Mode Class Drivers
  *  Implementing a Host Mode Class Driver in a user application requires a number of steps to be followed. Firstly,
- *  the module configuration and state structure must be added to the project source. These structures are named in a 
+ *  the module configuration and state structure must be added to the project source. These structures are named in a
  *  similar manner between classes, that of <i>USB_ClassInfo_<b>{Class Name}</b>_Host_t</i>, and are used to hold the
- *  complete state and configuration for each class instance. Multiple class instances is where the power of the class 
- *  drivers lie; multiple interfaces of the same class simply require more instances of the Class Driver's ClassInfo 
+ *  complete state and configuration for each class instance. Multiple class instances is where the power of the class
+ *  drivers lie; multiple interfaces of the same class simply require more instances of the Class Driver's ClassInfo
  *  structure.
  *
  *  Inside the ClassInfo structure lies two sections, a <i>Config</i> section, and a <i>State</i> section. The Config
@@ -261,7 +263,7 @@
  *          {
  *              .DataINPipeNumber       = 1,
  *              .DataINPipeDoubleBank   = false,
- *              
+ *
  *              .DataOUTPipeNumber      = 2,
  *              .DataOUTPipeDoubleBank  = false,
  *          },
@@ -272,7 +274,7 @@
  *  should be called in response to the host state machine entering the \ref HOST_STATE_Addressed state. This function
  *  will return an error code from the class driver's <i><b>{Class Name}</b>_EnumerationFailure_ErrorCodes_t</i> enum
  *  to indicate if the driver successfully initialized the instance and bound it to an interface in the attached device.
- *  Like all the class driver functions, this function takes in the address of the specific instance you wish to initialize - 
+ *  Like all the class driver functions, this function takes in the address of the specific instance you wish to initialize -
  *  in this manner, multiple separate instances of the same class type can be initialized. A fragment of a Class Driver
  *  based Host mode application may look like the following:
  *
@@ -281,7 +283,7 @@
  *      {
  *          case HOST_STATE_Addressed:
  *              LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
- *          
+ *
  *              uint16_t ConfigDescriptorSize;
  *              uint8_t  ConfigDescriptorData[512];
  *
@@ -321,16 +323,16 @@
  *  int main(void)
  *  {
  *      SetupHardware();
- *  
+ *
  *      LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
- *  
+ *
  *      for (;;)
  *      {
  *          switch (USB_HostState)
  *          {
  *             // Host state machine handling here
- *          } 
- *      
+ *          }
+ *
  *          MIDI_Host_USBTask(&My_Audio_Interface);
  *          USB_USBTask();
  *      }
@@ -348,7 +350,7 @@
  *  read and write routines. See each driver's individual documentation for more information on the
  *  class-specific functions.
  */
- 
+
 #ifndef __USB_H__
 #define __USB_H__
 
@@ -360,12 +362,12 @@
 	/* Includes: */
 		#include "HighLevel/USBMode.h"
 
-	/* Preprocessor Checks: */		
+	/* Preprocessor Checks: */
 		#if (!defined(USB_SERIES_2_AVR) && !defined(USB_SERIES_4_AVR) && \
 		     !defined(USB_SERIES_6_AVR) && !defined(USB_SERIES_7_AVR))
 			#error The currently selected AVR model is not supported under the USB component of the LUFA library.
 		#endif
-		
+
 	/* Includes: */
 		#include "HighLevel/USBTask.h"
 		#include "HighLevel/Events.h"
@@ -374,22 +376,33 @@
 
 		#include "LowLevel/USBController.h"
 		#include "LowLevel/USBInterrupt.h"
-	
+
 		#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
 			#include "LowLevel/Host.h"
 			#include "LowLevel/Pipe.h"
 			#include "HighLevel/HostStandardReq.h"
+			#include "HighLevel/PipeStream.h"
 		#endif
-		
+
 		#if defined(USB_CAN_BE_DEVICE) || defined(__DOXYGEN__)
 			#include "LowLevel/Device.h"
 			#include "LowLevel/Endpoint.h"
 			#include "HighLevel/DeviceStandardReq.h"
+			#include "HighLevel/EndpointStream.h"
 		#endif
-		
+
 		#if defined(USB_CAN_BE_BOTH) || defined(__DOXYGEN__)
 			#include "LowLevel/OTG.h"
 		#endif
-				
+		
+		#include "Class/Audio.h"
+		#include "Class/CDC.h"
+		#include "Class/HID.h"
+		#include "Class/MassStorage.h"
+		#include "Class/MIDI.h"
+		#include "Class/Printer.h"
+		#include "Class/RNDIS.h"
+		#include "Class/StillImage.h"
+
 #endif
 

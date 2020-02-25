@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -119,6 +119,40 @@ bool TINYNVM_WaitWhileNVMControllerBusy(void)
 	}
 }
 
+/** Enables the physical TPI interface on the target and enables access to the internal NVM controller.
+ *
+ *  \return Boolean true if the TPI interface was enabled successfully, false otherwise
+ */
+bool TINYNVM_EnableTPI(void)
+{
+	/* Enable TPI programming mode with the attached target */
+	XPROGTarget_EnableTargetTPI();
+
+	/* Lower direction change guard time to 0 USART bits */
+	XPROGTarget_SendByte(TPI_CMD_SSTCS | TPI_CTRL_REG);
+	XPROGTarget_SendByte(0x07);
+
+	/* Enable access to the XPROG NVM bus by sending the documented NVM access key to the device */
+	XPROGTarget_SendByte(TPI_CMD_SKEY);
+	for (uint8_t i = sizeof(TPI_NVMENABLE_KEY); i > 0; i--)
+	  XPROGTarget_SendByte(TPI_NVMENABLE_KEY[i - 1]);
+
+	/* Wait until the NVM bus becomes active */
+	return TINYNVM_WaitWhileNVMBusBusy();
+}
+
+/** Removes access to the target's NVM controller and physically disables the target's physical TPI interface. */
+void TINYNVM_DisableTPI(void)
+{
+	TINYNVM_WaitWhileNVMBusBusy();
+
+	/* Clear the NVMEN bit in the TPI STATUS register to disable TPI mode */
+	XPROGTarget_SendByte(TPI_CMD_SSTCS | TPI_STATUS_REG);
+	XPROGTarget_SendByte(0x00);
+
+	XPROGTarget_DisableTargetTPI();
+}
+
 /** Reads memory from the target's memory spaces.
  *
  *  \param[in]  ReadAddress  Start address to read from within the target's address space
@@ -138,17 +172,17 @@ bool TINYNVM_ReadMemory(const uint16_t ReadAddress,
 	/* Set the NVM control register to the NO OP command for memory reading */
 	TINYNVM_SendWriteNVMRegister(XPROG_Param_NVMCMDRegAddr);
 	XPROGTarget_SendByte(TINY_NVM_CMD_NOOP);
-	
+
 	/* Send the address of the location to read from */
 	TINYNVM_SendPointerAddress(ReadAddress);
-	
+
 	while (ReadSize-- && TimeoutTicksRemaining)
 	{
 		/* Read the byte of data from the target */
 		XPROGTarget_SendByte(TPI_CMD_SLD | TPI_POINTER_INDIRECT_PI);
 		*(ReadBuffer++) = XPROGTarget_ReceiveByte();
 	}
-	
+
 	return (TimeoutTicksRemaining != 0);
 }
 
@@ -167,7 +201,7 @@ bool TINYNVM_WriteMemory(const uint16_t WriteAddress,
 	/* Wait until the NVM controller is no longer busy */
 	if (!(TINYNVM_WaitWhileNVMControllerBusy()))
 	  return false;
-	  
+
 	/* Must have an integer number of words to write - if extra byte, word-align via a dummy high byte */
 	if (WriteLength & 0x01)
 	  WriteBuffer[WriteLength++] = 0xFF;
@@ -175,10 +209,10 @@ bool TINYNVM_WriteMemory(const uint16_t WriteAddress,
 	/* Set the NVM control register to the WORD WRITE command for memory reading */
 	TINYNVM_SendWriteNVMRegister(XPROG_Param_NVMCMDRegAddr);
 	XPROGTarget_SendByte(TINY_NVM_CMD_WORDWRITE);
-	
+
 	/* Send the address of the location to write to */
 	TINYNVM_SendPointerAddress(WriteAddress);
-	
+
 	while (WriteLength)
 	{
 		/* Wait until the NVM controller is no longer busy */
@@ -188,7 +222,7 @@ bool TINYNVM_WriteMemory(const uint16_t WriteAddress,
 		/* Write the low byte of data to the target */
 		XPROGTarget_SendByte(TPI_CMD_SST | TPI_POINTER_INDIRECT_PI);
 		XPROGTarget_SendByte(*(WriteBuffer++));
-		
+
 		/* Write the high byte of data to the target */
 		XPROGTarget_SendByte(TPI_CMD_SST | TPI_POINTER_INDIRECT_PI);
 		XPROGTarget_SendByte(*(WriteBuffer++));
@@ -196,7 +230,7 @@ bool TINYNVM_WriteMemory(const uint16_t WriteAddress,
 		/* Need to decrement the write length twice, since we read out a whole word */
 		WriteLength -= 2;
 	}
-	
+
 	return true;
 }
 
@@ -226,8 +260,9 @@ bool TINYNVM_EraseMemory(const uint8_t EraseCommand,
 	/* Wait until the NVM controller is no longer busy */
 	if (!(TINYNVM_WaitWhileNVMControllerBusy()))
 	  return false;
-	
+
 	return true;
 }
 
 #endif
+

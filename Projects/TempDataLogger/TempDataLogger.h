@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -42,7 +42,7 @@
 		#include <avr/power.h>
 		#include <avr/interrupt.h>
 		#include <stdio.h>
-		
+
 		#include "Descriptors.h"
 
 		#include "Lib/SCSI.h"
@@ -55,8 +55,6 @@
 		#include <LUFA/Drivers/Board/Temperature.h>
 		#include <LUFA/Drivers/Peripheral/ADC.h>
 		#include <LUFA/Drivers/USB/USB.h>
-		#include <LUFA/Drivers/USB/Class/MassStorage.h>
-		#include <LUFA/Drivers/USB/Class/HID.h>
 
 	/* Macros: */
 		/** LED mask for the library LED driver, to indicate that the USB interface is not ready. */
@@ -73,13 +71,13 @@
 
 		/** LED mask for the library LED driver, to indicate that the USB interface is busy. */
 		#define LEDMASK_USB_BUSY          LEDS_LED2
-		
+
 		/** Filename for the log data when written to the dataflash FAT filesystem. */
 		#define LOG_FILENAME             "TEMPLOG.txt"
-		
+
 		/** Default log interval when the EEPROM is blank, in 500ms ticks. */
 		#define DEFAULT_LOG_INTERVAL     20
-		
+
 	/* Type Defines: */
 		typedef struct
 		{
@@ -90,7 +88,7 @@
 			uint8_t Hour;
 			uint8_t Minute;
 			uint8_t Second;
-			
+
 			uint8_t LogInterval500MS;
 		} Device_Report_t;
 
@@ -102,7 +100,7 @@
 		void EVENT_USB_Device_Connect(void);
 		void EVENT_USB_Device_Disconnect(void);
 		void EVENT_USB_Device_ConfigurationChanged(void);
-		void EVENT_USB_Device_UnhandledControlRequest(void);
+		void EVENT_USB_Device_ControlRequest(void);
 
 		bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* const MSInterfaceInfo);
 		bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo,
@@ -111,9 +109,10 @@
 		                                         void* ReportData,
 		                                         uint16_t* const ReportSize);
 		void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo,
-		                                          const uint8_t ReportID, 
+		                                          const uint8_t ReportID,
 		                                          const uint8_t ReportType,
 		                                          const void* ReportData,
 		                                          const uint16_t ReportSize);
 
 #endif
+

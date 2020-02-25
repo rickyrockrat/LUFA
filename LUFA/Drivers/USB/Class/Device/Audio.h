@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -29,12 +29,12 @@
 */
 
 /** \file
- *  \brief Device mode driver for the library USB Audio Class driver.
+ *  \brief Device mode driver for the library USB Audio 1.0 Class driver.
  *
- *  Device mode driver for the library USB Audio Class driver.
+ *  Device mode driver for the library USB Audio 1.0 Class driver.
  *
- *  \note This file should not be included directly. It is automatically included as needed by the class driver
- *        dispatch header located in LUFA/Drivers/USB/Class/Audio.h.
+ *  \note This file should not be included directly. It is automatically included as needed by the USB module driver
+ *        dispatch header located in LUFA/Drivers/USB.h.
  */
 
 /** \ingroup Group_USBClassAudio
@@ -45,7 +45,7 @@
  *    - LUFA/Drivers/USB/Class/Device/Audio.c <i>(Makefile source module name: LUFA_SRC_USBCLASS)</i>
  *
  *  \section Module Description
- *  Device Mode USB Class driver framework interface, for the Audio USB Class driver.
+ *  Device Mode USB Class driver framework interface, for the Audio 1.0 USB Class driver.
  *
  *  @{
  */
@@ -56,7 +56,7 @@
 	/* Includes: */
 		#include "../../USB.h"
 		#include "../Common/Audio.h"
-		
+
 		#include <string.h>
 
 	/* Enable C linkage for C++ Compilers: */
@@ -66,7 +66,11 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_AUDIO_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/Class/Audio.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+		#endif
+
+		#if defined(__INCLUDE_FROM_AUDIO_DEVICE_C) && defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
 		#endif
 
 	/* Public Interface - May be used in end-application: */
@@ -97,7 +101,7 @@
 													 */
 					uint16_t DataOUTEndpointSize; /**< Size in bytes of the outgoing Audio Streaming data endpoint, if available
 												   *   (zero if unused).
-												   */			
+												   */
 				} Config; /**< Config data for the USB class interface within the device. All elements in this section
 				           *   <b>must</b> be set or the interface will fail to enumerate and operate correctly.
 				           */
@@ -108,13 +112,17 @@
 												*/
 				} State; /**< State data for the USB class interface within the device. All elements in this section
 				          *   are reset to their defaults when the interface is enumerated.
-				          */				
+				          */
 			} USB_ClassInfo_Audio_Device_t;
-		
+
 		/* Function Prototypes: */
 			/** Configures the endpoints of a given Audio interface, ready for use. This should be linked to the library
 			 *  \ref EVENT_USB_Device_ConfigurationChanged() event so that the endpoints are configured when the configuration containing the
 			 *  given Audio interface is selected.
+			 *
+			 *  \note The endpoint index numbers as given in the interface's configuration structure must not overlap with any other
+			 *        interface, or endpoint bank corruption will occur. Gaps in the allocated endpoint numbers or non-sequential indexes
+			 *        within a single interface is allowed, but no two interfaces of any type have have interleaved endpoint indexes.
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
 			 *
@@ -123,13 +131,13 @@
 			bool Audio_Device_ConfigureEndpoints(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Processes incoming control requests from the host, that are directed to the given Audio class interface. This should be
-			 *  linked to the library \ref EVENT_USB_Device_UnhandledControlRequest() event.
+			 *  linked to the library \ref EVENT_USB_Device_ControlRequest() event.
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
 			 */
 			void Audio_Device_ProcessControlRequest(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			
-		/* Inline Functions: */		
+
+		/* Inline Functions: */
 			/** General management task for a given Audio class interface, required for the correct operation of the interface. This should
 			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
 			 *
@@ -145,7 +153,7 @@
 			/** Determines if the given audio interface is ready for a sample to be read from it, and selects the streaming
 			 *  OUT endpoint ready for reading.
 			 *
-			 *  \pre This function must only be called when the Device state machine is in the DEVICE_STATE_Configured state or
+			 *  \pre This function must only be called when the Device state machine is in the \ref DEVICE_STATE_Configured state or
 			 *       the call will fail.
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
@@ -158,15 +166,15 @@
 			{
 				if ((USB_DeviceState != DEVICE_STATE_Configured) || !(AudioInterfaceInfo->State.InterfaceEnabled))
 				  return false;
-				
-				Endpoint_SelectEndpoint(AudioInterfaceInfo->Config.DataOUTEndpointNumber);	
+
+				Endpoint_SelectEndpoint(AudioInterfaceInfo->Config.DataOUTEndpointNumber);
 				return Endpoint_IsOUTReceived();
 			}
 
 			/** Determines if the given audio interface is ready to accept the next sample to be written to it, and selects
 			 *  the streaming IN endpoint ready for writing.
 			 *
-			 *  \pre This function must only be called when the Device state machine is in the DEVICE_STATE_Configured state or
+			 *  \pre This function must only be called when the Device state machine is in the \ref DEVICE_STATE_Configured state or
 			 *       the call will fail.
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class configuration and state.
@@ -179,7 +187,7 @@
 			{
 				if ((USB_DeviceState != DEVICE_STATE_Configured) || !(AudioInterfaceInfo->State.InterfaceEnabled))
 				  return false;
-				
+
 				Endpoint_SelectEndpoint(AudioInterfaceInfo->Config.DataINEndpointNumber);
 				return Endpoint_IsINReady();
 			}
@@ -198,14 +206,14 @@
 			static inline int8_t Audio_Device_ReadSample8(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo)
 			{
 				int8_t Sample;
-				
+
 				(void)AudioInterfaceInfo;
 
 				Sample = Endpoint_Read_Byte();
 
 				if (!(Endpoint_BytesInEndpoint()))
 				  Endpoint_ClearOUT();
-				
+
 				return Sample;
 			}
 
@@ -227,7 +235,7 @@
 				(void)AudioInterfaceInfo;
 
 				Sample = (int16_t)Endpoint_Read_Word_LE();
-					  
+
 				if (!(Endpoint_BytesInEndpoint()))
 				  Endpoint_ClearOUT();
 
@@ -252,7 +260,7 @@
 				(void)AudioInterfaceInfo;
 
 				Sample = (((uint32_t)Endpoint_Read_Byte() << 16) | Endpoint_Read_Word_LE());
-					  
+
 				if (!(Endpoint_BytesInEndpoint()))
 				  Endpoint_ClearOUT();
 
@@ -321,7 +329,8 @@
 		#if defined(__cplusplus)
 			}
 		#endif
-		
+
 #endif
 
 /** @} */
+

@@ -1,9 +1,9 @@
 #
 #             LUFA Library
 #     Copyright (C) Dean Camera, 2010.
-#              
+#
 #  dean [at] fourwalledcubicle [dot] com
-#      www.fourwalledcubicle.com
+#           www.lufa-lib.org
 #
 
 # Makefile to build the LUFA library, projects and demos.
@@ -24,3 +24,4 @@ all:
 	$(MAKE) -C Bootloaders $@ -s
 	@echo
 	@echo LUFA \"make $@\" operation complete.
+

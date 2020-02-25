@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -58,26 +58,26 @@
 		#if !defined(__INCLUDE_FROM_USB_DRIVER)
 			#error Do not include this file directly. Include LUFA/Drivers/USB/USB.h instead.
 		#endif
-		
+
 	/* Public Interface - May be used in end-application: */
 	#if defined(__DOXYGEN__)
 		/** Indicates that the target AVR microcontroller belongs to the Series 2 USB controller
-		 *  (i.e. AT90USBXXX2 or ATMEGAXXU2) when defined.
+		 *  (i.e. AT90USBxxx2 or ATMEGAxxU2) when defined.
 		 */
 		#define USB_SERIES_2_AVR
 
 		/** Indicates that the target AVR microcontroller belongs to the Series 4 USB controller
-		 *  (i.e. ATMEGAXXU4) when defined.
+		 *  (i.e. ATMEGAxxU4) when defined.
 		 */
 		#define USB_SERIES_4_AVR
 
 		/** Indicates that the target AVR microcontroller belongs to the Series 6 USB controller
-		 *  (i.e. AT90USBXXX6) when defined.
+		 *  (i.e. AT90USBxxx6) when defined.
 		 */
 		#define USB_SERIES_6_AVR
 
 		/** Indicates that the target AVR microcontroller belongs to the Series 7 USB controller
-		 *  (i.e. AT90USBXXX7) when defined.
+		 *  (i.e. AT90USBxxx7) when defined.
 		 */
 		#define USB_SERIES_7_AVR
 
@@ -96,7 +96,7 @@
 		 */
 		#define USB_CAN_BE_BOTH
 	#else
-		/* Macros: */			
+		/* Macros: */
 			#if (defined(__AVR_AT90USB162__) || defined(__AVR_AT90USB82__)  || \
 			     defined(__AVR_ATmega32U2__) || defined(__AVR_ATmega16U2__) || defined(__AVR_ATmega8U2__))
 				#define USB_SERIES_2_AVR
@@ -106,13 +106,13 @@
 				#define USB_SERIES_6_AVR
 			#elif (defined(__AVR_AT90USB647__) || defined(__AVR_AT90USB1287__))
 				#define USB_SERIES_7_AVR
-			#endif			
+			#endif
 
-			#if !defined(USB_SERIES_7_AVR)		
+			#if !defined(USB_SERIES_7_AVR)
 				#if defined(USB_HOST_ONLY)
 					#error USB_HOST_ONLY is not available for the currently selected USB AVR model.
 				#endif
-				
+
 				#if !defined(USB_DEVICE_ONLY)
 					#define USB_DEVICE_ONLY
 				#endif
@@ -127,12 +127,12 @@
 			#elif defined(USB_DEVICE_ONLY)
 				#define USB_CAN_BE_DEVICE
 			#endif
-			
+
 			#if (defined(USB_HOST_ONLY) && defined(USB_DEVICE_ONLY))
 				#error USB_HOST_ONLY and USB_DEVICE_ONLY are mutually exclusive.
 			#endif
 	#endif
-	
+
 #endif
 
 /** @} */

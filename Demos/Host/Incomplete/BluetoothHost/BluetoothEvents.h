@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -69,3 +69,4 @@
 		extern RFCOMM_Channel_t*    SerialChannel_RFCOMM;
 		
 #endif
+

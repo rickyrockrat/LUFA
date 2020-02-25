@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -191,3 +191,4 @@ void RFCOMM_ChannelSignalsReceived(RFCOMM_Channel_t* const RFCOMMChannel)
 {
 	// Currently do nothing in response to the remote device sending new terminal control signals
 }
+

@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
 
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -48,9 +48,9 @@ USB_Descriptor_Device_t PROGMEM RelayBoard_DeviceDescriptor =
 	.Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
 	.USBSpecification       = VERSION_BCD(01.10),
-	.Class                  = 0xFF,
-	.SubClass               = 0x00,
-	.Protocol               = 0x00,
+	.Class                  = USB_CSCP_VendorSpecificClass,
+	.SubClass               = USB_CSCP_NoDeviceSubclass,
+	.Protocol               = USB_CSCP_NoDeviceProtocol,
 
 	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
@@ -96,7 +96,7 @@ RelayBoard_USB_Descriptor_Configuration_t PROGMEM RelayBoard_ConfigurationDescri
 
 			.TotalEndpoints         = 0,
 
-			.Class                  = 0xFF,
+			.Class                  = USB_CSCP_VendorSpecificClass,
 			.SubClass               = 0x00,
 			.Protocol               = 0x00,
 
@@ -155,41 +155,41 @@ USB_Descriptor_String_t PROGMEM RelayBoard_SerialString =
  */
 uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                                     const uint8_t wIndex,
-                                    void** const DescriptorAddress)
+                                    const void** const DescriptorAddress)
 {
 	const uint8_t  DescriptorType   = (wValue >> 8);
 	const uint8_t  DescriptorNumber = (wValue & 0xFF);
 
-	void*    Address = NULL;
-	uint16_t Size    = NO_DESCRIPTOR;
+	const void* Address = NULL;
+	uint16_t    Size    = NO_DESCRIPTOR;
 
 	switch (DescriptorType)
 	{
 		case DTYPE_Device:
-			Address = (void*)&RelayBoard_DeviceDescriptor;
+			Address = &RelayBoard_DeviceDescriptor;
 			Size    = sizeof(USB_Descriptor_Device_t);
 			break;
 		case DTYPE_Configuration:
-			Address = (void*)&RelayBoard_ConfigurationDescriptor;
+			Address = &RelayBoard_ConfigurationDescriptor;
 			Size    = sizeof(RelayBoard_USB_Descriptor_Configuration_t);
 			break;
 		case DTYPE_String:
 			switch (DescriptorNumber)
 			{
 				case 0x00:
-					Address = (void*)&RelayBoard_LanguageString;
+					Address = &RelayBoard_LanguageString;
 					Size    = pgm_read_byte(&RelayBoard_LanguageString.Header.Size);
 					break;
 				case 0x01:
-					Address = (void*)&RelayBoard_ManufacturerString;
+					Address = &RelayBoard_ManufacturerString;
 					Size    = pgm_read_byte(&RelayBoard_ManufacturerString.Header.Size);
 					break;
 				case 0x02:
-					Address = (void*)&RelayBoard_ProductString;
+					Address = &RelayBoard_ProductString;
 					Size    = pgm_read_byte(&RelayBoard_ProductString.Header.Size);
 					break;
 				case 0x03:
-					Address = (void*)&RelayBoard_SerialString;
+					Address = &RelayBoard_SerialString;
 					Size    = pgm_read_byte(&RelayBoard_SerialString.Header.Size);
 					break;
 			}
@@ -200,3 +200,4 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 	*DescriptorAddress = Address;
 	return Size;
 }
+

@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
 
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -54,11 +54,12 @@
 		#define RELAY2      (1 << 6)
 		#define RELAY3      (1 << 5)
 		#define RELAY4      (1 << 4)
-		#define ALL_RELAYS  (RELAY1|RELAY2|RELAY3|RELAY4)
+		#define ALL_RELAYS  (RELAY1 | RELAY2 | RELAY3 | RELAY4)
 
 	/* Function Prototypes: */
 		void SetupHardware(void);
 
-		void EVENT_USB_Device_UnhandledControlRequest(void);
+		void EVENT_USB_Device_ControlRequest(void);
 
 #endif
+

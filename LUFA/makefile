@@ -1,9 +1,9 @@
 #
 #             LUFA Library
 #     Copyright (C) Dean Camera, 2010.
-#              
+#
 #  dean [at] fourwalledcubicle [dot] com
-#      www.fourwalledcubicle.com
+#           www.lufa-lib.org
 #
 
 # Makefile for the LUFA library itself. This can be used to generate the library documentation.
@@ -26,7 +26,9 @@ LUFA_SRC_USB          = $(LUFA_ROOT_PATH)/Drivers/USB/LowLevel/Device.c         
                         $(LUFA_ROOT_PATH)/Drivers/USB/HighLevel/ConfigDescriptor.c  \
                         $(LUFA_ROOT_PATH)/Drivers/USB/HighLevel/DeviceStandardReq.c \
                         $(LUFA_ROOT_PATH)/Drivers/USB/HighLevel/Events.c            \
+                        $(LUFA_ROOT_PATH)/Drivers/USB/HighLevel/EndpointStream.c    \
                         $(LUFA_ROOT_PATH)/Drivers/USB/HighLevel/HostStandardReq.c   \
+                        $(LUFA_ROOT_PATH)/Drivers/USB/HighLevel/PipeStream.c        \
                         $(LUFA_ROOT_PATH)/Drivers/USB/HighLevel/USBTask.c           \
                         $(LUFA_ROOT_PATH)/Drivers/USB/Class/Host/HIDParser.c
 LUFA_SRC_USBCLASS     = $(LUFA_ROOT_PATH)/Drivers/USB/Class/Device/Audio.c          \
@@ -51,16 +53,16 @@ LUFA_SRC_SCHEDULER    = $(LUFA_ROOT_PATH)/Scheduler/Scheduler.c
 
 # Check to see if the LUFA_PATH variable has not been set (the makefile is not being included from a project makefile)
 ifeq ($(origin LUFA_PATH), undefined)
-   LUFA_SRC_ALL_FILES  = $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)       \
-                         $(LUFA_SRC_TEMPERATURE) $(LUFA_SRC_SERIAL) \
-                         $(LUFA_SRC_SERIALSTREAM) $(LUFA_SRC_TWI)   \
-                         $(LUFA_SRC_SCHEDULER)
+   LUFA_SRC_ALL_FILES = $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)       \
+                        $(LUFA_SRC_TEMPERATURE) $(LUFA_SRC_SERIAL) \
+                        $(LUFA_SRC_SERIALSTREAM) $(LUFA_SRC_TWI)   \
+                        $(LUFA_SRC_SCHEDULER)
 
    all:
 
    clean:
 	rm -f $(LUFA_SRC_ALL_FILES:%.c=%.o)
-	
+
    clean_list:
 
    doxygen:

@@ -3,17 +3,17 @@
  *  This file contains special DoxyGen information for the generation of the main page and other special
  *  documentation pages. It is not a project source file.
  */
- 
+
 /** \mainpage AVRISP MKII Programmer Project
  *
  *  \section SSec_Compat Project Compatibility:
  *
  *  The following list indicates what microcontrollers are compatible with this project.
  *
- *  - Series 7 USB AVRs
- *  - Series 6 USB AVRs
- *  - Series 4 USB AVRs
- *  - Series 2 USB AVRs (8KB versions with reduced features only)
+ *  - Series 7 USB AVRs (AT90USBxxx7)
+ *  - Series 6 USB AVRs (AT90USBxxx6)
+ *  - Series 4 USB AVRs (ATMEGAxxU4)
+ *  - Series 2 USB AVRs (AT90USBxx2, ATMEGAxxU2) - <i>8KB versions with reduced features only</i>
  *
  *  \section SSec_Info USB Information:
  *
@@ -28,7 +28,7 @@
  *   <td><b>USB Class:</b></td>
  *   <td>Vendor Specific Class</td>
  *  </tr>
- *  <tr> 
+ *  <tr>
  *   <td><b>USB Subclass:</b></td>
  *   <td>N/A</td>
  *  </tr>
@@ -42,7 +42,7 @@
  *  </tr>
  * </table>
  *
- *  \section SSec_Description Project Description: 
+ *  \section SSec_Description Project Description:
  *
  *  Firmware for an AVRStudio compatible AVRISP-MKII clone programmer. This project will enable the USB AVR series of
  *  microcontrollers to act as a clone of the official Atmel AVRISP-MKII programmer, usable within AVRStudio. In its
@@ -105,9 +105,9 @@
  *   </tr>
  *  </table>
  *
- *  In addition, the AVR's XCK pin will generate a .5MHz clock when SPI programming is used, to act as an external
- *  device clock if the fuses have been mis-set. To use the recovery clock, connect XCK to the target AVR's XTAL1
- *  pin, and set the ISP programming speed to 125KHz or below.
+ *  In addition, the AVR's OCR1A pin will generate a 4MHz clock, to act as an external rescue device clock if the
+ *  fuses have been mis-set. To use the recovery clock, connect the OCR1A pin of the USB AVR to the target AVR's
+ *  XTAL1 pin, and set the ISP programming speed to 125KHz (note: other ISP speeds will not work correctly).
  *
  *  <b><sup>1</sup></b> <i>Optional, see \ref SSec_Options section - for USB AVRs with ADC modules only</i> \n
  *  <b><sup>2</sup></b> <i>See AUX line related tokens in the \ref SSec_Options section</i>
@@ -240,31 +240,31 @@
  *    <td>VTARGET_ADC_CHANNEL</td>
  *    <td>Makefile LUFA_OPTS</td>
  *    <td>ADC channel number (on supported AVRs) to use for VTARGET level detection, if NO_VTARGET_DETECT is not defined.
- *        <i>Ignored when compiled for targets lacking an ADC.</i></td> 
+ *        <i>Ignored when compiled for targets lacking an ADC.</i></td>
  *   </tr>
  *   <tr>
  *    <td>ENABLE_ISP_PROTOCOL</td>
  *    <td>Makefile LUFA_OPTS</td>
- *    <td>Define to enable SPI programming protocol support. <i>Ignored when compiled for the XPLAIN board.</i></td>  
+ *    <td>Define to enable SPI programming protocol support. <i>Ignored when compiled for the XPLAIN board.</i></td>
  *   </tr>
  *   <tr>
  *    <td>ENABLE_XPROG_PROTOCOL</td>
  *    <td>Makefile LUFA_OPTS</td>
- *    <td>Define to enable PDI and TPI programming protocol support. <i>Ignored when compiled for the XPLAIN board.</i></td>  
+ *    <td>Define to enable PDI and TPI programming protocol support. <i>Ignored when compiled for the XPLAIN board.</i></td>
  *   </tr>
  *   <tr>
  *    <td>NO_VTARGET_DETECT</td>
  *    <td>Makefile LUFA_OPTS</td>
  *    <td>Define to disable VTARGET sampling and reporting on AVR models with an ADC converter. This will cause the programmer
  *        to report a fixed 5V target voltage to the host regardless of the real target voltage. <i>Ignored when compiled for
- *        targets lacking an ADC.</i></td>  
+ *        targets lacking an ADC.</i></td>
  *   </tr>
  *   <tr>
  *    <td>VTARGET_REF_VOLTS</td>
  *    <td>Makefile LUFA_OPTS</td>
  *    <td>Indicates the programmer AVR's AVCC reference voltage when measuring the target's supply voltage. Note that the supply
  *        voltage should never exceed the reference voltage on the programmer AVR without some form of protection to prevent damage
- *        to the ADC. <i>Ignored when compiled for targets lacking an ADC, or when NO_VTARGET_DETECT is defined.</i></td>  
+ *        to the ADC. <i>Ignored when compiled for targets lacking an ADC, or when NO_VTARGET_DETECT is defined.</i></td>
  *   </tr>
  *   <tr>
  *    <td>VTARGET_SCALE_FACTOR</td>
@@ -272,13 +272,20 @@
  *    <td>Indicates the target's supply voltage scale factor when applied to the ADC. A simple resistive divider can be used on the
  *        ADC pin for measuring the target's supply voltage, so that voltages above the programmer AVR's AVCC reference voltage can be
  *        measured. This should be the reciprocal of the division performed - e.g. if the VTARGET voltage is halved, this should be set
- *        to 2. <i>Ignored when compiled for targets lacking an ADC, or when NO_VTARGET_DETECT is defined.</i></td>  
- *   </tr> 
+ *        to 2. <i>Ignored when compiled for targets lacking an ADC, or when NO_VTARGET_DETECT is defined.</i></td>
+ *   </tr>
  *   <tr>
  *    <td>LIBUSB_DRIVER_COMPAT</td>
  *    <td>Makefile LUFA_OPTS</td>
  *    <td>Define to switch to a non-standard endpoint scheme, breaking compatibility with AVRStudio under Windows but making
  *        the code compatible with software such as avrdude (all platforms) that use the libUSB driver.
  *   </tr>
+ *   <tr>
+ *    <td>XCK_RESCUE_CLOCK_ENABLE</td>
+ *    <td>Makefile LUFA_OPTS</td>
+ *    <td>Define to move the ISP rescue clock to the AVR's XCK pin instead of the OCR1A output pin. This is useful for existing programming
+ *        hardware that does not expose the OCR1A pin of the AVR, but *may* cause some issues with PDI programming mode.
+ *   </tr>
  *  </table>
  */
+

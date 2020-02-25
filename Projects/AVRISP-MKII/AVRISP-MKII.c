@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -43,7 +43,7 @@ int main(void)
 {
 	SetupHardware();
 	V2Protocol_Init();
-	
+
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 	sei();
 
@@ -54,7 +54,7 @@ int main(void)
 		   mode - either VBUS, or sourced from the VTARGET pin of the programming connectors */
 		LEDs_ChangeLEDs(LEDMASK_VBUSPOWER, (PIND & (1 << 0)) ? 0 : LEDMASK_VBUSPOWER);
 		#endif
-		
+
 		AVRISP_Task();
 		USB_USBTask();
 	}
@@ -72,7 +72,7 @@ void SetupHardware(void)
 
 	/* Hardware Initialization */
 	LEDs_Init();
-	USB_Init();	
+	USB_Init();
 }
 
 /** Event handler for the library USB Connection event. */
@@ -90,25 +90,19 @@ void EVENT_USB_Device_Disconnect(void)
 /** Event handler for the library USB Configuration Changed event. */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
-	/* Indicate USB connected and ready */
-	LEDs_SetAllLEDs(LEDMASK_USB_READY);
+	bool ConfigSuccess = true;
 
-	/* Setup AVRISP data Endpoints */
-	if (!(Endpoint_ConfigureEndpoint(AVRISP_DATA_OUT_EPNUM, EP_TYPE_BULK,
-	                                 ENDPOINT_DIR_OUT, AVRISP_DATA_EPSIZE,
-	                                 ENDPOINT_BANK_SINGLE)))
-	{
-		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-	}
+	/* Setup AVRISP Data Endpoint(s) */
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(AVRISP_DATA_OUT_EPNUM, EP_TYPE_BULK, ENDPOINT_DIR_OUT,
+	                                            AVRISP_DATA_EPSIZE, ENDPOINT_BANK_SINGLE);
 
 	#if defined(LIBUSB_DRIVER_COMPAT)
-	if (!(Endpoint_ConfigureEndpoint(AVRISP_DATA_IN_EPNUM, EP_TYPE_BULK,
-	                                 ENDPOINT_DIR_IN, AVRISP_DATA_EPSIZE,
-	                                 ENDPOINT_BANK_SINGLE)))
-	{
-		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-	}
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(AVRISP_DATA_IN_EPNUM, EP_TYPE_BULK, ENDPOINT_DIR_IN,
+	                                            AVRISP_DATA_EPSIZE, ENDPOINT_BANK_SINGLE);
 	#endif
+
+	/* Indicate endpoint configuration success or failure */
+	LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
 }
 
 /** Processes incoming V2 Protocol commands from the host, returning a response when required. */
@@ -121,7 +115,7 @@ void AVRISP_Task(void)
 	V2Params_UpdateParamValues();
 
 	Endpoint_SelectEndpoint(AVRISP_DATA_OUT_EPNUM);
-	
+
 	/* Check to see if a V2 Protocol command has been received */
 	if (Endpoint_IsOUTReceived())
 	{

@@ -1,22 +1,22 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
   Copyright 2010  Matthias Hullin (lufa [at] matthias [dot] hullin [dot] net)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -36,7 +36,7 @@
  */
 
 #include "MassStorageKeyboard.h"
-	
+
 /** LUFA Mass Storage Class driver interface configuration and state information. This structure is
  *  passed to all Mass Storage Class driver functions, so that multiple instances of the same class
  *  within a device can be differentiated from one another.
@@ -136,19 +136,18 @@ void EVENT_USB_Device_Disconnect(void)
 /** Event handler for the library USB Configuration Changed event. */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
-	LEDs_SetAllLEDs(LEDMASK_USB_READY);
+	bool ConfigSuccess = true;
 
-	if (!(MS_Device_ConfigureEndpoints(&Disk_MS_Interface)))
-	  LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-
-	if (!(HID_Device_ConfigureEndpoints(&Keyboard_HID_Interface)))
-	  LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+	ConfigSuccess &= MS_Device_ConfigureEndpoints(&Disk_MS_Interface);
+	ConfigSuccess &= HID_Device_ConfigureEndpoints(&Keyboard_HID_Interface);
 
 	USB_Device_EnableSOFEvents();
+
+	LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
 }
 
-/** Event handler for the library USB Unhandled Control Request event. */
-void EVENT_USB_Device_UnhandledControlRequest(void)
+/** Event handler for the library USB Control Request reception event. */
+void EVENT_USB_Device_ControlRequest(void)
 {
 	MS_Device_ProcessControlRequest(&Disk_MS_Interface);
 	HID_Device_ProcessControlRequest(&Keyboard_HID_Interface);
@@ -161,11 +160,11 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* const MSInterfaceInfo)
 {
 	bool CommandSuccess;
-	
+
 	LEDs_SetAllLEDs(LEDMASK_USB_BUSY);
 	CommandSuccess = SCSI_DecodeSCSICommand(MSInterfaceInfo);
 	LEDs_SetAllLEDs(LEDMASK_USB_READY);
-	
+
 	return CommandSuccess;
 }
 
@@ -179,7 +178,7 @@ void EVENT_USB_Device_StartOfFrame(void)
  *
  *  \param[in]     HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
  *  \param[in,out] ReportID    Report ID requested by the host if non-zero, otherwise callback should set to the generated report ID
- *  \param[in]     ReportType  Type of the report to create, either REPORT_ITEM_TYPE_In or REPORT_ITEM_TYPE_Feature
+ *  \param[in]     ReportType  Type of the report to create, either HID_REPORT_ITEM_In or HID_REPORT_ITEM_Feature
  *  \param[out]    ReportData  Pointer to a buffer where the created report should be stored
  *  \param[out]    ReportSize  Number of bytes written in the report (or zero if no report is to be sent
  *
@@ -192,28 +191,28 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          uint16_t* const ReportSize)
 {
 	USB_KeyboardReport_Data_t* KeyboardReport = (USB_KeyboardReport_Data_t*)ReportData;
-	
+
 	uint8_t JoyStatus_LCL    = Joystick_GetStatus();
 	uint8_t ButtonStatus_LCL = Buttons_GetStatus();
 
 	KeyboardReport->Modifier = HID_KEYBOARD_MODIFER_LEFTSHIFT;
 
 	if (JoyStatus_LCL & JOY_UP)
-	  KeyboardReport->KeyCode[0] = 0x04; // A
+	  KeyboardReport->KeyCode[0] = HID_KEYBOARD_SC_A;
 	else if (JoyStatus_LCL & JOY_DOWN)
-	  KeyboardReport->KeyCode[0] = 0x05; // B
+	  KeyboardReport->KeyCode[0] = HID_KEYBOARD_SC_B;
 
 	if (JoyStatus_LCL & JOY_LEFT)
-	  KeyboardReport->KeyCode[0] = 0x06; // C
+	  KeyboardReport->KeyCode[0] = HID_KEYBOARD_SC_C;
 	else if (JoyStatus_LCL & JOY_RIGHT)
-	  KeyboardReport->KeyCode[0] = 0x07; // D
+	  KeyboardReport->KeyCode[0] = HID_KEYBOARD_SC_D;
 
 	if (JoyStatus_LCL & JOY_PRESS)
-	  KeyboardReport->KeyCode[0] = 0x08; // E
-	  
+	  KeyboardReport->KeyCode[0] = HID_KEYBOARD_SC_E;
+
 	if (ButtonStatus_LCL & BUTTONS_BUTTON1)
-	  KeyboardReport->KeyCode[0] = 0x09; // F
-	
+	  KeyboardReport->KeyCode[0] = HID_KEYBOARD_SC_F;
+
 	*ReportSize = sizeof(USB_KeyboardReport_Data_t);
 	return false;
 }
@@ -222,7 +221,7 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
  *
  *  \param[in] HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
  *  \param[in] ReportID    Report ID of the received report from the host
- *  \param[in] ReportType  The type of report that the host has sent, either REPORT_ITEM_TYPE_Out or REPORT_ITEM_TYPE_Feature
+ *  \param[in] ReportType  The type of report that the host has sent, either HID_REPORT_ITEM_Out or HID_REPORT_ITEM_Feature
  *  \param[in] ReportData  Pointer to a buffer where the created report has been stored
  *  \param[in] ReportSize  Size in bytes of the received HID report
  */
@@ -237,13 +236,13 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 
 	if (*LEDReport & HID_KEYBOARD_LED_NUMLOCK)
 	  LEDMask |= LEDS_LED1;
-	
+
 	if (*LEDReport & HID_KEYBOARD_LED_CAPSLOCK)
 	  LEDMask |= LEDS_LED3;
 
 	if (*LEDReport & HID_KEYBOARD_LED_SCROLLLOCK)
 	  LEDMask |= LEDS_LED4;
-	  
+
 	LEDs_SetAllLEDs(LEDMask);
 }
 

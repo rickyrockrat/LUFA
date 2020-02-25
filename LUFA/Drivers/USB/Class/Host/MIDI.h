@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -33,8 +33,8 @@
  *
  *  Host mode driver for the library USB MIDI Class driver.
  *
- *  \note This file should not be included directly. It is automatically included as needed by the class driver
- *        dispatch header located in LUFA/Drivers/USB/Class/MIDI.h.
+ *  \note This file should not be included directly. It is automatically included as needed by the USB module driver
+ *        dispatch header located in LUFA/Drivers/USB.h.
  */
 
 /** \ingroup Group_USBClassMIDI
@@ -56,7 +56,7 @@
 	/* Includes: */
 		#include "../../USB.h"
 		#include "../Common/MIDI.h"
-		
+
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			extern "C" {
@@ -64,9 +64,13 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_MIDI_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/Class/MIDI.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
 		#endif
-		
+
+		#if defined(__INCLUDE_FROM_MIDI_HOST_C) && defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
+		#endif
+
 	/* Public Interface - May be used in end-application: */
 		/* Type Defines: */
 			/** \brief MIDI Class Host Mode Configuration and State Structure.
@@ -81,7 +85,7 @@
 				{
 					uint8_t  DataINPipeNumber; /**< Pipe number of the MIDI interface's streaming IN data pipe. */
 					bool     DataINPipeDoubleBank; /**< Indicates if the MIDI interface's IN data pipe should use double banking. */
-					
+
 					uint8_t  DataOUTPipeNumber; /**< Pipe number of the MIDI interface's streaming OUT data pipe. */
 					bool     DataOUTPipeDoubleBank; /**< Indicates if the MIDI interface's OUT data pipe should use double banking. */
 				} Config; /**< Config data for the USB class interface within the device. All elements in this section
@@ -89,10 +93,11 @@
 				           */
 				struct
 				{
-					bool IsActive; /**< Indicates if the current interface instance is connected to an attached device, valid
-					                *   after \ref MIDI_Host_ConfigurePipes() is called and the Host state machine is in the
-					                *   Configured state.
-					                */
+					bool     IsActive; /**< Indicates if the current interface instance is connected to an attached device, valid
+					                    *   after \ref MIDI_Host_ConfigurePipes() is called and the Host state machine is in the
+					                    *   Configured state.
+					                    */
+					uint8_t  InterfaceNumber; /**< Interface index of the MIDI interface within the attached device. */
 
 					uint16_t DataINPipeSize; /**< Size in bytes of the MIDI Streaming Data interface's IN data pipe. */
 					uint16_t DataOUTPipeSize;  /**< Size in bytes of the MIDI Streaming Data interface's OUT data pipe. */
@@ -101,17 +106,16 @@
 						  *   the interface is enumerated.
 						  */
 			} USB_ClassInfo_MIDI_Host_t;
-			
+
 		/* Enums: */
 			/** Enum for the possible error codes returned by the \ref MIDI_Host_ConfigurePipes() function. */
-			enum MIDIHost_EnumerationFailure_ErrorCodes_t
+			enum MIDI_Host_EnumerationFailure_ErrorCodes_t
 			{
 				MIDI_ENUMERROR_NoError                    = 0, /**< Configuration Descriptor was processed successfully. */
 				MIDI_ENUMERROR_InvalidConfigDescriptor    = 1, /**< The device returned an invalid Configuration Descriptor. */
-				MIDI_ENUMERROR_NoStreamingInterfaceFound  = 2, /**< A compatible MIDI interface was not found in the device's Configuration Descriptor. */
-				MIDI_ENUMERROR_EndpointsNotFound          = 3, /**< Compatible MIDI data endpoints were not found in the device's MIDI interface. */
+				MIDI_ENUMERROR_NoCompatibleInterfaceFound = 2, /**< A compatible MIDI interface was not found in the device's Configuration Descriptor. */
 			};
-	
+
 		/* Function Prototypes: */
 			/** Host interface configuration routine, to configure a given MIDI host interface instance using the Configuration
 			 *  Descriptor read from an attached USB device. This function automatically updates the given MIDI Host instance's
@@ -119,19 +123,30 @@
 			 *  This should be called once after the stack has enumerated the attached device, while the host state machine is in
 			 *  the Addressed state.
 			 *
+			 *  \note The pipe index numbers as given in the interface's configuration structure must not overlap with any other
+			 *        interface, or pipe bank corruption will occur. Gaps in the allocated pipe numbers or non-sequential indexes
+			 *        within a single interface is allowed, but no two interfaces of any type have have interleaved pipe indexes.
+			 *
 			 *  \param[in,out] MIDIInterfaceInfo       Pointer to a structure containing an MIDI Class host configuration and state.
 			 *  \param[in]     ConfigDescriptorSize    Length of the attached device's Configuration Descriptor.
 			 *  \param[in]     DeviceConfigDescriptor  Pointer to a buffer containing the attached device's Configuration Descriptor.
 			 *
-			 *  \return A value from the \ref MIDIHost_EnumerationFailure_ErrorCodes_t enum.
+			 *  \return A value from the \ref MIDI_Host_EnumerationFailure_ErrorCodes_t enum.
 			 */
 			uint8_t MIDI_Host_ConfigurePipes(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo,
 			                                 uint16_t ConfigDescriptorSize,
 			                                 void* DeviceConfigDescriptor) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(3);
 
+			/** General management task for a given MIDI host class interface, required for the correct operation of the interface. This should
+			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
+			 *
+			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing an MIDI Class host configuration and state.
+			 */
+			void MIDI_Host_USBTask(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+
 			/** Sends a MIDI event packet to the device. If no device is connected, the event packet is discarded.
 			 *
-			 *  \pre This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *  \pre This function must only be called when the Host state machine is in the \ref HOST_STATE_Configured state or the
 			 *       call will fail.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
@@ -152,10 +167,10 @@
 			 *  \return A value from the \ref Pipe_WaitUntilReady_ErrorCodes_t enum.
 			 */
 			 uint8_t MIDI_Host_Flush(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			 
+
 			/** Receives a MIDI event packet from the device.
 			 *
-			 *  \pre This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *  \pre This function must only be called when the Host state machine is in the \ref HOST_STATE_Configured state or the
 			 *       call will fail.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
@@ -166,35 +181,15 @@
 			bool MIDI_Host_ReceiveEventPacket(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo,
 			                                  MIDI_EventPacket_t* const Event) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
-		/* Inline Functions: */
-			/** General management task for a given MIDI host class interface, required for the correct operation of the interface. This should
-			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
-			 *
-			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing an MIDI Class host configuration and state.
-			 */
-			static inline void MIDI_Host_USBTask(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			static inline void MIDI_Host_USBTask(USB_ClassInfo_MIDI_Host_t* const MIDIInterfaceInfo)
-			{
-				(void)MIDIInterfaceInfo;
-			}
-
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
-		/* Macros: */
-			#define MIDI_STREAMING_CLASS           0x01
-			#define MIDI_STREAMING_SUBCLASS        0x03
-			#define MIDI_STREAMING_PROTOCOL        0x00
-			
-			#define MIDI_FOUND_DATAPIPE_IN           (1 << 0)
-			#define MIDI_FOUND_DATAPIPE_OUT          (1 << 1)
-
 		/* Function Prototypes: */
-			#if defined(__INCLUDE_FROM_MIDI_CLASS_HOST_C)
+			#if defined(__INCLUDE_FROM_MIDI_HOST_C)
 				static uint8_t DCOMP_MIDI_Host_NextMIDIStreamingInterface(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
 				static uint8_t DCOMP_MIDI_Host_NextMIDIStreamingDataEndpoint(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
-			#endif	
+			#endif
 	#endif
-				
+
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			}
@@ -203,3 +198,4 @@
 #endif
 
 /** @} */
+

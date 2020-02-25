@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -33,8 +33,8 @@
  *
  *  Device mode driver for the library USB MIDI Class driver.
  *
- *  \note This file should not be included directly. It is automatically included as needed by the class driver
- *        dispatch header located in LUFA/Drivers/USB/Class/MIDI.h.
+ *  \note This file should not be included directly. It is automatically included as needed by the USB module driver
+ *        dispatch header located in LUFA/Drivers/USB.h.
  */
 
 /** \ingroup Group_USBClassMIDI
@@ -66,7 +66,11 @@
 
 	/* Preprocessor Checks: */
 		#if !defined(__INCLUDE_FROM_MIDI_DRIVER)
-			#error Do not include this file directly. Include LUFA/Drivers/Class/MIDI.h instead.
+			#error Do not include this file directly. Include LUFA/Drivers/USB.h instead.
+		#endif
+
+		#if defined(__INCLUDE_FROM_MIDI_DEVICE_C) && defined(NO_STREAM_CALLBACKS)
+			#error The NO_STREAM_CALLBACKS compile time option cannot be used in projects using the library Class drivers.
 		#endif
 
 	/* Public Interface - May be used in end-application: */
@@ -92,35 +96,46 @@
 					bool     DataOUTEndpointDoubleBank; /**< Indicates if the MIDI interface's IN data endpoint should use double banking. */
 				} Config; /**< Config data for the USB class interface within the device. All elements in this section
 				           *   <b>must</b> be set or the interface will fail to enumerate and operate correctly.
-				           */									 
+				           */
 				struct
 				{
-					// No state information for this class yet
+					// No state information for this class
 				} State; /**< State data for the USB class interface within the device. All elements in this section
 				          *   are reset to their defaults when the interface is enumerated.
 				          */
-			} USB_ClassInfo_MIDI_Device_t;	
-	
+			} USB_ClassInfo_MIDI_Device_t;
+
 		/* Function Prototypes: */
 			/** Configures the endpoints of a given MIDI interface, ready for use. This should be linked to the library
 			 *  \ref EVENT_USB_Device_ConfigurationChanged() event so that the endpoints are configured when the configuration
 			 *  containing the given MIDI interface is selected.
+			 *
+			 *  \note The endpoint index numbers as given in the interface's configuration structure must not overlap with any other
+			 *        interface, or endpoint bank corruption will occur. Gaps in the allocated endpoint numbers or non-sequential indexes
+			 *        within a single interface is allowed, but no two interfaces of any type have have interleaved endpoint indexes.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
 			 *
 			 *  \return Boolean true if the endpoints were successfully configured, false otherwise.
 			 */
 			bool MIDI_Device_ConfigureEndpoints(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			
+
+			/** General management task for a given MIDI class interface, required for the correct operation of the interface. This should
+			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
+			 *
+			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
+			 */
+			void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+
 			/** Sends a MIDI event packet to the host. If no host is connected, the event packet is discarded. Events are queued into the
 			 *  endpoint bank until either the endpoint bank is full, or \ref MIDI_Device_Flush() is called. This allows for multiple
 			 *  MIDI events to be packed into a single endpoint packet, increasing data throughput.
 			 *
-			 *  \pre This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *  \pre This function must only be called when the Host state machine is in the \ref HOST_STATE_Configured state or the
 			 *       call will fail.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
-			 *  \param[in]     Event              Pointer to a populated USB_MIDI_EventPacket_t structure containing the MIDI event to send.
+			 *  \param[in]     Event              Pointer to a populated \ref MIDI_EventPacket_t structure containing the MIDI event to send.
 			 *
 			 *  \return A value from the \ref Endpoint_Stream_RW_ErrorCodes_t enum.
 			 */
@@ -140,7 +155,7 @@
 			/** Receives a MIDI event packet from the host. Events are unpacked from the endpoint, thus if the endpoint bank contains
 			 *  multiple MIDI events from the host in the one packet, multiple calls to this function will return each individual event.
 			 *
-			 *  \pre This function must only be called when the Host state machine is in the HOST_STATE_Configured state or the
+			 *  \pre This function must only be called when the Host state machine is in the \ref HOST_STATE_Configured state or the
 			 *       call will fail.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
@@ -152,22 +167,11 @@
 			                                    MIDI_EventPacket_t* const Event) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(2);
 
 		/* Inline Functions: */
-			/** General management task for a given MIDI class interface, required for the correct operation of the interface. This should
-			 *  be called frequently in the main program loop, before the master USB management task \ref USB_USBTask().
+			/** Processes incoming control requests from the host, that are directed to the given MIDI class interface. This should be
+			 *  linked to the library \ref EVENT_USB_Device_ControlRequest() event.
 			 *
 			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
 			 */
-			static inline void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
-			static inline void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo)
-			{
-				(void)MIDIInterfaceInfo;
-			}
-			
-			/** Processes incoming control requests from the host, that are directed to the given MIDI class interface. This should be
-			 *  linked to the library \ref EVENT_USB_Device_UnhandledControlRequest() event.
-			 *
-			 *  \param[in,out] MIDIInterfaceInfo  Pointer to a structure containing a MIDI Class configuration and state.
-			 */		
 			static inline void MIDI_Device_ProcessControlRequest(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			static inline void MIDI_Device_ProcessControlRequest(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo)
 			{
@@ -178,7 +182,8 @@
 		#if defined(__cplusplus)
 			}
 		#endif
-		
+
 #endif
 
 /** @} */
+

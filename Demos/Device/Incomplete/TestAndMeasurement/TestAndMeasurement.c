@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -118,29 +118,25 @@ void EVENT_USB_Device_Disconnect(void)
  */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
-	LEDs_SetAllLEDs(LEDMASK_USB_READY);
+	bool ConfigSuccess = true;
 
-	/* Setup TMC In and Out Endpoints */
-	if (!(Endpoint_ConfigureEndpoint(TMC_IN_EPNUM, EP_TYPE_BULK,
-		                             ENDPOINT_DIR_IN, TMC_IO_EPSIZE,
-	                                 ENDPOINT_BANK_SINGLE)))
-	{
-		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-	}
+	/* Setup TMC In, Out and Notification Endpoints */
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(TMC_NOTIFICATION_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_IN,
+	                                            TMC_IO_EPSIZE, ENDPOINT_BANK_SINGLE);
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(TMC_IN_EPNUM,  EP_TYPE_BULK, ENDPOINT_DIR_IN,
+	                                            TMC_IO_EPSIZE, ENDPOINT_BANK_SINGLE);
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(TMC_OUT_EPNUM, EP_TYPE_BULK, ENDPOINT_DIR_OUT,
+	                                            TMC_IO_EPSIZE, ENDPOINT_BANK_SINGLE);
 
-	if (!(Endpoint_ConfigureEndpoint(TMC_OUT_EPNUM, EP_TYPE_BULK,
-		                             ENDPOINT_DIR_OUT, TMC_IO_EPSIZE,
-	                                 ENDPOINT_BANK_SINGLE)))
-	{
-		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-	}
+	/* Indicate endpoint configuration success or failure */
+	LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
 }
 
-/** Event handler for the USB_UnhandledControlRequest event. This is used to catch standard and class specific
- *  control requests that are not handled internally by the USB library (including the CDC control commands,
- *  which are all issued via the control endpoint), so that they can be handled appropriately for the application.
+/** Event handler for the USB_ControlRequest event. This is used to catch and process control requests sent to
+ *  the device from the USB host before passing along unhandled control requests to the library for processing
+ *  internally.
  */
-void EVENT_USB_Device_UnhandledControlRequest(void)
+void EVENT_USB_Device_ControlRequest(void)
 {
 	uint8_t TMCRequestStatus = TMC_STATUS_SUCCESS;
 
@@ -150,8 +146,6 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case Req_InitiateAbortBulkOut:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_ENDPOINT))
 			{
-				Endpoint_ClearSETUP();
-				
 				/* Check that no split transaction is already in progress and the data transfer tag is valid */
 				if (RequestInProgress != 0)
 				{
@@ -169,6 +163,8 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 					/* Save the split request for later checking when a new request is received */
 					RequestInProgress = Req_InitiateAbortBulkOut;
 				}
+
+				Endpoint_ClearSETUP();
 				
 				/* Write the request response byte */
 				Endpoint_Write_Byte(TMCRequestStatus);
@@ -181,16 +177,16 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case Req_CheckAbortBulkOutStatus:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_ENDPOINT))
 			{
-				Endpoint_ClearSETUP();
-				
 				/* Check that an ABORT BULK OUT transaction has been requested and that the request has completed */
 				if (RequestInProgress != Req_InitiateAbortBulkOut)
 				  TMCRequestStatus = TMC_STATUS_SPLIT_NOT_IN_PROGRESS;				
 				else if (IsTMCBulkOUTReset)
 				  TMCRequestStatus = TMC_STATUS_PENDING;
 				else
-				  RequestInProgress = 0;			
-				
+				  RequestInProgress = 0;	
+
+				Endpoint_ClearSETUP();
+								
 				/* Write the request response bytes */
 				Endpoint_Write_Byte(TMCRequestStatus);
 				Endpoint_Write_Word_LE(0);
@@ -204,8 +200,6 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case Req_InitiateAbortBulkIn:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_ENDPOINT))
 			{
-				Endpoint_ClearSETUP();
-				
 				/* Check that no split transaction is already in progress and the data transfer tag is valid */
 				if (RequestInProgress != 0)
 				{
@@ -223,6 +217,8 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 					/* Save the split request for later checking when a new request is received */
 					RequestInProgress = Req_InitiateAbortBulkIn;
 				}
+
+				Endpoint_ClearSETUP();
 				
 				/* Write the request response bytes */
 				Endpoint_Write_Byte(TMCRequestStatus);
@@ -236,8 +232,6 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case Req_CheckAbortBulkInStatus:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_ENDPOINT))
 			{
-				Endpoint_ClearSETUP();
-				
 				/* Check that an ABORT BULK IN transaction has been requested and that the request has completed */
 				if (RequestInProgress != Req_InitiateAbortBulkIn)
 				  TMCRequestStatus = TMC_STATUS_SPLIT_NOT_IN_PROGRESS;
@@ -245,7 +239,9 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 				  TMCRequestStatus = TMC_STATUS_PENDING;
 				else
 				  RequestInProgress = 0;
-				
+
+				Endpoint_ClearSETUP();
+								
 				/* Write the request response bytes */
 				Endpoint_Write_Byte(TMCRequestStatus);
 				Endpoint_Write_Word_LE(0);
@@ -259,8 +255,6 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case Req_InitiateClear:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				Endpoint_ClearSETUP();
-				
 				/* Check that no split transaction is already in progress */
 				if (RequestInProgress != 0)
 				{
@@ -275,6 +269,8 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 					/* Save the split request for later checking when a new request is received */
 					RequestInProgress = Req_InitiateClear;
 				}
+
+				Endpoint_ClearSETUP();
 				
 				/* Write the request response byte */
 				Endpoint_Write_Byte(TMCRequestStatus);
@@ -287,8 +283,6 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case Req_CheckClearStatus:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				Endpoint_ClearSETUP();
-				
 				/* Check that a CLEAR transaction has been requested and that the request has completed */
 				if (RequestInProgress != Req_InitiateClear)
 				  TMCRequestStatus = TMC_STATUS_SPLIT_NOT_IN_PROGRESS;				
@@ -296,7 +290,9 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 				  TMCRequestStatus = TMC_STATUS_PENDING;
 				else
 				  RequestInProgress = 0;
-				
+
+				Endpoint_ClearSETUP();
+
 				/* Write the request response bytes */
 				Endpoint_Write_Byte(TMCRequestStatus);
 				Endpoint_Write_Byte(0);
@@ -309,13 +305,10 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case Req_GetCapabilities:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				/* Acknowledge the SETUP packet, ready for data transfer */
 				Endpoint_ClearSETUP();
 					
 				/* Write the device capabilities to the control endpoint */
-				Endpoint_Write_Control_Stream_LE(&Capabilities, sizeof(TMC_Capabilities_t));
-				
-				/* Finalize the stream transfer to send the last packet or clear the host abort */
+				Endpoint_Write_Control_Stream_LE(&Capabilities, sizeof(TMC_Capabilities_t));				
 				Endpoint_ClearOUT();
 			}
 			
@@ -436,3 +429,4 @@ uint8_t StreamCallback_AbortOUTOnRequest(void)
 	/* Continue with the current stream operation */
 	return STREAMCALLBACK_Continue;
 }
+

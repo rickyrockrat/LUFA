@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -36,7 +36,7 @@
  *
  *  \deprecated This module is deprecated and will be removed in a future library release.
  */
- 
+
 /** @defgroup Group_Scheduler Simple Task Scheduler - LUFA/Scheduler/Scheduler.h
  *
  *  \deprecated This module is deprecated and will be removed in a future library release.
@@ -51,45 +51,63 @@
  *
  *  For a task to yield it must return, thus each task should have persistent data marked with the static attribute.
  *
+ *  Each LUFA scheduler task should be written similar to an ISR; it should execute quickly (so that no one task
+ *  hogs the processor, preventing another from running before some sort of timeout is exceeded). Unlike normal RTOS
+ *  tasks, each LUFA scheduler task is a regular function, and thus must be designed to be called, and designed to
+ *  return to the calling scheduler function repeatedly. Data which must be preserved between task calls should be
+ *  declared as global or (preferably) as a static local variable inside the task.
+ *
+ *  The scheduler consists of a task list, listing all the tasks which can be executed by the scheduler. Once started,
+ *  each task is then called one after another, unless the task is stopped by another running task or interrupt.
+ *
  *  Usage Example:
  *  \code
  *      #include <LUFA/Scheduler/Scheduler.h>
- *      
- *      TASK(MyTask1);
- *      TASK(MyTask2);
- *      
+ *
+ *      TASK(MyTask1); // Task prototype
+ *      TASK(MyTask2); // Task prototype
+ *
  *      TASK_LIST
  *      {
- *      	{ .Task = MyTask1, .TaskStatus = TASK_RUN, .GroupID = 1  },
- *      	{ .Task = MyTask2, .TaskStatus = TASK_RUN, .GroupID = 1  },
+ *          { .Task = MyTask1, .TaskStatus = TASK_RUN, .GroupID = 1  },
+ *          { .Task = MyTask2, .TaskStatus = TASK_RUN, .GroupID = 1  },
  *      }
  *
  *      int main(void)
  *      {
- *      	Scheduler_Start();
+ *          Scheduler_Init();
+ *
+ *          // Other initialisation here
+ *
+ *          Scheduler_Start();
  *      }
  *
  *      TASK(MyTask1)
  *      {
- *      	// Implementation Here
+ *          // Task implementation here
  *      }
  *
  *      TASK(MyTask2)
  *      {
- *      	// Implementation Here
+ *          // Task implementation here
  *      }
  *  \endcode
  *
+ *  If desired, the LUFA scheduler <b>does not need to be used</b> in a LUFA powered application. A more conventional
+ *  approach to application design can be used, or a proper scheduling RTOS inserted in the place of the LUFA scheduler.
+ *  In the case of the former the USB task must be run manually repeatedly to maintain USB communications, and in the
+ *  case of the latter a proper RTOS task must be set up to do the same.
+ *
  *  @{
  */
- 
+
 #ifndef __SCHEDULER_H__
 #define __SCHEDULER_H__
 
 	/* Includes: */
 		#include <stdint.h>
 		#include <stdbool.h>
-		
+
 		#include <util/atomic.h>
 
 		#include "../Common/Common.h"
@@ -112,7 +130,7 @@
 			 *  \endcode
 			 */
 			#define TASK(name)              void name (void)
-			
+
 			/** Defines a task list array, containing one or more task entries of the type TaskEntry_t. Each task list
 			 *  should be encased in curly braces and ended with a comma.
 			 *
@@ -125,8 +143,8 @@
 			 *      }
 			 *  \endcode
 			 */
-			#define TASK_LIST               TaskEntry_t Scheduler_TaskList[] = 
-			
+			#define TASK_LIST               TaskEntry_t Scheduler_TaskList[] =
+
 			/** Constant, giving the maximum delay in scheduler ticks which can be stored in a variable of type
 			 *  \ref SchedulerDelayCounter_t.
 			 */
@@ -137,14 +155,14 @@
 
 			/** Task status mode constant, for passing to \ref Scheduler_SetTaskMode() or \ref Scheduler_SetGroupTaskMode(). */
 			#define TASK_STOP               false
-			
+
 		/* Pseudo-Function Macros: */
 			#if defined(__DOXYGEN__)
 				/** Starts the scheduler in its infinite loop, executing running tasks. This should be placed at the end
 				 *  of the user application's main() function, as it can never return to the calling function.
 				 */
 				void Scheduler_Start(void);
-				
+
 				/** Initialises the scheduler so that the scheduler functions can be called before the scheduler itself
 				 *  is started. This must be executed before any scheduler function calls other than Scheduler_Start(),
 				 *  and can be omitted if no such functions could be called before the scheduler is started.
@@ -158,12 +176,12 @@
 		/* Type Defines: */
 			/** Type define for a pointer to a scheduler task. */
 			typedef void (*TaskPtr_t)(void);
-			
+
 			/** Type define for a variable which can hold a tick delay value for the scheduler up to the maximum delay
 			 *  possible.
 			 */
 			typedef uint16_t SchedulerDelayCounter_t;
-			
+
 			/** \brief Scheduler Task List Entry Structure.
 			 *
 			 *  Structure for holding a single task's information in the scheduler task list.
@@ -181,7 +199,7 @@
 			 *  functions should be used instead of direct manipulation.
 			 */
 			exter TaskEntry_t Scheduler_TaskList[];
-			
+
 			/** Contains the total number of tasks in the task list, irrespective of if the task's status is set to
 			 *  \ref TASK_RUN or \ref TASK_STOP.
 			 *
@@ -210,7 +228,7 @@
 					*DelayCounter = Scheduler_TickCounter;
 				}
 			}
-		
+
 		/* Function Prototypes: */
 			/** Determines if the given tick delay has elapsed, based on the given delay period and tick counter value.
 			 *
@@ -233,7 +251,7 @@
 			bool Scheduler_HasDelayElapsed(const uint16_t Delay,
 			                               SchedulerDelayCounter_t* const DelayCounter)
 			                               ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(2);
-			
+
 			/** Sets the task mode for a given task.
 			 *
 			 *  \param[in] Task        Name of the task whose status is to be changed.
@@ -241,7 +259,7 @@
 			 */
 			void Scheduler_SetTaskMode(const TaskPtr_t Task,
 			                           const bool TaskStatus);
-			
+
 			/** Sets the task mode for a given task group ID, allowing for an entire group of tasks to have their
 			 *  statuses changed at once.
 			 *
@@ -263,7 +281,7 @@
 			{
 				Scheduler_TotalTasks = TotalTasks;
 			}
-		
+
 			static inline void Scheduler_GoSchedule(const uint8_t TotalTasks) ATTR_NO_RETURN ATTR_ALWAYS_INLINE ATTR_DEPRECATED;
 			static inline void Scheduler_GoSchedule(const uint8_t TotalTasks)
 			{
@@ -272,7 +290,7 @@
 				for (;;)
 				{
 					TaskEntry_t* CurrTask = &Scheduler_TaskList[0];
-					
+
 					while (CurrTask != &Scheduler_TaskList[TotalTasks])
 					{
 						if (CurrTask->TaskStatus == TASK_RUN)
@@ -283,12 +301,13 @@
 				}
 			}
 	#endif
-		
+
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
 			}
 		#endif
-		
+
 #endif
 
 /** @} */
+

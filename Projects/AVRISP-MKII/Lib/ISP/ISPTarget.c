@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -119,7 +119,7 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK)
 {
 	if (!(PINB & (1 << 1)))
 	{
-		if (SoftSPI_Data & 0x80)
+		if (SoftSPI_Data & (1 << 7))
 		  PORTB |=  (1 << 2);
 		else
 		  PORTB &= ~(1 << 2);
@@ -132,16 +132,17 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK)
 		  TCCR1B = 0;
 
 		if (PINB & (1 << 3))
-		  SoftSPI_Data |= 0x01;	
+		  SoftSPI_Data |= (1 << 0);
 	}
 
-	PORTB ^= (1 << 1);	
+	/* Fast toggle of PORTB.1 via the PIN register (see datasheet) */
+	PINB |= (1 << 1);
 }
 
 /** Initialises the appropriate SPI driver (hardware or software, depending on the selected ISP speed) ready for
  *  communication with the attached target.
  */
-void ISPTarget_Init(void)
+void ISPTarget_EnableTargetISP(void)
 {
 	uint8_t SCKDuration = V2Params_GetParameterValue(PARAM_SCK_DURATION);
 
@@ -155,19 +156,18 @@ void ISPTarget_Init(void)
 	else
 	{
 		HardwareSPIMode = false;
-		
+
 		DDRB  |= ((1 << 1) | (1 << 2));
 		PORTB |= ((1 << 0) | (1 << 3));
 
-		TIMSK1 = (1 << OCIE1A);
-		OCR1A  = pgm_read_word(&TimerCompareFromSCKDuration[SCKDuration - sizeof(SPIMaskFromSCKDuration)]);
+		ISPTarget_ConfigureSoftwareISP(SCKDuration);
 	}
 }
 
 /** Shuts down the current selected SPI driver (hardware or software, depending on the selected ISP speed) so that no
  *  further communications can occur until the driver is re-initialized.
  */
-void ISPTarget_ShutDown(void)
+void ISPTarget_DisableTargetISP(void)
 {
 	if (HardwareSPIMode)
 	{
@@ -176,8 +176,57 @@ void ISPTarget_ShutDown(void)
 	else
 	{
 		DDRB  &= ~((1 << 1) | (1 << 2));
-		PORTB &= ~((1 << 0) | (1 << 3));	
+		PORTB &= ~((1 << 0) | (1 << 3));
+		
+		ISPTarget_ConfigureRescueClock();
 	}
+}
+
+/** Configures the AVR to produce a .5MHz rescue clock out of the OCR1A pin of the AVR, so
+ *  that it can be fed into the XTAL1 pin of an AVR whose fuses have been misconfigured for
+ *  an external clock rather than a crystal. When used, the ISP speed must be 125KHz for this
+ *  functionality to work correctly.
+ */
+void ISPTarget_ConfigureRescueClock(void)
+{
+	#if defined(XCK_RESCUE_CLOCK_ENABLE)
+		/* Configure XCK as an output for the specified AVR model */
+		DDRD  |= (1 << 5);
+		
+		/* Start USART to generate a 4MHz clock on the XCK pin */
+		UBRR1  = ((F_CPU / 2 / ISP_RESCUE_CLOCK_SPEED) - 1);
+		UCSR1B = (1 << TXEN1);
+		UCSR1C = (1 << UMSEL10) | (1 << UPM11) | (1 << USBS1) | (1 << UCSZ11) | (1 << UCSZ10) | (1 << UCPOL1);
+	#else
+		/* Configure OCR1A as an output for the specified AVR model */
+		#if defined(USB_SERIES_2_AVR)
+		DDRC |= (1 << 6);
+		#else
+		DDRB |= (1 << 5);
+		#endif
+
+		/* Start Timer 1 to generate a 4MHz clock on the OCR1A pin */
+		TIMSK1 = 0;
+		TCNT1  = 0;
+		OCR1A  = ((F_CPU / 2 / ISP_RESCUE_CLOCK_SPEED) - 1);
+		TCCR1A = (1 << COM1A0);
+		TCCR1B = ((1 << WGM12) | (1 << CS10));
+	#endif
+}
+
+/** Configures the AVR's timer ready to produce software ISP for the slower ISP speeds that
+ *  cannot be obtained when using the AVR's hardware SPI module.
+ *
+ *  \param[in] SCKDuration  Duration of the desired software ISP SCK clock
+ */
+void ISPTarget_ConfigureSoftwareISP(const uint8_t SCKDuration)
+{
+	/* Configure Timer 1 for software ISP using the specified SCK duration */
+	TIMSK1 = (1 << OCIE1A);
+	TCNT1  = 0;
+	OCR1A  = pgm_read_word(&TimerCompareFromSCKDuration[SCKDuration - sizeof(SPIMaskFromSCKDuration)]);
+	TCCR1A = 0;
+	TCCR1B = 0;
 }
 
 /** Sends and receives a single byte of data to and from the attached target via software SPI.
@@ -200,7 +249,7 @@ uint8_t ISPTarget_TransferSoftSPIByte(const uint8_t Byte)
 	TCCR1B = ((1 << WGM12) | (1 << CS11));
 	while (SoftSPI_BitsRemaining && TimeoutTicksRemaining);
 	TCCR1B = 0;
-	
+
 	return SoftSPI_Data;
 }
 
@@ -214,9 +263,11 @@ void ISPTarget_ChangeTargetResetLine(const bool ResetTarget)
 	if (ResetTarget)
 	{
 		AUX_LINE_DDR |= AUX_LINE_MASK;
-		
+
 		if (!(V2Params_GetParameterValue(PARAM_RESET_POLARITY)))
-		  AUX_LINE_PORT |= AUX_LINE_MASK;
+		  AUX_LINE_PORT |=  AUX_LINE_MASK;
+		else
+		  AUX_LINE_PORT &= ~AUX_LINE_MASK;
 	}
 	else
 	{
@@ -252,7 +303,7 @@ void ISPTarget_LoadExtendedAddress(void)
 	ISPTarget_SendByte(LOAD_EXTENDED_ADDRESS_CMD);
 	ISPTarget_SendByte(0x00);
 	ISPTarget_SendByte((CurrentAddress & 0x00FF0000) >> 16);
-	ISPTarget_SendByte(0x00);	
+	ISPTarget_SendByte(0x00);
 }
 
 /** Waits until the last issued target memory programming command has completed, via the check mode given and using
@@ -273,7 +324,7 @@ uint8_t ISPTarget_WaitForProgComplete(const uint8_t ProgrammingMode,
                                       const uint8_t DelayMS,
                                       const uint8_t ReadMemCommand)
 {
-	uint8_t ProgrammingStatus  = STATUS_CMD_OK;
+	uint8_t ProgrammingStatus = STATUS_CMD_OK;
 
 	/* Determine method of Programming Complete check */
 	switch (ProgrammingMode & ~(PROG_MODE_PAGED_WRITES_MASK | PROG_MODE_COMMIT_PAGE_MASK))
@@ -294,8 +345,8 @@ uint8_t ISPTarget_WaitForProgComplete(const uint8_t ProgrammingMode,
 
 			if (!(TimeoutTicksRemaining))
 			 ProgrammingStatus = STATUS_CMD_TOUT;
-			
-			break;		
+
+			break;
 		case PROG_MODE_WORD_READYBUSY_MASK:
 		case PROG_MODE_PAGED_READYBUSY_MASK:
 			ProgrammingStatus = ISPTarget_WaitWhileTargetBusy();
@@ -306,3 +357,4 @@ uint8_t ISPTarget_WaitForProgComplete(const uint8_t ProgrammingMode,
 }
 
 #endif
+

@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
 
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -44,7 +44,7 @@
 int main(void)
 {
 	SetupHardware();
-	
+
 	sei();
 
 	for (;;)
@@ -69,8 +69,8 @@ void SetupHardware(void)
 	PORTC &= ~ALL_RELAYS;
 }
 
-/** Event handler for the library USB Unhandled Control Packet event. */
-void EVENT_USB_Device_UnhandledControlRequest(void)
+/** Event handler for the library USB Control Request reception event. */
+void EVENT_USB_Device_ControlRequest(void)
 {
     const uint8_t SerialNumber[5] = { 0, 0, 0, 0, 1 };
 	uint8_t ControlData[2]        = { 0, 0 };
@@ -103,7 +103,7 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 						break;
 				}
 			}
-			
+
 			break;
 		case 0x01:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
@@ -130,7 +130,7 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 						ControlData[1] = (PORTC & RELAY4) ? 2 : 3;
 						break;
 				}
-				
+
 				if (ControlData[1])
 				  Endpoint_Write_Control_Stream_LE(ControlData, sizeof(ControlData));
 
@@ -140,3 +140,4 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 			break;
 	}
 }
+

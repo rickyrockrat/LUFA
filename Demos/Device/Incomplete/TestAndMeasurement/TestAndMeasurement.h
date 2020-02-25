@@ -3,7 +3,7 @@
      Copyright (C) Dean Camera, 2010.
               
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
@@ -148,9 +148,10 @@
 		void EVENT_USB_Device_Connect(void);
 		void EVENT_USB_Device_Disconnect(void);
 		void EVENT_USB_Device_ConfigurationChanged(void);
-		void EVENT_USB_Device_UnhandledControlRequest(void);
+		void EVENT_USB_Device_ControlRequest(void);
 
 		uint8_t StreamCallback_AbortINOnRequest(void);
 		uint8_t StreamCallback_AbortOUTOnRequest(void);
 
 #endif
+

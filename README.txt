@@ -1,20 +1,20 @@
 
-                   _   _ _ ___ _  
-                  | | | | | __/ \ 
+                   _   _ _ ___ _
+                  | | | | | __/ \
                   | |_| U | _| o | - The Lightweight USB
                   |___|___|_||_n_|    Framework for AVRs
                 =========================================
                           Written by Dean Camera
                   dean [at] fourwalledcubicle [dot] com
 
-                 http://www.fourwalledcubicle.com/LUFA.php
+                         http://www.lufa-lib.org
                 =========================================
 
-               LUFA is donation supported. To support LUFA, 
-             please donate at http://www.fourwalledcubicle.com.
+               LUFA is donation supported. To support LUFA,
+             please donate at http://www.lufa-lib.org/donate
 
                 For Commercial Licensing information, see
-               http://fourwalledcubicle.com/PurchaseLUFA.php
+                     http://www.lufa-lib.org/license
 
 
 This package contains the complete LUFA library, demos, user-submitted
@@ -29,7 +29,7 @@ package in your chosen package management tool - under Ubuntu, this can be
 achieved by running the following command in the terminal:
 
    sudo apt-get install doxygen
-	
+
 Other package managers and distributions will have similar methods to
 install Doxygen. In Windows, you can download a prebuilt installer for
 Doxygen from its website, www.doxygen.org.
@@ -50,3 +50,4 @@ The documentation for the library itself (but not the documentation for the
 individual demos, projects or bootloaders) is also available as a separate
 package from the project webpage for convenience if Doxygen cannot be
 installed.
+

@@ -1,9 +1,9 @@
 #
 #             LUFA Library
 #     Copyright (C) Dean Camera, 2010.
-#              
+#
 #  dean [at] fourwalledcubicle [dot] com
-#      www.fourwalledcubicle.com
+#           www.lufa-lib.org
 #
 
 # Makefile to build all the LUFA Host Demos. Call with "make all" to
@@ -60,3 +60,4 @@ all:
 	$(MAKE) -C RNDISEthernetHost $@
 	$(MAKE) -C StillImageHost $@
 	$(MAKE) -C VirtualSerialHost $@
+

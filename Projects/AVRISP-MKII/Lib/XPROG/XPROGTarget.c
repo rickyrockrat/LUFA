@@ -1,21 +1,21 @@
 /*
              LUFA Library
      Copyright (C) Dean Camera, 2010.
-              
+
   dean [at] fourwalledcubicle [dot] com
-      www.fourwalledcubicle.com
+           www.lufa-lib.org
 */
 
 /*
   Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
-  Permission to use, copy, modify, distribute, and sell this 
+  Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
-  without fee, provided that the above copyright notice appear in 
+  without fee, provided that the above copyright notice appear in
   all copies and that both that the copyright notice and this
-  permission notice and warranty disclaimer appear in supporting 
-  documentation, and that the name of the author not be used in 
-  advertising or publicity pertaining to distribution of the 
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
   software without specific, written prior permission.
 
   The author disclaim all warranties with regard to this
@@ -39,7 +39,7 @@
 #if defined(ENABLE_XPROG_PROTOCOL) || defined(__DOXYGEN__)
 
 /** Flag to indicate if the USART is currently in Tx or Rx mode. */
-volatile bool IsSending;
+bool IsSending;
 
 /** Enables the target's PDI interface, holding the target in reset until PDI mode is exited. */
 void XPROGTarget_EnableTargetPDI(void)
@@ -49,19 +49,19 @@ void XPROGTarget_EnableTargetPDI(void)
 	/* Set Tx and XCK as outputs, Rx as input */
 	DDRD |=  (1 << 5) | (1 << 3);
 	DDRD &= ~(1 << 2);
-	
+
 	/* Set DATA line high for at least 90ns to disable /RESET functionality */
 	PORTD |= (1 << 3);
 	_delay_us(1);
-	
+
 	/* Set up the synchronous USART for XMEGA communications - 8 data bits, even parity, 2 stop bits */
-	UBRR1  = (F_CPU / XPROG_HARDWARE_SPEED);
+	UBRR1  = ((F_CPU / 2 / XPROG_HARDWARE_SPEED) - 1);
 	UCSR1B = (1 << TXEN1);
 	UCSR1C = (1 << UMSEL10) | (1 << UPM11) | (1 << USBS1) | (1 << UCSZ11) | (1 << UCSZ10) | (1 << UCPOL1);
 
-	/* Send two BREAKs of 12 bits each to enable PDI interface (need at least 16 idle bits) */
-	XPROGTarget_SendBreak();
-	XPROGTarget_SendBreak();
+	/* Send two IDLEs of 12 bits each to enable PDI interface (need at least 16 idle bits) */
+	XPROGTarget_SendIdle();
+	XPROGTarget_SendIdle();
 }
 
 /** Enables the target's TPI interface, holding the target in reset until TPI mode is exited. */
@@ -77,15 +77,15 @@ void XPROGTarget_EnableTargetTPI(void)
 	/* Set Tx and XCK as outputs, Rx as input */
 	DDRD |=  (1 << 5) | (1 << 3);
 	DDRD &= ~(1 << 2);
-		
+
 	/* Set up the synchronous USART for TINY communications - 8 data bits, even parity, 2 stop bits */
-	UBRR1  = (F_CPU / XPROG_HARDWARE_SPEED);
+	UBRR1  = ((F_CPU / 2 / XPROG_HARDWARE_SPEED) - 1);
 	UCSR1B = (1 << TXEN1);
 	UCSR1C = (1 << UMSEL10) | (1 << UPM11) | (1 << USBS1) | (1 << UCSZ11) | (1 << UCSZ10) | (1 << UCPOL1);
 
-	/* Send two BREAKs of 12 bits each to enable TPI interface (need at least 16 idle bits) */
-	XPROGTarget_SendBreak();
-	XPROGTarget_SendBreak();
+	/* Send two IDLEs of 12 bits each to enable TPI interface (need at least 16 idle bits) */
+	XPROGTarget_SendIdle();
+	XPROGTarget_SendIdle();
 }
 
 /** Disables the target's PDI interface, exits programming mode and starts the target's application. */
@@ -115,10 +115,10 @@ void XPROGTarget_DisableTargetTPI(void)
 	UCSR1B  = 0;
 	UCSR1C  = 0;
 
-	/* Set all USART lines as input, tristate */
+	/* Set all USART lines as inputs, tristate */
 	DDRD  &= ~((1 << 5) | (1 << 3));
 	PORTD &= ~((1 << 5) | (1 << 3) | (1 << 2));
-
+	
 	/* Tristate target /RESET line */
 	AUX_LINE_DDR  &= ~AUX_LINE_MASK;
 	AUX_LINE_PORT &= ~AUX_LINE_MASK;
@@ -133,7 +133,7 @@ void XPROGTarget_SendByte(const uint8_t Byte)
 	/* Switch to Tx mode if currently in Rx mode */
 	if (!(IsSending))
 	  XPROGTarget_SetTxMode();
-	  
+
 	/* Wait until there is space in the hardware Tx buffer before writing */
 	while (!(UCSR1A & (1 << UDRE1)));
 	UCSR1A |= (1 << TXC1);
@@ -156,14 +156,14 @@ uint8_t XPROGTarget_ReceiveByte(void)
 	return UDR1;
 }
 
-/** Sends a BREAK via the USART to the attached target, consisting of a full frame of idle bits. */
-void XPROGTarget_SendBreak(void)
+/** Sends an IDLE via the USART to the attached target, consisting of a full frame of idle bits. */
+void XPROGTarget_SendIdle(void)
 {
 	/* Switch to Tx mode if currently in Rx mode */
 	if (!(IsSending))
 	  XPROGTarget_SetTxMode();
-
-	/* Need to do nothing for a full frame to send a BREAK */
+	
+	/* Need to do nothing for a full frame to send an IDLE */
 	for (uint8_t i = 0; i < BITS_IN_USART_FRAME; i++)
 	{
 		/* Wait for a full cycle of the clock */
@@ -202,3 +202,4 @@ static void XPROGTarget_SetRxMode(void)
 }
 
 #endif
+

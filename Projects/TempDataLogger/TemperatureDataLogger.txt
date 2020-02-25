@@ -3,16 +3,16 @@
  *  This file contains special DoxyGen information for the generation of the main page and other special
  *  documentation pages. It is not a project source file.
  */
- 
+
 /** \mainpage Temperature Datalogger Project
  *
  *  \section SSec_Compat Demo Compatibility:
  *
  *  The following list indicates what microcontrollers are compatible with this demo.
  *
- *  - Series 7 USB AVRs
- *  - Series 6 USB AVRs
- *  - Series 4 USB AVRs (with >16KB of FLASH)
+ *  - Series 7 USB AVRs (AT90USBxxx7)
+ *  - Series 6 USB AVRs (AT90USBxxx6)
+ *  - Series 4 USB AVRs (ATMEGAxxU4) - <i>those with >16KB of FLASH memory only</i>
  *
  *  \section SSec_Info USB Information:
  *
@@ -28,7 +28,7 @@
  *    <td>Mass Storage Device \n
  *        Human Interface Device</td>
  *   </tr>
- *   <tr> 
+ *   <tr>
  *    <td><b>USB Subclasses:</b></td>
  *    <td>Bulk-Only Transport \n
  *        Keyboard Subclass</td>
@@ -47,7 +47,7 @@
  *   </tr>
  *  </table>
  *
- *  \section SSec_Description Project Description: 
+ *  \section SSec_Description Project Description:
  *
  *  Temperature Data Logger project. This project is a very basic USB data logger for the current temperature as reported by
  *  the board's temperature sensor, writing the temperature to a file stored on the board's Dataflash in a FAT filesystem
@@ -83,3 +83,4 @@
  *   </tr>
  *  </table>
  */
+

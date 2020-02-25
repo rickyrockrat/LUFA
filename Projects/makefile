@@ -1,9 +1,9 @@
 #
 #             LUFA Library
 #     Copyright (C) Dean Camera, 2010.
-#              
+#
 #  dean [at] fourwalledcubicle [dot] com
-#      www.fourwalledcubicle.com
+#           www.lufa-lib.org
 #
 
 # Makefile to build all the LUFA Projects. Call with "make all" to
@@ -37,7 +37,7 @@ all:
 
 	$(MAKE) -C USBtoSerial clean
 	$(MAKE) -C USBtoSerial all
-	
+
 	$(MAKE) -C Webserver clean
 	$(MAKE) -C Webserver all
 
@@ -47,7 +47,7 @@ all:
 %:
 	$(MAKE) -C AVRISP-MKII $@
 	$(MAKE) -C Benito $@
-	$(MAKE) -C LEDNotifier $@	
+	$(MAKE) -C LEDNotifier $@
 	$(MAKE) -C Magstripe $@
 	$(MAKE) -C MissileLauncher $@
 	$(MAKE) -C RelayBoard $@
@@ -55,3 +55,4 @@ all:
 	$(MAKE) -C USBtoSerial $@
 	$(MAKE) -C Webserver $@
 	$(MAKE) -C XPLAINBridge $@
+
