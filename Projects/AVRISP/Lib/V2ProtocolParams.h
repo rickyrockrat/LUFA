@@ -48,6 +48,7 @@
 		
 		#include "V2Protocol.h"
 		#include "V2ProtocolConstants.h"
+		#include "ISPTarget.h"
 
 	/* Macros: */
 		/** Parameter privilege mask to allow the host PC to read the parameter's value */
@@ -69,12 +70,12 @@
 		void    V2Params_LoadNonVolatileParamValues(void);
 		void    V2Params_UpdateParamValues(void);
 	
-		uint8_t V2Params_GetParameterPrivileges(uint8_t ParamID);
-		uint8_t V2Params_GetParameterValue(uint8_t ParamID);
-		void    V2Params_SetParameterValue(uint8_t ParamID, uint8_t Value);
+		uint8_t V2Params_GetParameterPrivileges(const uint8_t ParamID);
+		uint8_t V2Params_GetParameterValue(const uint8_t ParamID);
+		void    V2Params_SetParameterValue(const uint8_t ParamID, const uint8_t Value);
 		
 		#if defined(INCLUDE_FROM_V2PROTOCOL_PARAMS_C)
-			static ParameterItem_t* V2Params_GetParamFromTable(uint8_t ParamID);
+			static ParameterItem_t* V2Params_GetParamFromTable(const uint8_t ParamID);
 		#endif
 
 #endif

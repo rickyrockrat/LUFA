@@ -75,7 +75,8 @@
 		#endif
 	
 		#if (F_CLOCK == 8000000)
-			#if (defined(__AVR_AT90USB82__) || defined(__AVR_AT90USB162__))
+			#if (defined(__AVR_AT90USB82__) || defined(__AVR_AT90USB162__) || \
+			     defined(__AVR_ATMEGA8U2__) || defined(__AVR_ATMEGA16U2__))
 				#define USB_PLL_PSC                0
 			#elif (defined(__AVR_ATmega16U4__) || defined(__AVR_ATmega32U4__))
 				#define USB_PLL_PSC                0
@@ -85,7 +86,8 @@
 				#define USB_PLL_PSC                ((1 << PLLP1) | (1 << PLLP0))
 			#endif
 		#elif (F_CLOCK == 16000000)
-			#if (defined(__AVR_AT90USB82__) || defined(__AVR_AT90USB162__))
+			#if (defined(__AVR_AT90USB82__) || defined(__AVR_AT90USB162__) || \
+			     defined(__AVR_ATMEGA8U2__) || defined(__AVR_ATMEGA16U2__))
 				#define USB_PLL_PSC                (1 << PLLP0)
 			#elif (defined(__AVR_ATmega16U4__) || defined(__AVR_ATmega32U4__))
 				#define USB_PLL_PSC                (1 << PINDIV)
@@ -112,14 +114,10 @@
 			 */
 			#define USB_MODE_DEVICE                    1
 			
-			#if defined(USB_CAN_BE_HOST) || defined(__DOXYGEN__)
-				/** Mode mask for the \ref USB_CurrentMode global and the \ref USB_Init() function. This indicates that the
-				 *  USB interface is or should be initialized in the USB host mode.
-				 *
-				 *  \note This token is not available on AVR models which do not support host mode.
-				 */
-				#define USB_MODE_HOST                  2
-			#endif
+			/** Mode mask for the \ref USB_CurrentMode global and the \ref USB_Init() function. This indicates that the
+			 *  USB interface is or should be initialized in the USB host mode.
+			 */
+			#define USB_MODE_HOST                      2
 			
 			#if defined(USB_CAN_BE_BOTH) || defined(__DOXYGEN__)
 				/** Mode mask for the the \ref USB_Init() function. This indicates that the USB interface should be

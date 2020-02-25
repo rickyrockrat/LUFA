@@ -124,7 +124,7 @@ static uint8_t DComp_NextPRNTInterfaceEndpoint(void* CurrentDescriptor)
 
 void PRNT_Host_USBTask(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo)
 {
-	
+	(void)PRNTInterfaceInfo;
 }
 
 uint8_t PRNT_Host_SetBidirectionalMode(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo)
@@ -135,11 +135,11 @@ uint8_t PRNT_Host_SetBidirectionalMode(USB_ClassInfo_PRNT_Host_t* const PRNTInte
 	
 		USB_ControlRequest = (USB_Request_Header_t)
 			{
-				bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_INTERFACE),
-				bRequest:      REQ_SetInterface,
-				wValue:        PRNTInterfaceInfo->State.AlternateSetting,
-				wIndex:        PRNTInterfaceInfo->State.InterfaceNumber,
-				wLength:       0,
+				.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_STANDARD | REQREC_INTERFACE),
+				.bRequest      = REQ_SetInterface,
+				.wValue        = PRNTInterfaceInfo->State.AlternateSetting,
+				.wIndex        = PRNTInterfaceInfo->State.InterfaceNumber,
+				.wLength       = 0,
 			};
 		
 		Pipe_SelectPipe(PIPE_CONTROLPIPE);
@@ -155,11 +155,11 @@ uint8_t PRNT_Host_GetPortStatus(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceIn
 {
 	USB_ControlRequest = (USB_Request_Header_t)
 		{
-			bmRequestType: (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
-			bRequest:      REQ_GetPortStatus,
-			wValue:        0,
-			wIndex:        PRNTInterfaceInfo->State.InterfaceNumber,
-			wLength:       sizeof(uint8_t),
+			.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
+			.bRequest      = REQ_GetPortStatus,
+			.wValue        = 0,
+			.wIndex        = PRNTInterfaceInfo->State.InterfaceNumber,
+			.wLength       = sizeof(uint8_t),
 		};
 
 	Pipe_SelectPipe(PIPE_CONTROLPIPE);
@@ -171,11 +171,11 @@ uint8_t PRNT_Host_SoftReset(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo)
 {
 	USB_ControlRequest = (USB_Request_Header_t)
 		{
-			bmRequestType: (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
-			bRequest:      REQ_SoftReset,
-			wValue:        0,
-			wIndex:        PRNTInterfaceInfo->State.InterfaceNumber,
-			wLength:       0,
+			.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
+			.bRequest     = REQ_SoftReset,
+			.wValue       = 0,
+			.wIndex       = PRNTInterfaceInfo->State.InterfaceNumber,
+			.wLength      = 0,
 		};
 
 	Pipe_SelectPipe(PIPE_CONTROLPIPE);
@@ -186,6 +186,9 @@ uint8_t PRNT_Host_SoftReset(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo)
 uint8_t PRNT_Host_SendData(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo, void* PrinterCommands, uint16_t CommandSize)
 {
 	uint8_t ErrorCode;
+
+	if ((USB_HostState != HOST_STATE_Configured) || !(PRNTInterfaceInfo->State.IsActive))
+	  return PIPE_RWSTREAM_DeviceDisconnected;
 
 	Pipe_SelectPipe(PRNTInterfaceInfo->Config.DataOUTPipeNumber);
 	Pipe_Unfreeze();
@@ -212,11 +215,11 @@ uint8_t PRNT_Host_GetDeviceID(USB_ClassInfo_PRNT_Host_t* const PRNTInterfaceInfo
 
 	USB_ControlRequest = (USB_Request_Header_t)
 		{
-			bmRequestType: (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
-			bRequest:      REQ_GetDeviceID,
-			wValue:        0,
-			wIndex:        PRNTInterfaceInfo->State.InterfaceNumber,
-			wLength:       sizeof(DeviceIDStringLength),
+			.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
+			.bRequest      =  REQ_GetDeviceID,
+			.wValue        = 0,
+			.wIndex        = PRNTInterfaceInfo->State.InterfaceNumber,
+			.wLength       = sizeof(DeviceIDStringLength),
 		};
 		
 	Pipe_SelectPipe(PIPE_CONTROLPIPE);

@@ -129,7 +129,7 @@ static uint8_t DComp_NextMSInterfaceEndpoint(void* const CurrentDescriptor)
 
 void MS_Host_USBTask(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo)
 {
-	
+	(void)MSInterfaceInfo;
 }
 
 static uint8_t MS_Host_SendCommand(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, MS_CommandBlockWrapper_t* const SCSICommandBlock,
@@ -289,9 +289,6 @@ static uint8_t MS_Host_GetReturnedStatus(USB_ClassInfo_MS_Host_t* const MSInterf
 
 uint8_t MS_Host_ResetMSInterface(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo)
 {
-	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
-
 	USB_ControlRequest = (USB_Request_Header_t)
 		{
 			.bmRequestType = (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE),
@@ -308,10 +305,7 @@ uint8_t MS_Host_ResetMSInterface(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo)
 
 uint8_t MS_Host_GetMaxLUN(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, uint8_t* const MaxLUNIndex)
 {
-	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
-
-	uint8_t ErrorCode;
+	uint8_t ErrorCode = HOST_SENDCONTROL_Successful;
 
 	USB_ControlRequest = (USB_Request_Header_t)
 		{
@@ -325,7 +319,10 @@ uint8_t MS_Host_GetMaxLUN(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, uint8_
 	Pipe_SelectPipe(PIPE_CONTROLPIPE);
 
 	if ((ErrorCode = USB_Host_SendControlRequest(MaxLUNIndex)) != HOST_SENDCONTROL_Successful)
-	  *MaxLUNIndex = 0;
+	{
+		*MaxLUNIndex = 0;
+		ErrorCode = HOST_SENDCONTROL_Successful;
+	}
 	
 	return ErrorCode;
 }
@@ -334,7 +331,7 @@ uint8_t MS_Host_GetInquiryData(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, c
                                SCSI_Inquiry_Response_t* const InquiryData)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
+	  return HOST_SENDCONTROL_DeviceDisconnected;
 	  
 	uint8_t ErrorCode;
 
@@ -370,7 +367,7 @@ uint8_t MS_Host_GetInquiryData(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, c
 uint8_t MS_Host_TestUnitReady(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, const uint8_t LUNIndex)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
+	  return HOST_SENDCONTROL_DeviceDisconnected;
 
 	uint8_t ErrorCode;	
 
@@ -407,7 +404,7 @@ uint8_t MS_Host_ReadDeviceCapacity(USB_ClassInfo_MS_Host_t* const MSInterfaceInf
                                    SCSI_Capacity_t* const DeviceCapacity)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
+	  return HOST_SENDCONTROL_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 
@@ -451,7 +448,7 @@ uint8_t MS_Host_RequestSense(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo, con
                              SCSI_Request_Sense_Response_t* const SenseData)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
+	  return HOST_SENDCONTROL_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 
@@ -488,7 +485,7 @@ uint8_t MS_Host_PreventAllowMediumRemoval(USB_ClassInfo_MS_Host_t* const MSInter
                                           const bool PreventRemoval)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
+	  return HOST_SENDCONTROL_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 
@@ -525,7 +522,7 @@ uint8_t MS_Host_ReadDeviceBlocks(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo,
                                  const uint8_t Blocks, const uint16_t BlockSize, void* BlockBuffer)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
+	  return HOST_SENDCONTROL_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 
@@ -566,7 +563,7 @@ uint8_t MS_Host_WriteDeviceBlocks(USB_ClassInfo_MS_Host_t* const MSInterfaceInfo
                                   const uint8_t Blocks, const uint16_t BlockSize, void* BlockBuffer)
 {
 	if ((USB_HostState != HOST_STATE_Configured) || !(MSInterfaceInfo->State.IsActive))
-	  return HOST_SENDCONTROL_DeviceDisconnect;
+	  return HOST_SENDCONTROL_DeviceDisconnected;
 
 	uint8_t ErrorCode;
 

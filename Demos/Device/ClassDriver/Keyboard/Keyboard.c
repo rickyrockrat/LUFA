@@ -131,20 +131,20 @@ void EVENT_USB_Device_StartOfFrame(void)
  *
  *  \param[in] HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
  *  \param[in,out] ReportID  Report ID requested by the host if non-zero, otherwise callback should set to the generated report ID
+ *  \param[in] ReportType  Type of the report to create, either REPORT_ITEM_TYPE_In or REPORT_ITEM_TYPE_Feature
  *  \param[out] ReportData  Pointer to a buffer where the created report should be stored
  *  \param[out] ReportSize  Number of bytes written in the report (or zero if no report is to be sent
  *
  *  \return Boolean true to force the sending of the report, false to let the library determine if it needs to be sent
  */
 bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, uint8_t* const ReportID,
-                                         void* ReportData, uint16_t* ReportSize)
+                                         const uint8_t ReportType, void* ReportData, uint16_t* ReportSize)
 {
 	USB_KeyboardReport_Data_t* KeyboardReport = (USB_KeyboardReport_Data_t*)ReportData;
 	
 	uint8_t JoyStatus_LCL    = Joystick_GetStatus();
 	uint8_t ButtonStatus_LCL = Buttons_GetStatus();
 
-	static uint8_t PrevUsedKeyCodes;
 	uint8_t UsedKeyCodes = 0;
 	
 	if (JoyStatus_LCL & JOY_UP)
@@ -162,15 +162,6 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 	  
 	if (ButtonStatus_LCL & BUTTONS_BUTTON1)
 	  KeyboardReport->KeyCode[UsedKeyCodes++] = 0x09; // F
-	
-	/* The host will ignore the device if we add a new keycode to the report while another keycode is currently
-	 * being sent (i.e. the user has pressed another key while a key is already being pressed) - we need to intersperse
-	 * the two reports with a zeroed report to force the host to accept the additional keys */
-	if (UsedKeyCodes != PrevUsedKeyCodes)
-	{
-		memset(KeyboardReport, sizeof(USB_KeyboardReport_Data_t), 0x00);
-		PrevUsedKeyCodes = UsedKeyCodes;
-	}
 
 	*ReportSize = sizeof(USB_KeyboardReport_Data_t);
 	return false;

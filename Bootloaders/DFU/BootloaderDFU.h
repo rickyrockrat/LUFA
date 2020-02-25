@@ -55,7 +55,7 @@
 		 *  can protect the AVR's firmware from being dumped from a secured AVR. When false, memory operations are
 		 *  allowed at any time.
 		 */
-		#define SECURE_MODE           false
+		#define SECURE_MODE              false
 
 		/** Major bootloader version number. */
 		#define BOOTLOADER_VERSION_MINOR 2
@@ -79,7 +79,7 @@
 		 *  \param[in] dataarr  Command byte array to check against
 		 *  \param[in] cb1      First command byte to check
 		 */
-		#define IS_ONEBYTE_COMMAND(dataarr, cb1)       (dataarr[0] == cb1)
+		#define IS_ONEBYTE_COMMAND(dataarr, cb1)       (dataarr[0] == (cb1))
 
 		/** Convenience macro, used to determine if the issued command is the given two-byte long command.
 		 *
@@ -87,7 +87,7 @@
 		 *  \param[in] cb1      First command byte to check
 		 *  \param[in] cb2      Second command byte to check
 		 */
-		#define IS_TWOBYTE_COMMAND(dataarr, cb1, cb2) ((dataarr[0] == cb1) && (dataarr[1] == cb2))
+		#define IS_TWOBYTE_COMMAND(dataarr, cb1, cb2) ((dataarr[0] == (cb1)) && (dataarr[1] == (cb2)))
 	
 		/** Length of the DFU file suffix block, appended to the end of each complete memory write command.
 		 *  The DFU file suffix is currently unused (but is designed to give extra file information, such as

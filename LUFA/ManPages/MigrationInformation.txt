@@ -10,6 +10,21 @@
  *  to the next version released. It does not indicate all new additions to the library in each version change, only
  *  areas relevant to making older projects compatible with the API changes of each new release.
  *
+ * \section Sec_Migration091223 Migrating from 091122 to 091223
+ *
+ *  <b>Host Mode</b>
+ *    - The Still Image Host Class driver SI_Host_USBTask() and SI_Host_ConfigurePipes() functions were misnamed, and are
+ *      now named \ref SImage_Host_USBTask() and \ref SImage_Host_ConfigurePipes() respectively.
+ *    - The HOST_SENDCONTROL_DeviceDisconnect enum value has been renamed to \ref HOST_SENDCONTROL_DeviceDisconnected to be in
+ *      line with the rest of the library error codes.
+ *    - The HID Parser item usages no longer contain seperate minimum and maximum values, as this was a violation of the HID
+ *      specification. Instead, the values are distributed evenly across each item as its usage value, to ensure that all items
+ *      can be distinguished from oneanother.
+ *
+ *  <b>Device Mode</b>
+ *    - The CALLBACK_HID_Device_CreateHIDReport() HID Device Class driver callback now has a new ReportType parameter to
+ *      indicate the report type to generate. Existing applications may simply add and ignore this additional parameter.
+ *
  * \section Sec_Migration091122 Migrating from 090924 to 091122
  *  
  *  <b>Host Mode</b>

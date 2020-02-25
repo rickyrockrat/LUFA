@@ -65,7 +65,9 @@
 	
 		#if !defined(BOARD)
 			#error BOARD must be set in makefile to a value specified in BoardTypes.h.	
-		#elif (BOARD != BOARD_USBKEY) && (BOARD != BOARD_STK525) && (BOARD != BOARD_STK526) && (BOARD != BOARD_USER)
+		#elif ((BOARD != BOARD_USBKEY) && (BOARD != BOARD_STK525) && \
+		       (BOARD != BOARD_STK526) && (BOARD != BOARD_USER) &&   \
+			   (BOARD != BOARD_EVK527))
 			#error The selected board does not contain a temperature sensor.
 		#endif
 
@@ -90,8 +92,8 @@
 				/** Initializes the temperature sensor driver, including setting up the appropriate ADC channel.
 				 *  This must be called before any other temperature sensor routines.
 				 *
-				 *  The ADC itself (not the ADC channel) must be configured separately before calling the temperature
-				 *  sensor functions.
+				 *  \note The ADC itself (not the ADC channel) must be configured separately before calling the
+				 *        temperature sensor functions.
 				 */
 				static inline void Temperature_Init(void);
 			#else

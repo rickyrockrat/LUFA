@@ -54,13 +54,13 @@
 		
 	/* Macros: */
 		/** Pipe number for the HID data IN pipe */
-		#define HID_DATA_IN_PIPE                 1
+		#define HID_DATA_IN_PIPE          1
 		
 		/** Pipe number for the HID data OUT pipe */
-		#define HID_DATA_OUT_PIPE                2
+		#define HID_DATA_OUT_PIPE         2
 
 		/** HID Class specific request to send a HID report to the device. */
-		#define REQ_SetReport                    0x09
+		#define REQ_SetReport             0x09
 
 		/** LED mask for the library LED driver, to indicate that the USB interface is not ready. */
 		#define LEDMASK_USB_NOTREADY      LEDS_LED1
@@ -73,6 +73,15 @@
 
 		/** LED mask for the library LED driver, to indicate that an error has occurred in the USB interface. */
 		#define LEDMASK_USB_ERROR        (LEDS_LED1 | LEDS_LED3)
+		
+		/** HID Report Type to indicate an IN report. */
+		#define REPORT_TYPE_IN           1
+
+		/** HID Report Type to indicate an OUT report. */
+		#define REPORT_TYPE_OUT          2
+
+		/** HID Report Type to indicate a FEATURE report. */
+		#define REPORT_TYPE_FEATURE      3
 		
 	/* Function Prototypes: */
 		void SetupHardware(void);

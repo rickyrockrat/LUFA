@@ -92,69 +92,6 @@
 						  *   the interface is enumerated.
 						  */
 			} USB_ClassInfo_MS_Host_t;
-
-			/** Type define for a SCSI Sense structure. Structures of this type are filled out by the
-			 *  device via the MassStore_RequestSense() function, indicating the current sense data of the
-			 *  device (giving explicit error codes for the last issued command). For details of the
-			 *  structure contents, refer to the SCSI specifications.
-			 */
-			typedef struct
-			{
-				uint8_t       ResponseCode;
-
-				uint8_t       SegmentNumber;
-				
-				unsigned char SenseKey            : 4;
-				unsigned char _RESERVED1          : 1;
-				unsigned char ILI                 : 1;
-				unsigned char EOM                 : 1;
-				unsigned char FileMark            : 1;
-				
-				uint8_t      Information[4];
-				uint8_t      AdditionalLength;
-				uint8_t      CmdSpecificInformation[4];
-				uint8_t      AdditionalSenseCode;
-				uint8_t      AdditionalSenseQualifier;
-				uint8_t      FieldReplaceableUnitCode;
-				uint8_t      SenseKeySpecific[3];
-			} SCSI_Request_Sense_Response_t;
-
-			/** Type define for a SCSI Inquiry structure. Structures of this type are filled out by the
-			 *  device via the MassStore_Inquiry() function, retrieving the attached device's information.
-			 *  For details of the structure contents, refer to the SCSI specifications.
-			 */
-			typedef struct
-			{
-				unsigned char DeviceType          : 5;
-				unsigned char PeripheralQualifier : 3;
-				
-				unsigned char _RESERVED1          : 7;
-				unsigned char Removable           : 1;
-				
-				uint8_t      Version;
-				
-				unsigned char ResponseDataFormat  : 4;
-				unsigned char _RESERVED2          : 1;
-				unsigned char NormACA             : 1;
-				unsigned char TrmTsk              : 1;
-				unsigned char AERC                : 1;
-
-				uint8_t      AdditionalLength;
-				uint8_t      _RESERVED3[2];
-
-				unsigned char SoftReset           : 1;
-				unsigned char CmdQue              : 1;
-				unsigned char _RESERVED4          : 1;
-				unsigned char Linked              : 1;
-				unsigned char Sync                : 1;
-				unsigned char WideBus16Bit        : 1;
-				unsigned char WideBus32Bit        : 1;
-				unsigned char RelAddr             : 1;
-				
-				uint8_t      VendorID[8];
-				uint8_t      ProductID[16];
-				uint8_t      RevisionID[4];
-			} SCSI_Inquiry_Response_t;
 			
 			/** SCSI capacity structure, to hold the total capacity of the device in both the number
 			 *  of blocks in the current LUN, and the size of each block. This structure is filled by
@@ -211,6 +148,10 @@
 			/** Sends a GET MAX LUN control request to the attached device, retrieving the index of the highest LUN (Logical
 			 *  UNit, a logical drive) in the device. This value can then be used in the other functions of the Mass Storage
 			 *  Host mode Class driver to address a specific LUN within the device.
+			 *
+			 *  \note Some devices do not support this request, and will STALL it when issued. To get around this,
+			 *        on unsupported devices the max LUN index will be reported as zero and no error will be returned
+			 *        if the device STALLs the request.
 			 *
 			 *  \param[in,out] MSInterfaceInfo  Pointer to a structure containing a MS Class host configuration and state
 			 *  \param[out] MaxLUNIndex  Pointer to a location where the highest LUN index value should be stored
@@ -326,7 +267,7 @@
 			#define COMMAND_DIRECTION_DATA_OUT     (0 << 7)
 			#define COMMAND_DIRECTION_DATA_IN      (1 << 7)
 			
-			#define COMMAND_DATA_TIMEOUT_MS        2000
+			#define COMMAND_DATA_TIMEOUT_MS        10000
 
 			#define MS_FOUND_DATAPIPE_IN           (1 << 0)
 			#define MS_FOUND_DATAPIPE_OUT          (1 << 1)

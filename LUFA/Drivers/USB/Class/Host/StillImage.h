@@ -77,7 +77,7 @@
 				struct
 				{
 					bool IsActive; /**< Indicates if the current interface instance is connected to an attached device, valid
-					                *   after \ref SI_Host_ConfigurePipes() is called and the Host state machine is in the
+					                *   after \ref SImage_Host_ConfigurePipes() is called and the Host state machine is in the
 					                *   Configured state
 					                */
 
@@ -94,7 +94,7 @@
 			} USB_ClassInfo_SI_Host_t;
 	
 		/* Enums: */
-			/** Enum for the possible error codes returned by the \ref SI_Host_ConfigurePipes() function. */
+			/** Enum for the possible error codes returned by the \ref SImage_Host_ConfigurePipes() function. */
 			enum SIHost_EnumerationFailure_ErrorCodes_t
 			{
 				SI_ENUMERROR_NoError                    = 0, /**< Configuration Descriptor was processed successfully */
@@ -114,7 +114,7 @@
 			 *
 			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
 			 */
-			void SI_Host_USBTask(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+			void SImage_Host_USBTask(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 
 
 			/** Host interface configuration routine, to configure a given Still Image host interface instance using the
@@ -129,8 +129,8 @@
 			 *
 			 *  \return A value from the \ref SIHost_EnumerationFailure_ErrorCodes_t enum
 			 */
-			uint8_t SI_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, uint16_t ConfigDescriptorSize,
-                                           void* DeviceConfigDescriptor) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(3);
+			uint8_t SImage_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, uint16_t ConfigDescriptorSize,
+                                               void* DeviceConfigDescriptor) ATTR_NON_NULL_PTR_ARG(1) ATTR_NON_NULL_PTR_ARG(3);
 
 			/** Opens a new PIMA session with the attached device. This should be used before any session-orientated PIMA commands
 			 *  are issued to the device. Only one session can be open at the one time.
@@ -151,6 +151,26 @@
 			 *          returned a logical command failure
 			 */
 			uint8_t SImage_Host_CloseSession(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+
+			/** Sends a raw PIMA block header to the device, filling out the transaction ID automatically. This can be used to send
+			 *  arbitrary PIMA blocks to the device with or without parameters.
+			 *
+			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
+			 *  \param[in] PIMAHeader  Pointer to a PIMA container structure that is to be sent
+			 *
+			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum
+			 */
+			uint8_t SImage_Host_SendBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, SI_PIMA_Container_t* const PIMAHeader);
+			
+			/** Receives a raw PIMA block header to the device. This can be used to receive arbitrary PIMA blocks from the device with
+			 *  or without parameters.
+			 *
+			 *  \param[in,out] SIInterfaceInfo  Pointer to a structure containing a Still Image Class host configuration and state
+			 *  \param[out] PIMAHeader  Pointer to a PIMA container structure where the received block is to be stored
+			 *
+			 *  \return A value from the \ref Pipe_Stream_RW_ErrorCodes_t enum
+			 */
+			uint8_t SImage_Host_ReceiveBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, SI_PIMA_Container_t* const PIMAHeader);
 
 			/** Sends a given PIMA command to the attached device, filling out the PIMA command header's Transaction ID automatically.
 			 *			 
@@ -230,17 +250,12 @@
 			#define SI_FOUND_DATAPIPE_IN           (1 << 1)
 			#define SI_FOUND_DATAPIPE_OUT          (1 << 2)
 
-			#define COMMAND_DATA_TIMEOUT_MS        5000
+			#define COMMAND_DATA_TIMEOUT_MS        10000
 		
 		/* Function Prototypes: */
 			#if defined(INCLUDE_FROM_SI_CLASS_HOST_C)
 				static uint8_t DComp_SI_Host_NextSIInterface(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
 				static uint8_t DComp_SI_Host_NextSIInterfaceEndpoint(void* const CurrentDescriptor) ATTR_NON_NULL_PTR_ARG(1);
-
-				static uint8_t SImage_Host_SendBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
-				                                           SI_PIMA_Container_t* const PIMAHeader);
-				static uint8_t SImage_Host_ReceiveBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
-				                                              SI_PIMA_Container_t* const PIMAHeader);
 			#endif
 	#endif
 	

@@ -338,9 +338,11 @@
 				 */
 				static inline void Endpoint_SetEndpointDirection(uint8_t DirectionMask);
 			#else
-				#if defined(USB_SERIES_4_AVR) || defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR) || defined(__DOXYGEN__)
+				#if defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR)
 					#define Endpoint_BytesInEndpoint()        UEBCX
-				#else
+				#elif defined(USB_SERIES_4_AVR)
+					#define Endpoint_BytesInEndpoint()        (((uint16_t)UEBCHX << 8) | UEBCLX)				
+				#elif defined(USB_SERIES_2_AVR)
 					#define Endpoint_BytesInEndpoint()        UEBCLX
 				#endif
 				
@@ -353,7 +355,7 @@
 				#if !defined(CONTROL_ONLY_DEVICE)
 					#define Endpoint_SelectEndpoint(epnum)    MACROS{ UENUM = (epnum); }MACROE
 				#else
-					#define Endpoint_SelectEndpoint(epnum)    (void)epnum
+					#define Endpoint_SelectEndpoint(epnum)    (void)(epnum)
 				#endif
 
 				#define Endpoint_ResetFIFO(epnum)             MACROS{ UERST = (1 << (epnum)); UERST = 0; }MACROE

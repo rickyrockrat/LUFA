@@ -111,7 +111,7 @@
 				#define Dataflash_GetSelectedChip()          (DATAFLASH_CHIPCS_PORT & DATAFLASH_CHIPCS_MASK)
 
 				#define Dataflash_SelectChip(mask)   MACROS{ DATAFLASH_CHIPCS_PORT = ((DATAFLASH_CHIPCS_PORT \
-															 & ~DATAFLASH_CHIPCS_MASK) | mask);              }MACROE
+															 & ~DATAFLASH_CHIPCS_MASK) | (mask));            }MACROE
 				
 				#define Dataflash_DeselectChip()             Dataflash_SelectChip(DATAFLASH_NO_CHIP)
 			#endif
@@ -158,6 +158,12 @@
 				#include "STK525/Dataflash.h"
 			#elif (BOARD == BOARD_STK526)
 				#include "STK526/Dataflash.h"
+			#elif (BOARD == BOARD_XPLAIN)
+				#include "XPLAIN/Dataflash.h"
+			#elif (BOARD == BOARD_XPLAIN_REV1)
+				#include "XPLAIN/Dataflash.h"
+			#elif (BOARD == BOARD_EVK527)
+				#include "EVK527/Dataflash.h"
 			#elif (BOARD == BOARD_USER)
 				#include "Board/Dataflash.h"
 			#else

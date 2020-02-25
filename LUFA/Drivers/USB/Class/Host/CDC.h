@@ -88,6 +88,11 @@
 					uint16_t DataINPipeSize; /**< Size in bytes of the CDC interface's IN data pipe */
 					uint16_t DataOUTPipeSize;  /**< Size in bytes of the CDC interface's OUT data pipe */
 					uint16_t NotificationPipeSize;  /**< Size in bytes of the CDC interface's IN notification pipe, if used */
+					
+					bool BidirectionalDataEndpoints; /**< Indicates if the attached CDC interface uses bidirectional data endpoints,
+					                                  *   and this has only the IN pipe configured (with \ref Pipe_SetPipeToken()
+					                                  *   used to switch the pipe's direction)
+					                                  */
 
 					struct
 					{
@@ -209,8 +214,17 @@
 			 */
 			uint8_t CDC_Host_ReceiveByte(USB_ClassInfo_CDC_Host_t* const CDCInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
 			
+			/** Flushes any data waiting to be sent, ensuring that the send buffer is cleared.
+			 *
+			 *  \param[in,out] CDCInterfaceInfo  Pointer to a structure containing a CDC Class host configuration and state
+			 *
+			 *  \return A value from the \ref Pipe_WaitUntilReady_ErrorCodes_t enum
+			 */
+			uint8_t CDC_Host_Flush(USB_ClassInfo_CDC_Host_t* const CDCInterfaceInfo) ATTR_NON_NULL_PTR_ARG(1);
+
 			/** Creates a standard characer stream for the given CDC Device instance so that it can be used with all the regular
-			 *  functions in the avr-libc <stdio.h> library that accept a FILE stream as a destination (e.g. fprintf).
+			 *  functions in the avr-libc <stdio.h> library that accept a FILE stream as a destination (e.g. fprintf). The created
+			 *  stream is bidirectional and can be used for both input and output functions.
 			 *
 			 *  \note The created stream can be given as stdout if desired to direct the standard output from all <stdio.h> functions
 			 *        to the given CDC interface.

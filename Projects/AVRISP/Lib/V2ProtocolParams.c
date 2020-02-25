@@ -67,7 +67,7 @@ static ParameterItem_t ParameterTable[] =
 		  .ParamPrivileges = PARAM_PRIV_READ                    },
 
 		{ .ParamID          = PARAM_SCK_DURATION,
-		  .ParamValue       = (TOTAL_PROGRAMMING_SPEEDS - 1),
+		  .ParamValue       = (TOTAL_ISP_PROGRAMMING_SPEEDS - 1),
 		  .ParamPrivileges = PARAM_PRIV_READ | PARAM_PRIV_WRITE },
 
 		{ .ParamID          = PARAM_RESET_POLARITY,
@@ -88,8 +88,7 @@ static ParameterItem_t ParameterTable[] =
 void V2Params_LoadNonVolatileParamValues(void)
 {
 	/* Target RESET line polarity is a non-volatile value, retrieve current parameter value from EEPROM -
-	 *   NB: Cannot call V2Protocol_SetParameterValue() here, as that will cause another EEPROM write!
-	 */
+	 *   NB: Cannot call V2Protocol_SetParameterValue() here, as that will cause another EEPROM write! */
 	V2Params_GetParamFromTable(PARAM_RESET_POLARITY)->ParamValue = eeprom_read_byte(&EEPROM_Rest_Polarity);
 }
 
@@ -112,7 +111,7 @@ void V2Params_UpdateParamValues(void)
  *
  *  \return Privileges for the requested parameter, as a mask of PARAM_PRIV_* masks
  */ 
-uint8_t V2Params_GetParameterPrivileges(uint8_t ParamID)
+uint8_t V2Params_GetParameterPrivileges(const uint8_t ParamID)
 {
 	ParameterItem_t* ParamInfo = V2Params_GetParamFromTable(ParamID);
 	
@@ -128,11 +127,11 @@ uint8_t V2Params_GetParameterPrivileges(uint8_t ParamID)
  *
  *  \return Current value of the parameter in the table, or 0 if not found
  */ 
-uint8_t V2Params_GetParameterValue(uint8_t ParamID)
+uint8_t V2Params_GetParameterValue(const uint8_t ParamID)
 {
 	ParameterItem_t* ParamInfo = V2Params_GetParamFromTable(ParamID);
 	
-	if ((ParamInfo == NULL) || !(ParamInfo->ParamPrivileges & PARAM_PRIV_READ))
+	if (ParamInfo == NULL)
 	  return 0;
 	
 	return ParamInfo->ParamValue;
@@ -141,15 +140,15 @@ uint8_t V2Params_GetParameterValue(uint8_t ParamID)
 /** Sets the value for a given parameter in the parameter table.
  *
  *  \param[in] ParamID  Parameter ID whose value is to be set in the table
- *  \param[in] Value  New value to set the parameter to
+ *  \param[in] Value    New value to set the parameter to
  *
  *  \return Pointer to the associated parameter information from the parameter table if found, NULL otherwise
  */
-void V2Params_SetParameterValue(uint8_t ParamID, uint8_t Value)
+void V2Params_SetParameterValue(const uint8_t ParamID, const uint8_t Value)
 {
 	ParameterItem_t* ParamInfo = V2Params_GetParamFromTable(ParamID);
 
-	if ((ParamInfo == NULL) || !(ParamInfo->ParamPrivileges & PARAM_PRIV_WRITE))
+	if (ParamInfo == NULL)
 	  return;
 
 	ParamInfo->ParamValue = Value;
@@ -166,7 +165,7 @@ void V2Params_SetParameterValue(uint8_t ParamID, uint8_t Value)
  *
  *  \return Pointer to the associated parameter information from the parameter table if found, NULL otherwise
  */
-static ParameterItem_t* V2Params_GetParamFromTable(uint8_t ParamID)
+static ParameterItem_t* V2Params_GetParamFromTable(const uint8_t ParamID)
 {
 	/* Find the parameter in the parameter table if present */
 	for (uint8_t TableIndex = 0; TableIndex < (sizeof(ParameterTable) / sizeof(ParameterTable[0])); TableIndex++)

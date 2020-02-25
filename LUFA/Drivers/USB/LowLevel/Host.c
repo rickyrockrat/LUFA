@@ -66,10 +66,12 @@ void USB_Host_ProcessNextHostState(void)
 			USB_HostState = HOST_STATE_Powered_WaitForDeviceSettle;
 			break;
 		case HOST_STATE_Powered_WaitForDeviceSettle:
-			#if HOST_DEVICE_SETTLE_DELAY_MS > 0
-			_delay_ms(1);
-
-			if (!(WaitMSRemaining--))
+			if (WaitMSRemaining--)
+			{
+				_delay_ms(1);
+				break;
+			}
+			else
 			{
 				USB_Host_VBUS_Manual_Off();
 
@@ -79,9 +81,6 @@ void USB_Host_ProcessNextHostState(void)
 				
 				USB_HostState = HOST_STATE_Powered_WaitForConnect;
 			}
-			#else
-			USB_HostState = HOST_STATE_Powered_WaitForConnect;			
-			#endif
 			
 			break;
 		case HOST_STATE_Powered_WaitForConnect:		
@@ -297,16 +296,32 @@ uint8_t USB_Host_GetDeviceDescriptor(void* const DeviceDescriptorPtr)
 {
 	USB_ControlRequest = (USB_Request_Header_t)
 		{
-			bmRequestType: (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_DEVICE),
-			bRequest:      REQ_GetDescriptor,
-			wValue:        (DTYPE_Device << 8),
-			wIndex:        0,
-			wLength:       sizeof(USB_Descriptor_Device_t),
+			.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_DEVICE),
+			.bRequest      = REQ_GetDescriptor,
+			.wValue        = (DTYPE_Device << 8),
+			.wIndex        = 0,
+			.wLength       = sizeof(USB_Descriptor_Device_t),
 		};
 
 	Pipe_SelectPipe(PIPE_CONTROLPIPE);
 	
 	return USB_Host_SendControlRequest(DeviceDescriptorPtr);
+}
+
+uint8_t USB_Host_GetDeviceStringDescriptor(uint8_t Index, void* const Buffer, uint8_t BufferLength)
+{
+	USB_ControlRequest = (USB_Request_Header_t)
+		{
+			.bmRequestType = (REQDIR_DEVICETOHOST | REQTYPE_STANDARD | REQREC_DEVICE),
+			.bRequest      = REQ_GetDescriptor,
+			.wValue        = (DTYPE_String << 8) | Index,
+			.wIndex        = 0,
+			.wLength       = BufferLength,
+		};
+
+	Pipe_SelectPipe(PIPE_CONTROLPIPE);
+	
+	return USB_Host_SendControlRequest(Buffer);
 }
 
 uint8_t USB_Host_ClearPipeStall(uint8_t EndpointNum)

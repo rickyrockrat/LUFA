@@ -58,6 +58,8 @@
 		#define CMD_READ_SIGNATURE_ISP      0x1B
 		#define CMD_READ_OSCCAL_ISP         0x1C
 		#define CMD_SPI_MULTI               0x1D
+		#define CMD_XPROG                   0x50
+		#define CMD_XPROG_SETMODE           0x51
 
 		#define STATUS_CMD_OK               0x00
 		#define STATUS_CMD_TOUT             0x80

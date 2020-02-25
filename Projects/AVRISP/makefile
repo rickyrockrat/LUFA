@@ -66,7 +66,7 @@ MCU = at90usb1287
 # Target board (see library "Board Types" documentation, USER or blank for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called 
 # "Board" inside the application directory.
-BOARD  = USBKEY
+BOARD = USBKEY
 
 
 # Processor frequency.
@@ -129,7 +129,11 @@ SRC = $(TARGET).c                                                 \
 	  Descriptors.c                                               \
       Lib/V2Protocol.c                                            \
       Lib/V2ProtocolParams.c                                      \
-      Lib/V2ProtocolTarget.c                                      \
+      Lib/ISPProtocol.c                                           \
+      Lib/ISPTarget.c                                             \
+	  Lib/PDIProtocol.c                                           \
+	  Lib/PDITarget.c                                             \
+	  Lib/NVMTarget.c                                             \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/DevChapter9.c        \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Endpoint.c           \
 	  $(LUFA_PATH)/LUFA/Drivers/USB/LowLevel/Host.c               \
@@ -187,9 +191,12 @@ CSTANDARD = -std=gnu99
 # Place -D or -U options here for C sources
 CDEFS  = -DF_CPU=$(F_CPU)UL -DF_CLOCK=$(F_CLOCK)UL -DBOARD=BOARD_$(BOARD) $(LUFA_OPTS)
 CDEFS += -DRESET_LINE_PORT=PORTB
+CDEFS += -DRESET_LINE_PIN=PINB
 CDEFS += -DRESET_LINE_DDR=DDRB
 CDEFS += -DRESET_LINE_MASK="(1 << 4)"
 CDEFS += -DVTARGET_ADC_CHANNEL=2
+CDEFS += -DENABLE_ISP_PROTOCOL
+CDEFS += -DENABLE_PDI_PROTOCOL
 
 
 # Place -D or -U options here for ASM sources

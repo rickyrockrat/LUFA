@@ -11,7 +11,7 @@
  *  \image html LUFA.gif
  *  \n
  *
- *  For author and donation information, see \ref Page_Donating.
+ *  <b>For author and donation information, see \ref Page_Donating.</b>
  *
  *  LUFA is an open-source USB library for the USB-enabled AVR microcontrollers, released under the MIT license. It supports
  *  a large number of USB AVR models and boards (see \ref Page_DeviceSupport). It is designed to provide an easy to use, feature
@@ -33,8 +33,9 @@
  *  <b>Subsections:</b>
  *  - \subpage Page_WhyUseLUFA Why Use LUFA?
  *  - \subpage Page_LUFAvsAtmelStack How does LUFA compare to the Atmel USB AVR stack?
+ *  - \subpage Page_AlternativeStacks Alternative USB AVR Stacks
  *  - \subpage Page_Licence Project licence
- *  - \subpage Page_Donating Donating to Support this Project
+ *  - \subpage Page_Donating Donating to support this project
  *  - \subpage Page_LibraryApps Overview of included Demos, Bootloaders and Projects
  *
  *  <small><i>Logo design by EDIGMA.COM</i></small>

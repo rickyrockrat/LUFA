@@ -43,6 +43,7 @@
 	/* Includes: */
 		#include <avr/pgmspace.h>
 		#include <stdbool.h>
+		#include <stddef.h>
 
 		#include "../../../Common/Common.h"
 		#include "USBMode.h"
@@ -81,12 +82,12 @@
 			#endif
 			
 			/** Macro to calculate the power value for the device descriptor, from a given number of milliamps. */
-			#define USB_CONFIG_POWER_MA(mA)           (mA >> 1)
+			#define USB_CONFIG_POWER_MA(mA)           ((mA) >> 1)
 
 			/** Macro to calculate the Unicode length of a string with a given number of Unicode characters.
 			 *  Should be used in string descriptor's headers for giving the string descriptor's byte length.
 			 */
-			#define USB_STRING_LEN(str)               (sizeof(USB_Descriptor_Header_t) + (str << 1))
+			#define USB_STRING_LEN(str)               (sizeof(USB_Descriptor_Header_t) + ((str) << 1))
 			
 			/** Macro to encode a given four digit floating point version number (e.g. 01.23) into Binary Coded
 			 *  Decimal format for descriptor fields requiring BCD encoding, such as the USB version number in the
@@ -118,6 +119,7 @@
 			 */
 			#define USB_CONFIG_ATTR_BUSPOWERED        0x80
 
+			
 			/** Can be masked with other configuration descriptor attributes for a \ref USB_Descriptor_Configuration_Header_t
 			 *  descriptor's ConfigAttributes value to indicate that the specified configuration can draw its power
 			 *  from the device's own power source.
@@ -544,17 +546,17 @@
 			{
 				USB_Descriptor_Header_t Header; /**< Descriptor header, including type and size. */
 				
-				int16_t     UnicodeString[]; /**< String data, as unicode characters (alternatively,
-				                              *   string language IDs). If normal ASCII characters are
-				                              *   to be used, they must be added as an array of characters
-				                              *   rather than a normal C string so that they are widened to
-				                              *   Unicode size.
-				                              *
-				                              *   Under GCC, strings prefixed with the "L" character (before
-				                              *   the opening string quotation mark) are considered to be
-				                              *   Unicode strings, and may be used instead of an explicit
-				                              *   array of ASCII characters.
-				                              */
+				wchar_t UnicodeString[];  /**< String data, as unicode characters (alternatively,
+				                           *   string language IDs). If normal ASCII characters are
+				                           *   to be used, they must be added as an array of characters
+				                           *   rather than a normal C string so that they are widened to
+				                           *   Unicode size.
+				                           *
+				                           *   Under GCC, strings prefixed with the "L" character (before
+				                           *   the opening string quotation mark) are considered to be
+				                           *   Unicode strings, and may be used instead of an explicit
+				                           *   array of ASCII characters.
+				                           */
 			} USB_Descriptor_String_t;
 
 			/** Type define for a standard string descriptor. Unlike other standard descriptors, the length
@@ -592,10 +594,10 @@
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Macros: */
-			#define VERSION_TENS(x)                   (int)(x / 10)
-			#define VERSION_ONES(x)                   (int)(x - (10 * VERSION_TENS(x)))
-			#define VERSION_TENTHS(x)                 (int)((x - (int)x) * 10)
-			#define VERSION_HUNDREDTHS(x)             (int)(((x - (int)x) * 100) - (10 * VERSION_TENTHS(x)))
+			#define VERSION_TENS(x)                   (int)((x) / 10)
+			#define VERSION_ONES(x)                   (int)((x) - (10 * VERSION_TENS(x)))
+			#define VERSION_TENTHS(x)                 (int)(((x) - (int)(x)) * 10)
+			#define VERSION_HUNDREDTHS(x)             (int)((((x) - (int)(x)) * 100) - (10 * VERSION_TENTHS(x)))
 	#endif
 	
 	/* Disable C linkage for C++ Compilers: */

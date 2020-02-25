@@ -72,7 +72,7 @@
 		#define LEDMASK_USB_ERROR        (LEDS_LED1 | LEDS_LED3)
 
 		/** LED mask for the library LED driver, to indicate that the USB interface is busy. */
-		#define LEDMASK_USB_BUSY         (LEDS_LED2)
+		#define LEDMASK_USB_BUSY         LEDS_LED2
 		
 		/** Total number of logical drives within the device - must be non-zero. */
 		#define TOTAL_LUNS               1
@@ -91,7 +91,7 @@
 		bool CALLBACK_MS_Device_SCSICommandReceived(USB_ClassInfo_MS_Device_t* MSInterfaceInfo);
 
 		bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, uint8_t* const ReportID,
-                                                 void* ReportData, uint16_t* ReportSize);
+                                                 const uint8_t ReportType, void* ReportData, uint16_t* ReportSize);
 		void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, const uint8_t ReportID, 
 		                                          const void* ReportData, const uint16_t ReportSize);
 

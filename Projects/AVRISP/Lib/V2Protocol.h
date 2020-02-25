@@ -43,41 +43,58 @@
 		#include "../Descriptors.h"
 		#include "V2ProtocolConstants.h"
 		#include "V2ProtocolParams.h"
-		#include "V2ProtocolTarget.h"
+		#include "ISPProtocol.h"
+		#include "PDIProtocol.h"
+
+	/* Preprocessor Checks: */
+		#if ((BOARD == BOARD_XPLAIN) || (BOARD == BOARD_XPLAIN_REV1))
+			#undef ENABLE_ISP_PROTOCOL
+			
+			#if !defined(ENABLE_PDI_PROTOCOL)
+				#define ENABLE_PDI_PROTOCOL
+			#endif
+		#endif
 
 	/* Macros: */
 		/** Programmer ID string, returned to the host during the CMD_SIGN_ON command processing */
-		#define PROGRAMMER_ID                   "AVRISP_MK2"
-		
-		/** Mask for the reading or writing of the high byte in a FLASH word when issuing a low-level programming command */
-		#define READ_WRITE_HIGH_BYTE_MASK       (1 << 3)
+		#define PROGRAMMER_ID             "AVRISP_MK2"
 
-		#define PROG_MODE_PAGED_WRITES_MASK     (1 << 0)
-		#define PROG_MODE_WORD_TIMEDELAY_MASK   (1 << 1)
-		#define PROG_MODE_WORD_VALUE_MASK       (1 << 2)
-		#define PROG_MODE_WORD_READYBUSY_MASK   (1 << 3)
-		#define PROG_MODE_PAGED_TIMEDELAY_MASK  (1 << 4)
-		#define PROG_MODE_PAGED_VALUE_MASK      (1 << 5)
-		#define PROG_MODE_PAGED_READYBUSY_MASK  (1 << 6)
-		#define PROG_MODE_COMMIT_PAGE_MASK      (1 << 7)
+		/** Timeout in milliseconds of target busy-wait loops waiting for a command to complete */
+		#define TARGET_BUSY_TIMEOUT_MS    240
+
+	/* Inline Functions: */
+		/** Blocking delay for a given number of milliseconds, via a hardware timer.
+		 *
+		 *  \param[in] DelayMS  Number of milliseconds to delay for
+		 */
+		static inline void V2Protocol_DelayMS(uint8_t DelayMS)
+		{
+			TCNT0 = 0;
+			TIFR0 = (1 << OCF1A);
+
+			while (DelayMS)
+			{
+				if (TIFR0 & (1 << OCF1A))
+				{
+					TIFR0 = (1 << OCF1A);
+					DelayMS--;
+				}
+			}
+		}
+
+	/* External Variables: */
+		extern uint32_t CurrentAddress;
+		extern bool MustSetAddress;
 
 	/* Function Prototypes: */
 		void V2Protocol_ProcessCommand(void);
 		
 		#if defined(INCLUDE_FROM_V2PROTOCOL_C)
-			static void V2Protocol_Command_Unknown(uint8_t V2Command);
-			static void V2Protocol_Command_SignOn(void);
-			static void V2Protocol_Command_GetSetParam(uint8_t V2Command);
-			static void V2Protocol_Command_LoadAddress(void);
-			static void V2Protocol_Command_ResetProtection(void);
-			static void V2Protocol_Command_EnterISPMode(void);
-			static void V2Protocol_Command_LeaveISPMode(void);
-			static void V2Protocol_Command_ProgramMemory(uint8_t V2Command);
-			static void V2Protocol_Command_ReadMemory(uint8_t V2Command);
-			static void V2Protocol_Command_ChipErase(void);
-			static void V2Protocol_Command_ReadFuseLockSigOSCCAL(uint8_t V2Command);
-			static void V2Protocol_Command_WriteFuseLock(uint8_t V2Command);
-			static void V2Protocol_Command_SPIMulti(void);
+			static void V2Protocol_UnknownCommand(uint8_t V2Command);
+			static void V2Protocol_SignOn(void);
+			static void V2Protocol_GetSetParam(uint8_t V2Command);
+			static void V2Protocol_ResetProtection(void);
+			static void V2Protocol_LoadAddress(void);
 		#endif
 
 #endif
