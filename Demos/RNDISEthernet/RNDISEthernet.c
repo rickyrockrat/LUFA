@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -44,21 +44,19 @@
 	right-click the .INF file and choose the Install option. If
 	Windows 2000 is used, the Microsoft INF file in the hotfix
 	will need to be altered to use the VID/PID of the demo and
-	then chosen instead of the MyUSB RNDIS INF file when prompted.
+	then chosen instead of the LUFA RNDIS INF file when prompted.
 
 	When enumerated, this demo will install as a new network
-	adapter which ethernet packets can be sent to and recieved
+	adapter which ethernet packets can be sent to and received
 	from. Running on top of the adapter is a very simple TCP/IP
 	stack with a HTTP webserver and TELNET host which can be
 	accessed through a web browser at IP address 10.0.0.2:80 or
-	through a TELNET client at 10.0.0.2:25. In order to access
-	this device, you will need to manually configure the network
-	adapter it enumerates in the OS to use a fixed IP of 10.0.0.1
-	rather than using dynamic address allocation, as the device does
-	not implement a DHCP server capable of handing out IP addresses.
+	through a TELNET client at 10.0.0.2:25. This device also supports
+	ping echos via the ICMP protocol.
 	
 	**NOTE:** The TCP/IP stack in this demo has a number of limitations
-	and should serve as an example only. For complete projects, it is 
+	and should serve as an example only - it is not fully featured nor
+	compliant to the TCP/IP specification. For complete projects, it is 
 	recommended that it be replaced with an external open source TCP/IP
 	stack that is feature complete, such as the uIP stack.
 */
@@ -74,10 +72,10 @@
 #include "RNDISEthernet.h"
 
 /* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,     "MyUSB RNDIS App");
-BUTTLOADTAG(BuildTime,    __TIME__);
-BUTTLOADTAG(BuildDate,    __DATE__);
-BUTTLOADTAG(MyUSBVersion, "MyUSB V" MYUSB_VERSION_STRING);
+BUTTLOADTAG(ProjName,    "LUFA RNDIS App");
+BUTTLOADTAG(BuildTime,   __TIME__);
+BUTTLOADTAG(BuildDate,   __DATE__);
+BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
 
 /* Scheduler Task List */
 TASK_LIST
@@ -109,7 +107,7 @@ int main(void)
 	printf_P(PSTR("\r\n\r\n****** RNDIS Demo running. ******\r\n"));
 
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 	
 	/* Initialize Scheduler so that it can be used */
 	Scheduler_Init();
@@ -127,7 +125,7 @@ EVENT_HANDLER(USB_Connect)
 	Scheduler_SetTaskMode(USB_USBTask, TASK_RUN);
 
 	/* Indicate USB enumerating */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED4);
+	UpdateStatus(Status_USBEnumerating);
 }
 
 EVENT_HANDLER(USB_Disconnect)
@@ -139,7 +137,7 @@ EVENT_HANDLER(USB_Disconnect)
 	Scheduler_SetTaskMode(USB_USBTask, TASK_STOP);
 
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 }
 
 EVENT_HANDLER(USB_ConfigurationChanged)
@@ -158,7 +156,7 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 	                           ENDPOINT_BANK_SINGLE);
 
 	/* Indicate USB connected and ready */
-	LEDs_SetAllLEDs(LEDS_LED2 | LEDS_LED4);
+	UpdateStatus(Status_USBReady);
 
 	/* Start TCP/IP tasks */
 	Scheduler_SetTaskMode(RNDIS_Task, TASK_RUN);
@@ -230,6 +228,36 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	}
 }
 
+/** Function to manage status updates to the user. This is done via LEDs on the given board, if available, but may be changed to
+ *  log to a serial port, or anything else that is suitable for status updates.
+ *
+ *  \param CurrentStatus  Current status of the system, from the RNDISEthernet_StatusCodes_t enum
+ */
+void UpdateStatus(uint8_t CurrentStatus)
+{
+	uint8_t LEDMask = LEDS_NO_LEDS;
+	
+	/* Set the LED mask to the appropriate LED mask based on the given status code */
+	switch (CurrentStatus)
+	{
+		case Status_USBNotReady:
+			LEDMask = (LEDS_LED1);
+			break;
+		case Status_USBEnumerating:
+			LEDMask = (LEDS_LED1 | LEDS_LED2);
+			break;
+		case Status_USBReady:
+			LEDMask = (LEDS_LED2 | LEDS_LED4);
+			break;
+		case Status_ProcessingEthernetFrame:
+			LEDMask = (LEDS_LED2 | LEDS_LED3);
+			break;		
+	}
+	
+	/* Set the board LEDs to the new LED mask */
+	LEDs_SetAllLEDs(LEDMask);
+}
+
 TASK(RNDIS_Task)
 {
 	/* Select the notification endpoint */
@@ -253,6 +281,7 @@ TASK(RNDIS_Task)
 		/* Send the notification to the host */
 		Endpoint_ClearCurrentBank();
 
+		/* Indicate a response is no longer ready */
 		ResponseReady = false;
 	}
 	
@@ -336,7 +365,13 @@ TASK(Ethernet_Task)
 	/* Check if a frame has been written to the IN frame buffer */
 	if (FrameIN.FrameInBuffer)
 	{
-		/* Print out the frame details */
+		/* Indicate packet processing started */
+		UpdateStatus(Status_ProcessingEthernetFrame);
+
+		/* Process the ethernet frame - replace this with your own Ethernet handler code as desired */
 		Ethernet_ProcessPacket();
+
+		/* Indicate packet processing complete */
+		UpdateStatus(Status_USBReady);
 	}
 }

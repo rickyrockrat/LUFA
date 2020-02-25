@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -79,7 +79,7 @@ void DecodeEthernetFrameHeader(void* InDataStart)
 void DecodeARPHeader(void* InDataStart)
 {
 	#if !defined(NO_DECODE_ARP)
-	Ethernet_ARP_Header_t* ARPHeader = (Ethernet_ARP_Header_t*)InDataStart;	
+	ARP_Header_t* ARPHeader = (ARP_Header_t*)InDataStart;	
 
 	printf_P(PSTR("   \\\r\n    ARP\r\n"));
 
@@ -125,9 +125,9 @@ void DecodeARPHeader(void* InDataStart)
 void DecodeIPHeader(void* InDataStart)
 {
 	#if !defined(NO_DECODE_IP)
-	Ethernet_IP_Header_t* IPHeader  = (Ethernet_IP_Header_t*)InDataStart;
+	IP_Header_t* IPHeader  = (IP_Header_t*)InDataStart;
 
-	uint16_t              HeaderLengthBytes = (IPHeader->HeaderLength * sizeof(uint32_t));
+	uint16_t HeaderLengthBytes = (IPHeader->HeaderLength * sizeof(uint32_t));
 
 	printf_P(PSTR("   \\\r\n    IP\r\n"));
 
@@ -159,7 +159,7 @@ void DecodeIPHeader(void* InDataStart)
 void DecodeICMPHeader(void* InDataStart)
 {
 	#if !defined(NO_DECODE_ICMP)
-	Ethernet_ICMP_Header_t* ICMPHeader  = (Ethernet_ICMP_Header_t*)InDataStart;
+	ICMP_Header_t* ICMPHeader  = (ICMP_Header_t*)InDataStart;
 
 	printf_P(PSTR("    \\\r\n     ICMP\r\n"));
 
@@ -171,11 +171,11 @@ void DecodeICMPHeader(void* InDataStart)
 void DecodeTCPHeader(void* InDataStart)
 {
 	#if !defined(NO_DECODE_TCP)
-	Ethernet_TCP_Header_t* TCPHeader  = (Ethernet_TCP_Header_t*)InDataStart;
+	TCP_Header_t* TCPHeader  = (TCP_Header_t*)InDataStart;
 
 	uint16_t               HeaderLengthBytes = (TCPHeader->DataOffset * sizeof(uint32_t));
 
-	printf_P(PSTR("    \\\r\n     TCP\r\n");
+	printf_P(PSTR("    \\\r\n     TCP\r\n"));
 
 	printf_P(PSTR("     + Header Length: %u Bytes\r\n"), HeaderLengthBytes);
 
@@ -189,5 +189,53 @@ void DecodeTCPHeader(void* InDataStart)
 	
 	if (TCP_GetPortState(TCPHeader->DestinationPort) == TCP_Port_Closed)
 	  printf_P(PSTR("     + NOT LISTENING ON DESTINATION PORT\r\n"));
+	#endif
+}
+
+void DecodeUDPHeader(void* InDataStart)
+{
+	#if !defined(NO_DECODE_UDP)
+	UDP_Header_t* UDPHeader = (UDP_Header_t*)InDataStart;
+
+	printf_P(PSTR("    \\\r\n     UDP\r\n"));
+
+	printf_P(PSTR("     + Source Port: %u\r\n"), SwapEndian_16(UDPHeader->SourcePort));
+	printf_P(PSTR("     + Destination Port: %u\r\n"), SwapEndian_16(UDPHeader->DestinationPort));
+
+	printf_P(PSTR("     + Data Length: %d\r\n"), SwapEndian_16(UDPHeader->Length));
+	#endif
+}
+
+void DecodeDHCPHeader(void* InDataStart)
+{
+	#if !defined(NO_DECODE_DHCP)
+	uint8_t* DHCPOptions = (InDataStart + sizeof(DHCP_Header_t));
+
+	printf_P(PSTR("     \\\r\n      DHCP\r\n"));
+
+	while (DHCPOptions[0] != DHCP_OPTION_END)
+	{
+		if (DHCPOptions[0] == DHCP_OPTION_MESSAGETYPE)
+		{
+			switch (DHCPOptions[2])
+			{
+				case DHCP_MESSAGETYPE_DISCOVER:
+					printf_P(PSTR("      + DISCOVER\r\n"));
+					break;
+				case DHCP_MESSAGETYPE_REQUEST:
+					printf_P(PSTR("      + REQUEST\r\n"));
+					break;
+				case DHCP_MESSAGETYPE_RELEASE:
+					printf_P(PSTR("      + RELEASE\r\n"));
+					break;
+				case DHCP_MESSAGETYPE_DECLINE:
+					printf_P(PSTR("      + DECLINE\r\n"));
+					break;
+			}
+		}
+		
+		DHCPOptionsINStart += ((DHCPOptionsINStart[0] == DHCP_OPTION_PAD) ? 1 : (DHCPOptionsINStart[1] + 2));
+	}
+
 	#endif
 }

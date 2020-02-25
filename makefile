@@ -1,12 +1,12 @@
 #
-#             MyUSB Library
+#             LUFA Library
 #     Copyright (C) Dean Camera, 2008.
 #              
 #  dean [at] fourwalledcubicle [dot] com
 #      www.fourwalledcubicle.com
 #
 
-# Makefile to build the MyUSB library and Demos.
+# Makefile to build the LUFA library and Demos.
 
 # Call with "make all" to rebuild everything, "make clean" to clean everything,
 # "make clean_list" to remove all intermediatary files but preserve any binaries
@@ -16,21 +16,12 @@
 # to remove all the commands from the output. This gives a much easier to read
 # report of the entire build process.
 
-all:
-
-doxygen:
-	@echo Generating library documentation.
-	@echo
-	doxygen doxygen.conf
-	@echo
-	@echo Generation of library documentation complete.
-
 %:
-	@echo Executing \"make $@\" on all MyUSB library elements.
+	@echo Executing \"make $@\" on all LUFA library elements.
 	@echo
-	make -C MyUSB/ $@
+	make -C LUFA/ $@
 	make -C Demos/ $@
 	make -C Projects/ $@
 	make -C Bootloaders/ $@
 	@echo
-	@echo MyUSB \"make $@\" operation complete.
+	@echo LUFA \"make $@\" operation complete.

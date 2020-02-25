@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -8,7 +8,8 @@
 
 /*
   Copyright 2008  Dean Camera (dean [at] fourwalledcubicle [dot] com)
-
+  Copyright 2008  Denver Gingerich (denver [at] ossguy [dot] com)
+  
   Permission to use, copy, modify, and distribute this software
   and its documentation for any purpose and without fee is hereby
   granted, provided that the above copyright notice appear in all
@@ -39,43 +40,75 @@
 
 		#include "Descriptors.h"
 
-		#include <MyUSB/Version.h>                    // Library Version Information
-		#include <MyUSB/Common/ButtLoadTag.h>         // PROGMEM tags readable by the ButtLoad project
-		#include <MyUSB/Drivers/USB/USB.h>            // USB Functionality
-		#include <MyUSB/Drivers/Board/Joystick.h>     // Joystick driver
-		#include <MyUSB/Drivers/Board/LEDs.h>         // LEDs driver
-		#include <MyUSB/Drivers/Board/HWB.h>          // Hardware Button driver
-		#include <MyUSB/Scheduler/Scheduler.h>        // Simple scheduler for task management
+		#include <LUFA/Version.h>                    // Library Version Information
+		#include <LUFA/Common/ButtLoadTag.h>         // PROGMEM tags readable by the ButtLoad project
+		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
+		#include <LUFA/Drivers/Board/Joystick.h>     // Joystick driver
+		#include <LUFA/Drivers/Board/LEDs.h>         // LEDs driver
+		#include <LUFA/Drivers/Board/HWB.h>          // Hardware Button driver
+		#include <LUFA/Scheduler/Scheduler.h>        // Simple scheduler for task management
 		
 	/* Task Definitions: */
 		TASK(USB_Keyboard);
 		TASK(USB_Mouse);
 
+	/* Enums: */
+		/** Enum for the possible status codes for passing to the UpdateStatus() function. */
+		enum KeyboardMouse_StatusCodes_t
+		{
+			Status_USBNotReady    = 0, /**< USB is not ready (disconnected from a USB host) */
+			Status_USBEnumerating = 1, /**< USB interface is enumerating */
+			Status_USBReady       = 2, /**< USB interface is connected and ready */
+		};
+		
 	/* Macros: */
+		/** HID Class specific request to get the next HID report from the device. */
 		#define REQ_GetReport      0x01
+
+		/** HID Class specific request to send the next HID report to the device. */
 		#define REQ_SetReport      0x09
+
+		/** HID Class specific request to get the current HID protocol in use, either report or boot. */
 		#define REQ_GetProtocol    0x03
+
+		/** HID Class specific request to set the current HID protocol in use, either report or boot. */
 		#define REQ_SetProtocol    0x0B
 		
 	/* Type Defines: */
+		/** Type define for the keyboard HID report structure, for creating and sending HID reports to the host PC.
+		 *  This mirrors the layout described to the host in the HID report descriptor, in Descriptors.c.
+		 */
 		typedef struct
 		{
-			uint8_t Modifier;
-			uint8_t Reserved;
-			uint8_t KeyCode[6];
+			uint8_t Modifier; /**< Modifier mask byte, containing a mask of modifier keys set (such as shift or CTRL) */
+			uint8_t Reserved; /**< Reserved, always set as 0x00 */
+			uint8_t KeyCode[6]; /**< Array of up to six simultaneous key codes of pressed keys */
 		} USB_KeyboardReport_Data_t;
 
+		/** Type define for the mouse HID report structure, for creating and sending HID reports to the host PC.
+		 *  This mirrors the layout described to the host in the HID report descriptor, in Descriptors.c.
+		 */
 		typedef struct
 		{
-			uint8_t Button;
-			int8_t  X;
-			int8_t  Y;
+			uint8_t Button; /**< Bit mask of the currently pressed mouse buttons */
+			int8_t  X; /**< Current mouse delta X movement, as a signed 8-bit integer */
+			int8_t  Y; /**< Current mouse delta Y movement, as a signed 8-bit integer */
 		} USB_MouseReport_Data_t;
 			
 	/* Event Handlers: */
+		/** Indicates that this module will catch the USB_Connect event when thrown by the library. */
 		HANDLES_EVENT(USB_Connect);
+
+		/** Indicates that this module will catch the USB_Disconnect event when thrown by the library. */
 		HANDLES_EVENT(USB_Disconnect);
+
+		/** Indicates that this module will catch the USB_ConfigurationChanged event when thrown by the library. */
 		HANDLES_EVENT(USB_ConfigurationChanged);
+
+		/** Indicates that this module will catch the USB_UnhandledControlPacket event when thrown by the library. */
 		HANDLES_EVENT(USB_UnhandledControlPacket);
 
+	/* Function Prototypes: */
+		void UpdateStatus(uint8_t CurrentStatus);
+		
 #endif

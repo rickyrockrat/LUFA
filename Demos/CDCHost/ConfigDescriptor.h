@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -32,8 +32,8 @@
 #define _CONFIGDESCRIPTOR_H_
 
 	/* Includes: */
-		#include <MyUSB/Drivers/USB/USB.h>                        // USB Functionality
-		#include <MyUSB/Drivers/USB/Class/ConfigDescriptor.h>     // Configuration Descriptor Parser
+		#include <LUFA/Drivers/USB/USB.h>                        // USB Functionality
+		#include <LUFA/Drivers/USB/Class/ConfigDescriptor.h>     // Configuration Descriptor Parser
 		
 		#include "CDCHost.h"
 		
@@ -45,7 +45,7 @@
 		#define CDC_PROTOCOL                   0x01
 
 	/* Enums: */
-		enum GetConfigDescriptorDataCodes_t
+		enum CDCHost_GetConfigDescriptorDataCodes_t
 		{
 			SuccessfulConfigRead               = 0,
 			ControlError                       = 1,

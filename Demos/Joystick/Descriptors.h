@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,15 +28,23 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for Descriptors.c.
+ */
+ 
 #ifndef _DESCRIPTORS_H_
 #define _DESCRIPTORS_H_
 
 	/* Includes: */
-		#include <MyUSB/Drivers/USB/USB.h>
+		#include <LUFA/Drivers/USB/USB.h>
 
 		#include <avr/pgmspace.h>
 
 	/* Type Defines: */
+		/** Type define for the HID class specific HID descriptor, to describe the HID device's specifications. Refer to the HID
+		 *  specification for details on the structure elements.
+		 */
 		typedef struct
 		{
 			USB_Descriptor_Header_t               Header;
@@ -50,8 +58,13 @@
 			uint16_t                              HIDReportLength;
 		} USB_Descriptor_HID_t;
 
+		/** Type define for the data type used to store HID report descriptor elements. */
 		typedef uint8_t USB_Descriptor_HIDReport_Datatype_t;
 
+		/** Type define for the device configuration descriptor structure. This must be defined in the
+		 *  application code, as the configuration descriptor contains several sub-descriptors which
+		 *  vary between devices, and which describe the device's usage to the host.
+		 */
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t Config;
@@ -61,19 +74,20 @@
 		} USB_Descriptor_Configuration_t;
 					
 	/* Macros: */
+		/** Endpoint number of the Joystick HID reporting IN endpoint. */
 		#define JOYSTICK_EPNUM               1
+
+		/** Size in bytes of the Joystick HID reporting IN endpoint. */
 		#define JOYSTICK_EPSIZE              8
 
-		#define DTYPE_HID                    0x21
-		#define DTYPE_Report                 0x22
-
-	/* External Variables: */
-		extern USB_Descriptor_HIDReport_Datatype_t JoystickReport[];
-		extern USB_Descriptor_Configuration_t      ConfigurationDescriptor;
+		/** Descriptor header type value, to indicate a HID class HID descriptor. */
+		#define DTYPE_HID                 0x21
+		
+		/** Descriptor header type value, to indicate a HID class HID report descriptor. */
+		#define DTYPE_Report              0x22
 
 	/* Function Prototypes: */
-		bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
-		                       void** const DescriptorAddress, uint16_t* const DescriptorSize)
-		                       ATTR_WARN_UNUSED_RESULT ATTR_WEAK ATTR_NON_NULL_PTR_ARG(3, 4);
+		uint16_t USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
+		                           ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif

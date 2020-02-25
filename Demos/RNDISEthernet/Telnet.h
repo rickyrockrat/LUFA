@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -35,12 +35,12 @@
 		#include <avr/io.h>
 		#include <string.h>
 		
-		#include <MyUSB/Drivers/Board/LEDs.h>
+		#include <LUFA/Drivers/Board/LEDs.h>
 		
 		#include "TCP.h"
 	
 	/* Function Prototypes: */
 		void Telnet_Init(void);
-		void Telnet_ApplicationCallback(TCP_ConnectionBuffer_t* Buffer);
+		void Telnet_ApplicationCallback(TCP_ConnectionState_t* ConnectionState, TCP_ConnectionBuffer_t* Buffer);
 
 #endif

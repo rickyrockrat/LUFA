@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -40,17 +40,30 @@
 		#include "PIMACodes.h"
 		#include "StillImageCommands.h"
 
-		#include <MyUSB/Common/ButtLoadTag.h>                     // PROGMEM tags readable by the ButtLoad project
-		#include <MyUSB/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
-		#include <MyUSB/Drivers/USB/USB.h>                        // USB Functionality
-		#include <MyUSB/Drivers/AT90USBXXX/Serial_Stream.h>       // Serial stream driver
-		#include <MyUSB/Drivers/Board/LEDs.h>                     // LED driver
-		#include <MyUSB/Scheduler/Scheduler.h>                    // Simple scheduler for task management
+		#include <LUFA/Common/ButtLoadTag.h>                     // PROGMEM tags readable by the ButtLoad project
+		#include <LUFA/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
+		#include <LUFA/Drivers/USB/USB.h>                        // USB Functionality
+		#include <LUFA/Drivers/AT90USBXXX/Serial_Stream.h>       // Serial stream driver
+		#include <LUFA/Drivers/Board/LEDs.h>                     // LED driver
+		#include <LUFA/Scheduler/Scheduler.h>                    // Simple scheduler for task management
 		
 	/* Macros: */
 		#define SIMAGE_CLASS                   0x06
 		#define SIMAGE_SUBCLASS                0x01
 		#define SIMAGE_PROTOCOL                0x01
+
+	/* Enums: */
+		/** Enum for the possible status codes for passing to the UpdateStatus() function. */
+		enum StillImageHost_StatusCodes_t
+		{
+			Status_USBNotReady      = 0, /**< USB is not ready (disconnected from a USB device) */
+			Status_USBEnumerating   = 1, /**< USB interface is enumerating */
+			Status_USBReady         = 2, /**< USB interface is connected and ready */
+			Status_EnumerationError = 3, /**< Software error while enumerating the attached USB device */
+			Status_HardwareError    = 4, /**< Hardware error while enumerating the attached USB device */
+			Status_Busy             = 5, /**< Busy reading or writing to the attached Still Image device */
+			Status_PIMACommandError = 6, /**< Error while sending or receiving a PIM command to the attached device */
+		};
 
 	/* Task Definitions: */
 		TASK(USB_SImage_Host);
@@ -65,5 +78,6 @@
 	/* Function Prototypes: */
 		void UnicodeToASCII(uint8_t* restrict UnicodeString, char* restrict Buffer);
 		void ShowCommandError(uint8_t ErrorCode, bool ResponseCodeError);
+		void UpdateStatus(uint8_t CurrentStatus);
 		
 #endif

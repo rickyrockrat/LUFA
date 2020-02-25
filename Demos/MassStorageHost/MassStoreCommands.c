@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,7 +28,7 @@
   this software.
 */
 
-#define INCLUDE_FROM_MASSSTORE_COMMANDS_C
+#define  INCLUDE_FROM_MASSSTORE_COMMANDS_C
 #include "MassStoreCommands.h"
 
 /* Globals: */
@@ -52,10 +52,11 @@ static void MassStore_SendCommand(void)
 	/* Send the data in the OUT pipe to the attached device */
 	Pipe_ClearCurrentBank();
 
+	/* Some buggy devices require a delay here before the pipe freezing or they will lock up */
+	USB_Host_WaitMS(1);
+
 	/* Freeze pipe after use */
 	Pipe_Freeze();
-
-	USB_Host_WaitMS(1);
 }
 
 static uint8_t MassStore_WaitForDataReceived(void)
@@ -70,7 +71,7 @@ static uint8_t MassStore_WaitForDataReceived(void)
 	Pipe_SelectPipe(MASS_STORE_DATA_IN_PIPE);
 	Pipe_Unfreeze();
 
-	/* Wait until data recieved in the IN pipe */
+	/* Wait until data received in the IN pipe */
 	while (!(Pipe_ReadWriteAllowed()))
 	{
 		/* Check to see if a new frame has been issued (1ms elapsed) */
@@ -215,7 +216,7 @@ uint8_t MassStore_RequestSense(const uint8_t LUNIndex, const SCSI_Request_Sense_
 	/* Send SCSI command to the attached device */
 	MassStore_SendCommand();
 
-	/* Wait until data recieved from the device */
+	/* Wait until data received from the device */
 	if ((ReturnCode = MassStore_WaitForDataReceived()) != NoError)
 	  return ReturnCode;
 
@@ -265,7 +266,7 @@ uint8_t MassStore_ReadDeviceBlock(const uint8_t LUNIndex, const uint32_t BlockAd
 	/* Send SCSI command to the attached device */
 	MassStore_SendCommand();
 
-	/* Wait until data recieved from the device */
+	/* Wait until data received from the device */
 	if ((ReturnCode = MassStore_WaitForDataReceived()) != NoError)
 	  return ReturnCode;
 
@@ -393,7 +394,7 @@ uint8_t MassStore_ReadCapacity(const uint8_t LUNIndex, SCSI_Capacity_t* const Ca
 	/* Send SCSI command to the attached device */
 	MassStore_SendCommand();
 
-	/* Wait until data recieved from the device */
+	/* Wait until data received from the device */
 	if ((ReturnCode = MassStore_WaitForDataReceived()) != NoError)
 	  return ReturnCode;
 	  

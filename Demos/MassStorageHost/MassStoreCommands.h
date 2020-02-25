@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -37,7 +37,7 @@
 		#include "MassStorageHost.h"
 		#include "../MassStorage/SCSI_Codes.h"
 
-		#include <MyUSB/Drivers/USB/USB.h>                    // USB Functionality
+		#include <LUFA/Drivers/USB/USB.h>                    // USB Functionality
 
 	/* Macros: */
 		#define MASS_STORAGE_RESET               0xFF
@@ -109,14 +109,14 @@
 		} SCSI_Capacity_t;
 
 	/* Enums: */
-		enum CommandStatusCodes_t
+		enum MassStorageHost_CommandStatusCodes_t
 		{
 			Command_Pass = 0,
 			Command_Fail = 1,
 			Phase_Error  = 2
 		};
 		
-		enum ReadWriteErrorCodes_t
+		enum MassStorageHost_ReadWriteErrorCodes_t
 		{
 			NoError            = 0,
 			InPipeStalled      = 1,

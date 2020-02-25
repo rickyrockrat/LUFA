@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -32,7 +32,7 @@
 #define _HID_REPORT_H_
 
 	/* Includes: */
-		#include <MyUSB/Drivers/USB/Class/HIDParser.h>            // HID Class Report Parser
+		#include <LUFA/Drivers/USB/Class/HIDParser.h>            // HID Class Report Parser
 		
 		#include "KeyboardHostWithParser.h"
 
@@ -40,7 +40,7 @@
 		#define USAGEPAGE_KEYBOARD             0x07
 
 	/* Enums: */
-		enum GetHIDReportDataCodes_t
+		enum KeyboardHostWithParser_GetHIDReportDataCodes_t
 		{
 			ParseSucessful          = 0,
 			ParseError              = 1,

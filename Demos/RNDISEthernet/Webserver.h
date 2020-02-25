@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -35,7 +35,7 @@
 		#include <avr/io.h>
 		#include <avr/pgmspace.h>
 		
-		#include <MyUSB/Version.h>
+		#include <LUFA/Version.h>
 		
 		#include "TCP.h"
 	
@@ -44,6 +44,6 @@
 	
 	/* Function Prototypes: */
 		void Webserver_Init(void);
-		void Webserver_ApplicationCallback(TCP_ConnectionBuffer_t* Buffer);
+		void Webserver_ApplicationCallback(TCP_ConnectionState_t* ConnectionState, TCP_ConnectionBuffer_t* Buffer);
 
 #endif

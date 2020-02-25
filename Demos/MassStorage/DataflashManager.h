@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,6 +28,11 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for DataflashManager.c.
+ */
+ 
 #ifndef _DATAFLASH_MANAGER_H
 #define _DATAFLASH_MANAGER_H
 
@@ -37,14 +42,21 @@
 		#include "MassStorage.h"
 		#include "Descriptors.h"
 
-		#include <MyUSB/Common/Common.h>              // Function Attribute, Atomic, Debug and ISR Macros
-		#include <MyUSB/Drivers/USB/USB.h>            // USB Functionality
-		#include <MyUSB/Drivers/Board/Dataflash.h>    // Dataflash chip driver
+		#include <LUFA/Common/Common.h>              // Function Attribute, Atomic, Debug and ISR Macros
+		#include <LUFA/Drivers/USB/USB.h>            // USB Functionality
+		#include <LUFA/Drivers/Board/Dataflash.h>    // Dataflash chip driver
 
 	/* Defines: */
+		/** Total number of bytes of the storage medium, comprised of one or more dataflash ICs. */
 		#define VIRTUAL_MEMORY_BYTES                ((uint32_t)(DATAFLASH_PAGES * DATAFLASH_TOTALCHIPS) \
 		                                            * DATAFLASH_PAGE_SIZE)
+
+		/** Block size of the device. This is kept at 512 to remain compatible with the OS despite the underlying
+		 *  storage media (Dataflash) using a different native block size.
+		 */
 		#define VIRTUAL_MEMORY_BLOCK_SIZE           512
+		
+		/** Total number of blocks of the virtual memory for reporting to the host as the device's total capacity. */
 		#define VIRTUAL_MEMORY_BLOCKS               ((VIRTUAL_MEMORY_BYTES / VIRTUAL_MEMORY_BLOCK_SIZE) - 1)
 		
 	/* Function Prototypes: */

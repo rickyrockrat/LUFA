@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -30,7 +30,7 @@
 
 #include "Descriptors.h"
 
-USB_Descriptor_Device_t DeviceDescriptor PROGMEM =
+USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 {
 	Header:                 {Size: sizeof(USB_Descriptor_Device_t), Type: DTYPE_Device},
 		
@@ -47,12 +47,12 @@ USB_Descriptor_Device_t DeviceDescriptor PROGMEM =
 		
 	ManufacturerStrIndex:   0x01,
 	ProductStrIndex:        0x02,
-	SerialNumStrIndex:      NO_DESCRIPTOR_STRING,
+	SerialNumStrIndex:      NO_DESCRIPTOR,
 		
 	NumberOfConfigurations: 1
 };
 	
-USB_Descriptor_Configuration_t ConfigurationDescriptor PROGMEM =
+USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 {
 	Config:
 		{
@@ -62,7 +62,7 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor PROGMEM =
 			TotalInterfaces:        2,
 				
 			ConfigurationNumber:    1,
-			ConfigurationStrIndex:  NO_DESCRIPTOR_STRING,
+			ConfigurationStrIndex:  NO_DESCRIPTOR,
 				
 			ConfigAttributes:       (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_SELFPOWERED),
 			
@@ -82,7 +82,7 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor PROGMEM =
 			SubClass:               0x02,
 			Protocol:               0xFF,
 				
-			InterfaceStrIndex:      NO_DESCRIPTOR_STRING
+			InterfaceStrIndex:      NO_DESCRIPTOR
 		},
 
 	Header_Functional:
@@ -148,7 +148,7 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor PROGMEM =
 			SubClass:               0x00,
 			Protocol:               0x00,
 				
-			InterfaceStrIndex:      NO_DESCRIPTOR_STRING
+			InterfaceStrIndex:      NO_DESCRIPTOR
 		},
 
 	DataOutEndpoint:
@@ -172,34 +172,36 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor PROGMEM =
 		}
 };
 
-USB_Descriptor_String_t LanguageString PROGMEM =
+USB_Descriptor_String_t PROGMEM LanguageString =
 {
 	Header:                 {Size: USB_STRING_LEN(1), Type: DTYPE_String},
 		
 	UnicodeString:          {LANGUAGE_ID_ENG}
 };
 
-USB_Descriptor_String_t ManufacturerString PROGMEM =
+USB_Descriptor_String_t PROGMEM ManufacturerString =
 {
 	Header:                 {Size: USB_STRING_LEN(11), Type: DTYPE_String},
 		
 	UnicodeString:          L"Dean Camera"
 };
 
-USB_Descriptor_String_t ProductString PROGMEM =
+USB_Descriptor_String_t PROGMEM ProductString =
 {
-	Header:                 {Size: USB_STRING_LEN(20), Type: DTYPE_String},
+	Header:                 {Size: USB_STRING_LEN(19), Type: DTYPE_String},
 		
-	UnicodeString:          L"MyUSB RNDIS CDC Demo"
+	UnicodeString:          L"LUFA RNDIS CDC Demo"
 };
 
-bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
-                       void** const DescriptorAddress, uint16_t* const DescriptorSize)
+uint16_t USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
 {
-	void*    Address = NULL;
-	uint16_t Size    = 0;
+	const uint8_t  DescriptorType   = (wValue >> 8);
+	const uint8_t  DescriptorNumber = (wValue & 0xFF);
 
-	switch (wValue >> 8)
+	void*    Address = NULL;
+	uint16_t Size    = NO_DESCRIPTOR;
+
+	switch (DescriptorType)
 	{
 		case DTYPE_Device:
 			Address = DESCRIPTOR_ADDRESS(DeviceDescriptor);
@@ -210,7 +212,7 @@ bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 			Size    = sizeof(USB_Descriptor_Configuration_t);
 			break;
 		case DTYPE_String:
-			switch (wValue & 0xFF)
+			switch (DescriptorNumber)
 			{
 				case 0x00:
 					Address = DESCRIPTOR_ADDRESS(LanguageString);
@@ -229,13 +231,6 @@ bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 			break;
 	}
 	
-	if (Address != NULL)
-	{
-		*DescriptorAddress = Address;
-		*DescriptorSize    = Size;
-
-		return true;
-	}
-		
-	return false;
+	*DescriptorAddress = Address;
+	return Size;
 }

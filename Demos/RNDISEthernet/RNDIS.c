@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -32,9 +32,9 @@
 #include "RNDIS.h"
 
 /* Global Variables: */
-static MAC_Address_t AdapterMACAddress          PROGMEM = {ADAPTER_MAC_ADDRESS};
-static char          AdapterVendorDescription[] PROGMEM = "MyUSB RNDIS Adapter";
-static uint32_t      AdapterSupportedOIDList[]  PROGMEM =
+static MAC_Address_t PROGMEM AdapterMACAddress          = {ADAPTER_MAC_ADDRESS};
+static char          PROGMEM AdapterVendorDescription[] = "LUFA RNDIS Adapter";
+static uint32_t      PROGMEM AdapterSupportedOIDList[]  =
 							{
 								OID_GEN_SUPPORTED_LIST,
 								OID_GEN_HARDWARE_STATUS,
@@ -163,7 +163,7 @@ void ProcessRNDISControlMessage(void)
 			SET_Response->MessageLength     = sizeof(RNDIS_SET_CMPLT_t);
 			SET_Response->RequestId         = SET_Message->RequestId;
 
-			void*     SetData               = &RNDISMessageBuffer[sizeof(RNDIS_Message_Header_t) +
+			void* SetData                   = &RNDISMessageBuffer[sizeof(RNDIS_Message_Header_t) +
 			                                                      SET_Message->InformationBufferOffset];
 						
 			if (ProcessNDISSet(SET_Oid, SetData, SET_Message->InformationBufferLength))

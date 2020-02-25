@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -40,7 +40,10 @@
 		#include "ProtocolDecoders.h"
 	
 	/* Macros: */
+		#define NULL_IP_ADDRESS                  {0, 0, 0, 0}
+		#define CLIENT_IP_ADDRESS                {10, 0, 0, 1}
 		#define SERVER_IP_ADDRESS                {10, 0, 0, 2}
+		#define BROADCAST_IP_ADDRESS             {0xFF, 0xFF, 0xFF, 0xFF}
 
 		#define DEFAULT_TTL                      128
 		

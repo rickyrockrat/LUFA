@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,33 +28,12 @@
   this software.
 */
 
-/*
-	Audio demonstration application. This gives a simple reference
-	application for implementing a USB Audio Input device using the
-	basic USB Audio drivers in all modern OSes (i.e. no special drivers
-	required).
-	
-	On startup the system will automatically enumerate and function
-	as a USB microphone. Incomming audio from the ADC channel 1 will
-	be sampled and sent to the host computer.
-	
-	To use, connect a microphone to the ADC channel 2.
-	
-	Under Windows, if a driver request dialogue pops up, select the option
-	to automatically install the appropriate drivers.
-
-	      ( Input Terminal )--->---( Output Terminal )
-	      (   Microphone   )       (  USB Endpoint   )
-*/
-
-/*
-	USB Mode:           Device
-	USB Class:          Audio Class
-	USB Subclass:       Standard Audio Device
-	Relevant Standards: USBIF Audio Class Specification
-	Usable Speeds:      Full Speed Mode
-*/
-
+/** \file
+ *
+ *  Main source file for the Audio Input demo. This file contains the main tasks of the demo and
+ *  is responsible for the initial application hardware configuration.
+ */
+ 
 /* ---  Project Configuration  --- */
 //#define MICROPHONE_BIASED_TO_HALF_RAIL
 /* --- --- --- --- --- --- --- --- */
@@ -62,10 +41,10 @@
 #include "AudioInput.h"
 
 /* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,     "MyUSB AudioIn App");
-BUTTLOADTAG(BuildTime,    __TIME__);
-BUTTLOADTAG(BuildDate,    __DATE__);
-BUTTLOADTAG(MyUSBVersion, "MyUSB V" MYUSB_VERSION_STRING);
+BUTTLOADTAG(ProjName,    "LUFA AudioIn App");
+BUTTLOADTAG(BuildTime,   __TIME__);
+BUTTLOADTAG(BuildDate,   __DATE__);
+BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
 
 /* Scheduler Task List */
 TASK_LIST
@@ -74,6 +53,10 @@ TASK_LIST
 	{ Task: USB_Audio_Task       , TaskStatus: TASK_STOP },
 };
 
+
+/** Main program entry point. This routine configures the hardware required by the application, then
+ *  starts the scheduler to run the application tasks.
+ */
 int main(void)
 {
 	/* Disable watchdog if enabled by bootloader/fuses */
@@ -88,10 +71,11 @@ int main(void)
 	ADC_Init(ADC_FREE_RUNNING | ADC_PRESCALE_32);
 	ADC_SetupChannel(MIC_IN_ADC_CHANNEL);
 	
+	/* Start the ADC conversion in free running mode */
 	ADC_StartReading(ADC_REFERENCE_AVCC | ADC_RIGHT_ADJUSTED | MIC_IN_ADC_CHANNEL);
 	
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 	
 	/* Initialize Scheduler so that it can be used */
 	Scheduler_Init();
@@ -103,13 +87,16 @@ int main(void)
 	Scheduler_Start();
 }
 
+/** Event handler for the USB_Connect event. This indicates that the device is enumerating via the status LEDs, and
+ *  configures the sample update and PWM timers.
+ */
 EVENT_HANDLER(USB_Connect)
 {
 	/* Start USB management task */
 	Scheduler_SetTaskMode(USB_USBTask, TASK_RUN);
 
 	/* Indicate USB enumerating */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED4);
+	UpdateStatus(Status_USBEnumerating);
 
 	/* Sample reload timer initialization */
 	OCR0A   = (F_CPU / AUDIO_SAMPLE_FREQUENCY);
@@ -117,6 +104,9 @@ EVENT_HANDLER(USB_Connect)
 	TCCR0B  = (1 << CS00);   // Fcpu speed
 }
 
+/** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
+ *  the status LEDs, disables the sample update and PWM output timers and stops the USB and Audio management tasks.
+ */
 EVENT_HANDLER(USB_Disconnect)
 {
 	/* Stop the sample reload timer */
@@ -127,9 +117,12 @@ EVENT_HANDLER(USB_Disconnect)
 	Scheduler_SetTaskMode(USB_USBTask, TASK_STOP);
 
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 }
 
+/** Event handler for the USB_ConfigurationChanged event. This is fired when the host set the current configuration
+ *  of the USB device after enumeration - the device endpoints are configured.
+ */
 EVENT_HANDLER(USB_ConfigurationChanged)
 {
 	/* Setup audio stream endpoint */
@@ -138,9 +131,13 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 	                           ENDPOINT_BANK_DOUBLE);
 
 	/* Indicate USB connected and ready */
-	LEDs_SetAllLEDs(LEDS_LED2 | LEDS_LED4);
+	UpdateStatus(Status_USBReady);
 }
 
+/** Event handler for the USB_UnhandledControlPacket event. This is used to catch standard and class specific
+ *  control requests that are not handled internally by the USB library (including the Audio class-specific
+ *  requests) so that they can be handled appropriately for the application.
+ */
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	/* Process General and Audio specific control requests */
@@ -174,6 +171,34 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	}
 }
 
+/** Function to manage status updates to the user. This is done via LEDs on the given board, if available, but may be changed to
+ *  log to a serial port, or anything else that is suitable for status updates.
+ *
+ *  \param CurrentStatus  Current status of the system, from the AudioInput_StatusCodes_t enum
+ */
+void UpdateStatus(uint8_t CurrentStatus)
+{
+	uint8_t LEDMask = LEDS_NO_LEDS;
+	
+	/* Set the LED mask to the appropriate LED mask based on the given status code */
+	switch (CurrentStatus)
+	{
+		case Status_USBNotReady:
+			LEDMask = (LEDS_LED1);
+			break;
+		case Status_USBEnumerating:
+			LEDMask = (LEDS_LED1 | LEDS_LED2);
+			break;
+		case Status_USBReady:
+			LEDMask = (LEDS_LED2 | LEDS_LED4);
+			break;
+	}
+	
+	/* Set the board LEDs to the new LED mask */
+	LEDs_SetAllLEDs(LEDMask);
+}
+
+/** Task to manage the Audio interface, reading in ADC samples from the microphone, and them to the host. */
 TASK(USB_Audio_Task)
 {
 	/* Select the audio stream endpoint */

@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -40,7 +40,7 @@
 	printed as a formatted list through the USART before the mouse is
 	fully enumerated.
 
-	Currently only single interface mice are supported.	
+	Currently only single interface and single report mice are supported.	
 */
 
 /*
@@ -55,10 +55,10 @@
 #include "MouseHostWithParser.h"
 
 /* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,     "MyUSB Mouse Host App");
-BUTTLOADTAG(BuildTime,    __TIME__);
-BUTTLOADTAG(BuildDate,    __DATE__);
-BUTTLOADTAG(MyUSBVersion, "MyUSB V" MYUSB_VERSION_STRING);
+BUTTLOADTAG(ProjName,    "LUFA Mouse Host App");
+BUTTLOADTAG(BuildTime,   __TIME__);
+BUTTLOADTAG(BuildDate,   __DATE__);
+BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
 
 /* Scheduler Task List */
 TASK_LIST
@@ -81,7 +81,7 @@ int main(void)
 	LEDs_Init();
 	
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 	
 	/* Initialize Scheduler so that it can be used */
 	Scheduler_Init();
@@ -100,7 +100,7 @@ int main(void)
 EVENT_HANDLER(USB_DeviceAttached)
 {
 	puts_P(PSTR("Device Attached.\r\n"));
-	LEDs_SetAllLEDs(LEDS_NO_LEDS);
+	UpdateStatus(Status_USBEnumerating);
 
 	/* Start USB management task to enumerate the device */
 	Scheduler_SetTaskMode(USB_USBTask, TASK_RUN);
@@ -113,13 +113,16 @@ EVENT_HANDLER(USB_DeviceUnattached)
 	Scheduler_SetTaskMode(USB_Mouse_Host, TASK_STOP);
 
 	puts_P(PSTR("Device Unattached.\r\n"));
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 }
 
 EVENT_HANDLER(USB_DeviceEnumerationComplete)
 {
 	/* Start Mouse Host task */
 	Scheduler_SetTaskMode(USB_Mouse_Host, TASK_RUN);
+	
+	/* Indicate device enumeration complete */
+	UpdateStatus(Status_USBReady);
 }
 
 EVENT_HANDLER(USB_HostError)
@@ -129,7 +132,7 @@ EVENT_HANDLER(USB_HostError)
 	puts_P(PSTR(ESC_BG_RED "Host Mode Error\r\n"));
 	printf_P(PSTR(" -- Error Code %d\r\n"), ErrorCode);
 
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_HardwareError);
 	for(;;);
 }
 
@@ -138,6 +141,42 @@ EVENT_HANDLER(USB_DeviceEnumerationFailed)
 	puts_P(PSTR(ESC_BG_RED "Dev Enum Error\r\n"));
 	printf_P(PSTR(" -- Error Code %d\r\n"), ErrorCode);
 	printf_P(PSTR(" -- In State %d\r\n"), USB_HostState);
+	
+	UpdateStatus(Status_EnumerationError);
+}
+
+/** Function to manage status updates to the user. This is done via LEDs on the given board, if available, but may be changed to
+ *  log to a serial port, or anything else that is suitable for status updates.
+ *
+ *  \param CurrentStatus  Current status of the system, from the MouseHostWithParser_StatusCodes_t enum
+ */
+void UpdateStatus(uint8_t CurrentStatus)
+{
+	uint8_t LEDMask = LEDS_NO_LEDS;
+	
+	/* Set the LED mask to the appropriate LED mask based on the given status code */
+	switch (CurrentStatus)
+	{
+		case Status_USBNotReady:
+			LEDMask = (LEDS_LED1);
+			break;
+		case Status_USBEnumerating:
+			LEDMask = (LEDS_LED1 | LEDS_LED2);
+			break;
+		case Status_USBReady:
+			LEDMask = (LEDS_LED2);
+			break;
+		case Status_EnumerationError:
+		case Status_HardwareError:
+			LEDMask = (LEDS_LED1 | LEDS_LED3);
+			break;
+		case Status_Busy:
+			LEDMask = (LEDS_LED1 | LEDS_LED2);
+			break;
+	}
+	
+	/* Set the board LEDs to the new LED mask */
+	LEDs_SetAllLEDs(LEDMask);
 }
 
 TASK(USB_Mouse_Host)
@@ -165,7 +204,7 @@ TASK(USB_Mouse_Host)
 				printf_P(PSTR(" -- Error Code: %d\r\n"), ErrorCode);
 
 				/* Indicate error via status LEDs */
-				LEDs_SetAllLEDs(LEDS_LED1);
+				UpdateStatus(Status_EnumerationError);
 
 				/* Wait until USB device disconnected */
 				while (USB_IsConnected);
@@ -188,7 +227,7 @@ TASK(USB_Mouse_Host)
 				printf_P(PSTR(" -- Error Code: %d\r\n"), ErrorCode);
 				
 				/* Indicate error via status LEDs */
-				LEDs_SetAllLEDs(LEDS_LED1);
+				UpdateStatus(Status_EnumerationError);
 
 				/* Wait until USB device disconnected */
 				while (USB_IsConnected);
@@ -198,7 +237,7 @@ TASK(USB_Mouse_Host)
 			puts_P(PSTR("Processing HID Report.\r\n"));
 
 			/* LEDs one and two on to indicate busy processing */
-			LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED2);
+			UpdateStatus(Status_Busy);
 
 			/* Get and process the device's first HID report descriptor */
 			if ((ErrorCode = GetHIDReportData()) != ParseSucessful)
@@ -207,7 +246,7 @@ TASK(USB_Mouse_Host)
 				printf_P(PSTR(" -- Error Code: %d\r\n"), ErrorCode);
 			
 				/* Indicate error via status LEDs */
-				LEDs_SetAllLEDs(LEDS_LED1);
+				UpdateStatus(Status_EnumerationError);
 				
 				/* Wait until USB device disconnected */
 				while (USB_IsConnected);
@@ -215,15 +254,12 @@ TASK(USB_Mouse_Host)
 			}
 
 			puts_P(PSTR("Dumping HID Report Items.\r\n"));
-			
-			/* LEDs one, two and four on to indicate busy dumping descriptor data */
-			LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED2 | LEDS_LED4);
 
 			/* Dump the HID report items to the serial port */
 			DumpHIDReportItems();
 			
 			/* All LEDs off - ready to indicate keypresses */
-			LEDs_SetAllLEDs(LEDS_NO_LEDS);
+			UpdateStatus(Status_USBReady);
 
 			puts_P(PSTR("Mouse Enumerated.\r\n"));
 				
@@ -234,7 +270,7 @@ TASK(USB_Mouse_Host)
 			Pipe_SelectPipe(MOUSE_DATAPIPE);	
 			Pipe_Unfreeze();
 
-			/* Check if data has been recieved from the attached mouse */
+			/* Check if data has been received from the attached mouse */
 			if (Pipe_ReadWriteAllowed())
 			{
 				uint8_t LEDMask = LEDS_NO_LEDS;
@@ -250,13 +286,19 @@ TASK(USB_Mouse_Host)
 				{
 					/* Create a tempoary item pointer to the next report item */
 					HID_ReportItem_t* ReportItem = &HIDReportInfo.ReportItems[ReportNumber];
+					
+					bool FoundData;
 
 					if ((ReportItem->Attributes.Usage.Page       == USAGE_PAGE_BUTTON) &&
 					    (ReportItem->ItemType                    == REPORT_ITEM_TYPE_In))
 					{
 						/* Get the mouse button value */
-						GetReportItemInfo(MouseReport, ReportItem);
+						FoundData = GetReportItemInfo(MouseReport, ReportItem);
 						
+						/* For multi-report devices - if the requested data was not in the issued report, continue */
+						if (!(FoundData))
+						  continue;
+
 						/* If button is pressed, all LEDs are turned on */
 						if (ReportItem->Value)
 						  LEDMask = LEDS_ALL_LEDS;
@@ -267,8 +309,12 @@ TASK(USB_Mouse_Host)
 					         (ReportItem->ItemType                == REPORT_ITEM_TYPE_In))
 					{
 						/* Get the mouse relative position value */
-						GetReportItemInfo(MouseReport, ReportItem);
+						FoundData = GetReportItemInfo(MouseReport, ReportItem);
 						
+						/* For multi-report devices - if the requested data was not in the issued report, continue */
+						if (!(FoundData))
+						  continue;
+
 						/* Value is a signed 8-bit value, cast as appropriate */
 						int8_t DeltaMovement = (int8_t)ReportItem->Value;
 						

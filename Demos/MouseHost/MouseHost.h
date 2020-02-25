@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -37,13 +37,13 @@
 		#include <avr/pgmspace.h>
 		#include <stdio.h>
 
-		#include <MyUSB/Version.h>                                // Library Version Information
-		#include <MyUSB/Common/ButtLoadTag.h>                     // PROGMEM tags readable by the ButtLoad project
-		#include <MyUSB/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
-		#include <MyUSB/Drivers/USB/USB.h>                        // USB Functionality
-		#include <MyUSB/Drivers/AT90USBXXX/Serial_Stream.h>       // Serial stream driver
-		#include <MyUSB/Drivers/Board/LEDs.h>                     // LEDs driver
-		#include <MyUSB/Scheduler/Scheduler.h>                    // Simple scheduler for task management
+		#include <LUFA/Version.h>                                // Library Version Information
+		#include <LUFA/Common/ButtLoadTag.h>                     // PROGMEM tags readable by the ButtLoad project
+		#include <LUFA/Drivers/Misc/TerminalCodes.h>             // ANSI Terminal Escape Codes
+		#include <LUFA/Drivers/USB/USB.h>                        // USB Functionality
+		#include <LUFA/Drivers/AT90USBXXX/Serial_Stream.h>       // Serial stream driver
+		#include <LUFA/Drivers/Board/LEDs.h>                     // LEDs driver
+		#include <LUFA/Scheduler/Scheduler.h>                    // Simple scheduler for task management
 		
 		#include "ConfigDescriptor.h"
 		
@@ -61,11 +61,25 @@
 	/* Task Definitions: */
 		TASK(USB_Mouse_Host);
 
+	/* Enums: */
+		/** Enum for the possible status codes for passing to the UpdateStatus() function. */
+		enum MouseHost_StatusCodes_t
+		{
+			Status_USBNotReady      = 0, /**< USB is not ready (disconnected from a USB device) */
+			Status_USBEnumerating   = 1, /**< USB interface is enumerating */
+			Status_USBReady         = 2, /**< USB interface is connected and ready */
+			Status_EnumerationError = 3, /**< Software error while enumerating the attached USB device */
+			Status_HardwareError    = 4, /**< Hardware error while enumerating the attached USB device */
+		};
+		
 	/* Event Handlers: */
 		HANDLES_EVENT(USB_DeviceAttached);
 		HANDLES_EVENT(USB_DeviceUnattached);
 		HANDLES_EVENT(USB_DeviceEnumerationComplete);
 		HANDLES_EVENT(USB_HostError);
 		HANDLES_EVENT(USB_DeviceEnumerationFailed);
+
+	/* Function Prototypes: */
+		void UpdateStatus(uint8_t CurrentStatus);
 		
 #endif

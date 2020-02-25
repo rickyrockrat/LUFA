@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -32,7 +32,7 @@
 #define _DESCRIPTORS_H_
 
 	/* Includes: */
-		#include <MyUSB/Drivers/USB/USB.h>
+		#include <LUFA/Drivers/USB/USB.h>
 
 		#include <avr/pgmspace.h>
 
@@ -72,8 +72,7 @@
 		} USB_Descriptor_Configuration_t;
 
 	/* Function Prototypes: */
-		bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
-		                       void** const DescriptorAddress, uint16_t* const DescriptorSize)
-		                       ATTR_WARN_UNUSED_RESULT ATTR_WEAK ATTR_NON_NULL_PTR_ARG(3, 4);
+		uint16_t USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
+		                           ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif

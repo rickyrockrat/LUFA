@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,6 +28,11 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for AudioOutput.c.
+ */
+ 
 #ifndef _AUDIO_OUTPUT_H_
 #define _AUDIO_OUTPUT_H_
 
@@ -38,32 +43,56 @@
 
 		#include "Descriptors.h"
 				
-		#include <MyUSB/Version.h>                            // Library Version Information
-		#include <MyUSB/Common/ButtLoadTag.h>                 // PROGMEM tags readable by the ButtLoad project
-		#include <MyUSB/Drivers/USB/USB.h>                    // USB Functionality
-		#include <MyUSB/Drivers/Board/Joystick.h>             // Joystick driver
-		#include <MyUSB/Drivers/Board/LEDs.h>                 // LEDs driver
-		#include <MyUSB/Drivers/Board/HWB.h>                  // Hardware Button driver
-		#include <MyUSB/Scheduler/Scheduler.h>                // Simple scheduler for task management
+		#include <LUFA/Version.h>                            // Library Version Information
+		#include <LUFA/Common/ButtLoadTag.h>                 // PROGMEM tags readable by the ButtLoad project
+		#include <LUFA/Drivers/USB/USB.h>                    // USB Functionality
+		#include <LUFA/Drivers/Board/Joystick.h>             // Joystick driver
+		#include <LUFA/Drivers/Board/LEDs.h>                 // LEDs driver
+		#include <LUFA/Drivers/Board/HWB.h>                  // Hardware Button driver
+		#include <LUFA/Scheduler/Scheduler.h>                // Simple scheduler for task management
 
    /* Macros: */
+		/** MIDI command for a note on (activation) event */
 		#define MIDI_COMMAND_NOTE_ON         0x90
+
+		/** MIDI command for a note off (deactivation) event */
 		#define MIDI_COMMAND_NOTE_OFF        0x80
 
+		/** Standard key press velocity value used for all note events, as no pressure sensor is mounted */
 		#define MIDI_STANDARD_VELOCITY       64
 		
+		/** Convenience macro. MIDI channels are numbered from 1-10 (natural numbers) however the logical channel
+		 *  addresses are zero-indexed. This converts a natural MIDI channel number into the logical channel address.
+		 *
+		 *  \param channel  MIDI channel number to address
+		 */
 		#define MIDI_CHANNEL(channel)        (channel - 1)
+
+	/* Enums: */
+		/** Enum for the possible status codes for passing to the UpdateStatus() function. */
+		enum MIDI_StatusCodes_t
+		{
+			Status_USBNotReady    = 0, /**< USB is not ready (disconnected from a USB host) */
+			Status_USBEnumerating = 1, /**< USB interface is enumerating */
+			Status_USBReady       = 2, /**< USB interface is connected and ready */
+		};
 
 	/* Task Definitions: */
 		TASK(USB_MIDI_Task);
 
 	/* Event Handlers: */
+		/** Indicates that this module will catch the USB_Connect event when thrown by the library. */
 		HANDLES_EVENT(USB_Connect);
+
+		/** Indicates that this module will catch the USB_Disconnect event when thrown by the library. */
 		HANDLES_EVENT(USB_Disconnect);
+
+		/** Indicates that this module will catch the USB_ConfigurationChanged event when thrown by the library. */
 		HANDLES_EVENT(USB_ConfigurationChanged);
 
    /* Function Prototypes: */
 		void SendMIDINoteChange(const uint8_t Pitch, const bool OnOff,
-		                        const uint8_t CableID, const uint8_t Channel);
-
+		                        const uint8_t CableID, const uint8_t Channel);		
+		void UpdateStatus(uint8_t CurrentStatus);
+		
 #endif

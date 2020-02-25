@@ -45,7 +45,7 @@ MCU = at90usb1287
 
 
 # Target board (USBKEY, STK525, STK526, USER or blank for projects not requiring
-# MyUSB board drivers). If USER is selected, put custom board drivers in a directory
+# LUFA board drivers). If USER is selected, put custom board drivers in a directory
 # called "Board" inside the application directory.
 BOARD  = USBKEY
 
@@ -86,20 +86,20 @@ OBJDIR = .
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c                                           \
-	  ConfigDescriptor.c                                    \
-	  StillImageCommands.c                                  \
-	  ../../MyUSB/Scheduler/Scheduler.c                     \
-	  ../../MyUSB/Drivers/AT90USBXXX/Serial_Stream.c        \
-	  ../../MyUSB/Drivers/AT90USBXXX/Serial.c               \
-	  ../../MyUSB/Drivers/USB/LowLevel/LowLevel.c           \
-	  ../../MyUSB/Drivers/USB/LowLevel/Pipe.c               \
-	  ../../MyUSB/Drivers/USB/LowLevel/Host.c               \
-	  ../../MyUSB/Drivers/USB/LowLevel/HostChapter9.c       \
-	  ../../MyUSB/Drivers/USB/HighLevel/USBTask.c           \
-	  ../../MyUSB/Drivers/USB/HighLevel/USBInterrupt.c      \
-	  ../../MyUSB/Drivers/USB/HighLevel/Events.c            \
-	  ../../MyUSB/Drivers/USB/Class/ConfigDescriptor.c      \
+SRC = $(TARGET).c                                          \
+	  ConfigDescriptor.c                                   \
+	  StillImageCommands.c                                 \
+	  ../../LUFA/Scheduler/Scheduler.c                     \
+	  ../../LUFA/Drivers/AT90USBXXX/Serial_Stream.c        \
+	  ../../LUFA/Drivers/AT90USBXXX/Serial.c               \
+	  ../../LUFA/Drivers/USB/LowLevel/LowLevel.c           \
+	  ../../LUFA/Drivers/USB/LowLevel/Pipe.c               \
+	  ../../LUFA/Drivers/USB/LowLevel/Host.c               \
+	  ../../LUFA/Drivers/USB/LowLevel/HostChapter9.c       \
+	  ../../LUFA/Drivers/USB/HighLevel/USBTask.c           \
+	  ../../LUFA/Drivers/USB/HighLevel/USBInterrupt.c      \
+	  ../../LUFA/Drivers/USB/HighLevel/Events.c            \
+	  ../../LUFA/Drivers/USB/Class/ConfigDescriptor.c      \
 	  
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC = 
@@ -145,7 +145,7 @@ CSTANDARD = -std=gnu99
 
 # Place -D or -U options here for C sources
 CDEFS  = -DF_CPU=$(F_CPU)UL -DBOARD=BOARD_$(BOARD) -DUSE_NONSTANDARD_DESCRIPTOR_NAMES -DNO_STREAM_CALLBACKS
-CDEFS += -DUSB_HOST_ONLY -DUSE_STATIC_OPTIONS=USB_OPT_REG_ENABLED
+CDEFS += -DUSB_HOST_ONLY -DUSE_STATIC_OPTIONS=(USB_OPT_REG_ENABLED | USB_OPT_AUTO_PLL)
 
 
 # Place -D or -U options here for ASM sources
@@ -461,11 +461,11 @@ sizeafter:
 
 checkhooks: build
 	@echo
-	@echo ------- Unhooked MyUSB Events -------
-	@$(shell) (grep -s '^Event.*MyUSB/.*\\.o' $(TARGET).map | \
+	@echo ------- Unhooked LUFA Events -------
+	@$(shell) (grep -s '^Event.*LUFA/.*\\.o' $(TARGET).map | \
 	           cut -d' ' -f1 | cut -d'_' -f2- | grep ".*") || \
 			   echo "(None)"
-	@echo ----- End Unhooked MyUSB Events -----
+	@echo ----- End Unhooked LUFA Events -----
 	
 checklibmode:
 	@echo
@@ -641,6 +641,14 @@ clean_list:
 	$(REMOVEDIR) .dep
 
 
+doxygen:
+	@echo Generating Project Documentation...
+	@doxygen Doxygen.conf
+	@echo Documentation Generation Complete.
+
+clean_doxygen:
+	rm -rf Documentation
+
 # Create object files directory
 $(shell mkdir $(OBJDIR) 2>/dev/null)
 
@@ -654,4 +662,4 @@ $(shell mkdir $(OBJDIR) 2>/dev/null)
 finish end sizebefore sizeafter gccversion  \
 build elf hex eep lss sym coff extcoff      \
 clean clean_list clean_binary program debug \
-gdb-config
+gdb-config doxygen

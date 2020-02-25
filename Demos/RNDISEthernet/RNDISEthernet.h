@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -35,6 +35,8 @@
 		#include <avr/io.h>
 		#include <avr/wdt.h>
 		#include <string.h>
+		#include <stdio.h>
+		#include <avr/pgmspace.h>
 
 		#include "Descriptors.h"
 		#include "RNDIS.h"
@@ -44,13 +46,13 @@
 		#include "Webserver.h"
 		#include "Telnet.h"
 
-		#include <MyUSB/Version.h>                        // Library Version Information
-		#include <MyUSB/Common/ButtLoadTag.h>             // PROGMEM tags readable by the ButtLoad project
-		#include <MyUSB/Drivers/USB/USB.h>                // USB Functionality
-		#include <MyUSB/Drivers/Board/LEDs.h>             // LEDs driver
-		#include <MyUSB/Scheduler/Scheduler.h>            // Simple scheduler for task management
+		#include <LUFA/Version.h>                        // Library Version Information
+		#include <LUFA/Common/ButtLoadTag.h>             // PROGMEM tags readable by the ButtLoad project
+		#include <LUFA/Drivers/USB/USB.h>                // USB Functionality
+		#include <LUFA/Drivers/Board/LEDs.h>             // LEDs driver
+		#include <LUFA/Scheduler/Scheduler.h>            // Simple scheduler for task management
 
-		#include <MyUSB/Drivers/AT90USBXXX/Serial_Stream.h>
+		#include <LUFA/Drivers/AT90USBXXX/Serial_Stream.h>
 	
 	/* Event Handlers: */
 		HANDLES_EVENT(USB_Connect);
@@ -67,9 +69,22 @@
 			uint16_t wIndex;
 			uint16_t wLength;
 		} USB_Notification_t;
+
+	/* Enums: */
+		/** Enum for the possible status codes for passing to the UpdateStatus() function. */
+		enum RNDISEthernet_StatusCodes_t
+		{
+			Status_USBNotReady             = 0, /**< USB is not ready (disconnected from a USB host) */
+			Status_USBEnumerating          = 1, /**< USB interface is enumerating */
+			Status_USBReady                = 2, /**< USB interface is connected and ready */
+			Status_ProcessingEthernetFrame = 3, /**< Currently processing an ethernet frame from the host */
+		};
 		
 	/* Tasks: */
 		TASK(RNDIS_Task);
 		TASK(Ethernet_Task);
-		
+
+	/* Function Prototypes: */
+		void UpdateStatus(uint8_t CurrentStatus);
+	
 #endif

@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,34 +28,13 @@
   this software.
 */
 
-/*
-	Communications Device Class demonstration application.
-	This gives a simple reference application for implementing
-	a USB to Serial converter using the CDC class. Sent and
-	recieved data on the serial port is communicated to the USB
-	host.
-	
-	Before running, you will need to install the INF file that
-	is located in the USBtoSerial project directory. This will enable
-	Windows to use its inbuilt CDC drivers, negating the need
-	for special Windows drivers for the device.
-*/
-
-/*
-	USB Mode:           Device
-	USB Class:          Communications Device Class (CDC)
-	USB Subclass:       Abstract Control Model (ACM)
-	Relevant Standards: USBIF CDC Class Standard
-	Usable Speeds:      Full Speed Mode
-*/
-
 #include "USBtoSerial.h"
 
 /* Project Tags, for reading out using the ButtLoad project */
-BUTTLOADTAG(ProjName,     "MyUSB USB RS232 App");
-BUTTLOADTAG(BuildTime,    __TIME__);
-BUTTLOADTAG(BuildDate,    __DATE__);
-BUTTLOADTAG(MyUSBVersion, "MyUSB V" MYUSB_VERSION_STRING);
+BUTTLOADTAG(ProjName,    "LUFA USB RS232 App");
+BUTTLOADTAG(BuildTime,   __TIME__);
+BUTTLOADTAG(BuildDate,   __DATE__);
+BUTTLOADTAG(LUFAVersion, "LUFA V" LUFA_VERSION_STRING);
 
 /* Scheduler Task List */
 TASK_LIST
@@ -65,16 +44,28 @@ TASK_LIST
 };
 
 /* Globals: */
+/** Contains the current baud rate and other settings of the virtual serial port.
+ *
+ *  These values are set by the host via a class-specific request, and the physical USART should be reconfigured to match the
+ *  new settings each time they are changed by the host.
+ */
 CDC_Line_Coding_t LineCoding = { BaudRateBPS: 9600,
                                  CharFormat:  OneStopBit,
                                  ParityType:  Parity_None,
                                  DataBits:    8            };
 
-RingBuff_t        Rx_Buffer;
-RingBuff_t        Tx_Buffer;
+/** Ring (circular) buffer to hold the RX data - data from the host to the attached device on the serial port. */
+RingBuff_t Rx_Buffer;
 
-volatile bool     Transmitting = false;
+/** Ring (circular) buffer to hold the TX data - data from the attached device on the serial port to the host. */
+RingBuff_t Tx_Buffer;
 
+/** Flag to indicate if the USART is currently transmitting data from the Rx_Buffer circular buffer. */
+volatile bool Transmitting = false;
+
+/** Main program entry point. This routine configures the hardware required by the application, then
+ *  starts the scheduler to run the application tasks.
+ */
 int main(void)
 {
 	/* Disable watchdog if enabled by bootloader/fuses */
@@ -93,7 +84,7 @@ int main(void)
 	Buffer_Initialize(&Tx_Buffer);
 	
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 	
 	/* Initialize Scheduler so that it can be used */
 	Scheduler_Init();
@@ -105,15 +96,21 @@ int main(void)
 	Scheduler_Start();
 }
 
+/** Event handler for the USB_Connect event. This indicates that the device is enumerating via the status LEDs and
+ *  starts the library USB task to begin the enumeration and USB management process.
+ */
 EVENT_HANDLER(USB_Connect)
 {
 	/* Start USB management task */
 	Scheduler_SetTaskMode(USB_USBTask, TASK_RUN);
 
 	/* Indicate USB enumerating */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED4);
+	UpdateStatus(Status_USBEnumerating);
 }
 
+/** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
+ *  the status LEDs and stops the USB management and CDC management tasks.
+ */
 EVENT_HANDLER(USB_Disconnect)
 {
 	/* Stop running CDC and USB management tasks */
@@ -121,9 +118,12 @@ EVENT_HANDLER(USB_Disconnect)
 	Scheduler_SetTaskMode(USB_USBTask, TASK_STOP);
 
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED3);
+	UpdateStatus(Status_USBNotReady);
 }
 
+/** Event handler for the USB_ConfigurationChanged event. This is fired when the host set the current configuration
+ *  of the USB device after enumeration - the device endpoints are configured and the CDC management task started.
+ */
 EVENT_HANDLER(USB_ConfigurationChanged)
 {
 	/* Setup CDC Notification, Rx and Tx Endpoints */
@@ -133,19 +133,23 @@ EVENT_HANDLER(USB_ConfigurationChanged)
 
 	Endpoint_ConfigureEndpoint(CDC_TX_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_IN, CDC_TXRX_EPSIZE,
-	                           ENDPOINT_BANK_DOUBLE);
+	                           ENDPOINT_BANK_SINGLE);
 
 	Endpoint_ConfigureEndpoint(CDC_RX_EPNUM, EP_TYPE_BULK,
 		                       ENDPOINT_DIR_OUT, CDC_TXRX_EPSIZE,
-	                           ENDPOINT_BANK_DOUBLE);
+	                           ENDPOINT_BANK_SINGLE);
 
 	/* Indicate USB connected and ready */
-	LEDs_SetAllLEDs(LEDS_LED2 | LEDS_LED4);
+	UpdateStatus(Status_USBReady);
 
 	/* Start CDC task */
 	Scheduler_SetTaskMode(CDC_Task, TASK_RUN);
 }
 
+/** Event handler for the USB_UnhandledControlPacket event. This is used to catch standard and class specific
+ *  control requests that are not handled internally by the USB library (including the CDC control commands,
+ *  which are all issued via the control endpoint), so that they can be handled appropriately for the application.
+ */
 EVENT_HANDLER(USB_UnhandledControlPacket)
 {
 	uint8_t* LineCodingData = (uint8_t*)&LineCoding;
@@ -153,7 +157,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	/* Process CDC specific control requests */
 	switch (bRequest)
 	{
-		case GET_LINE_CODING:
+		case REQ_GetLineEncoding:
 			if (bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{	
 				/* Acknowedge the SETUP packet, ready for data transfer */
@@ -167,7 +171,7 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 			}
 			
 			break;
-		case SET_LINE_CODING:
+		case REQ_SetLineEncoding:
 			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				/* Acknowedge the SETUP packet, ready for data transfer */
@@ -184,13 +188,24 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 			}
 	
 			break;
-		case SET_CONTROL_LINE_STATE:
+		case REQ_SetControlLineState:
 			if (bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
+#if 0
+				/* NOTE: Here you can read in the line state mask from the host, to get the current state of the output handshake
+				         lines. The mask is read in from the wValue parameter, and can be masked against the CONTROL_LINE_OUT_* masks
+				         to determine the RTS and DTR line states using the following code:
+				*/
+
+				uint16_t wIndex = Endpoint_Read_Word_LE();
+					
+				// Do something with the given line states in wIndex
+#endif
+				
 				/* Acknowedge the SETUP packet, ready for data transfer */
 				Endpoint_ClearSetupReceived();
 				
-				/* Send an empty packet to acknowedge the command (currently unused) */
+				/* Send an empty packet to acknowedge the command */
 				Endpoint_ClearSetupIN();
 			}
 	
@@ -198,16 +213,40 @@ EVENT_HANDLER(USB_UnhandledControlPacket)
 	}
 }
 
+/** Task to manage CDC data transmission and reception to and from the host, from and to the physical USART. */
 TASK(CDC_Task)
 {
 	if (USB_IsConnected)
 	{
+#if 0
+		/* NOTE: Here you can use the notification endpoint to send back line state changes to the host, for the special RS-232
+				 handshake signal lines (and some error states), via the CONTROL_LINE_IN_* masks and the following code:
+		*/
+
+		USB_Notification_Header_t Notification = (USB_Notification_Header_t)
+			{
+				NotificationType: (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE),
+				Notification:     NOTIF_SerialState,
+				wValue:           0,
+				wIndex:           0,
+				wLength:          sizeof(uint16_t),
+			};
+			
+		uint16_t LineStateMask;
+		
+		// Set LineStateMask here to a mask of CONTROL_LINE_IN_* masks to set the input handshake line states to send to the host
+		
+		Endpoint_SelectEndpoint(CDC_NOTIFICATION_EPNUM);
+		Endpoint_Write_Stream_LE(&Notification, sizeof(Notification));
+		Endpoint_Write_Stream_LE(&LineStateMask, sizeof(LineStateMask));
+#endif
+
 		/* Select the Serial Rx Endpoint */
 		Endpoint_SelectEndpoint(CDC_RX_EPNUM);
 		
 		if (Endpoint_ReadWriteAllowed())
 		{
-			/* Read the recieved data endpoint into the transmission buffer */
+			/* Read the received data endpoint into the transmission buffer */
 			while (Endpoint_BytesInEndpoint())
 			{
 				/* Wait until the buffer has space for a new character */
@@ -244,7 +283,7 @@ TASK(CDC_Task)
 			/* Check before sending the data if the endpoint is completely full */
 			bool IsFull = (Endpoint_BytesInEndpoint() == CDC_TXRX_EPSIZE);
 			
-			/* Write the transmission buffer contents to the recieved data endpoint */
+			/* Write the transmission buffer contents to the received data endpoint */
 			while (Tx_Buffer.Elements && (Endpoint_BytesInEndpoint() < CDC_TXRX_EPSIZE))
 			  Endpoint_Write_Byte(Buffer_GetElement(&Tx_Buffer));
 			
@@ -264,21 +303,56 @@ TASK(CDC_Task)
 	}
 }
 
-ISR(USART1_TX_vect)
+/** ISR to handle the USART transmit complete interrupt, fired each time the USART has sent a character. This reloads the USART
+ *  data register with the next byte from the Rx_Buffer circular buffer if a character is available, or stops the transmission if
+ *  the buffer is currently empty.
+ */
+ISR(USART1_TX_vect, ISR_BLOCK)
 {
-	/* Send next character if avaliable */
+	/* Send next character if available */
 	if (Rx_Buffer.Elements)
 	  UDR1 = Buffer_GetElement(&Rx_Buffer);
 	else
 	  Transmitting = false;
 }
 
-ISR(USART1_RX_vect)
+/** ISR to handle the USART receive complete interrupt, fired each time the USART has received a character. This stores the received
+ *  character into the Tx_Buffer circular buffer for later transmission to the host.
+ */
+ISR(USART1_RX_vect, ISR_BLOCK)
 {
-	/* Character recieved, store it into the buffer */
+	/* Character received, store it into the buffer */
 	Buffer_StoreElement(&Tx_Buffer, UDR1);
 }
 
+/** Function to manage status updates to the user. This is done via LEDs on the given board, if available, but may be changed to
+ *  log to a serial port, or anything else that is suitable for status updates.
+ *
+ *  \param CurrentStatus  Current status of the system, from the USBtoSerial_StatusCodes_t enum
+ */
+void UpdateStatus(uint8_t CurrentStatus)
+{
+	uint8_t LEDMask = LEDS_NO_LEDS;
+	
+	/* Set the LED mask to the appropriate LED mask based on the given status code */
+	switch (CurrentStatus)
+	{
+		case Status_USBNotReady:
+			LEDMask = (LEDS_LED1);
+			break;
+		case Status_USBEnumerating:
+			LEDMask = (LEDS_LED1 | LEDS_LED2);
+			break;
+		case Status_USBReady:
+			LEDMask = (LEDS_LED2 | LEDS_LED4);
+			break;
+	}
+	
+	/* Set the board LEDs to the new LED mask */
+	LEDs_SetAllLEDs(LEDMask);
+}
+
+/** Reconfigures the USART to match the current serial port settings issued by the host as closely as possible. */
 void ReconfigureUSART(void)
 {
 	uint8_t ConfigMask = 0;

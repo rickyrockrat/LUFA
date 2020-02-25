@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,33 +28,52 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for Descriptors.c.
+ */
+
 #ifndef _DESCRIPTORS_H_
 #define _DESCRIPTORS_H_
 
 	/* Includes: */
-		#include <MyUSB/Drivers/USB/USB.h>
+		#include <LUFA/Drivers/USB/USB.h>
 
 	/* Macros: */
-		#define CDC_FUNCTIONAL_DESCRIPTOR(size)                      \
-		     struct                                                  \
-		     {                                                       \
-		          USB_Descriptor_CDCFunctional_Header_t FuncHeader;  \
-		          uint8_t                               Data[size];  \
+		/** Structure for a CDC class Functional descriptor, with a given data size. This is used instead of a
+		 *  type define so that the same macro can be used for functional descriptors of varying data lengths,
+		 *  while allowing the sizeof() operator to return correct results.
+		 *
+		 *  \param DataSize  Size of the functional descriptor's data payload, in bytes
+		 */
+		#define CDC_FUNCTIONAL_DESCRIPTOR(DataSize)        \
+		     struct                                        \
+		     {                                             \
+		          USB_Descriptor_Header_t Header;          \
+			      uint8_t                 SubType;         \
+		          uint8_t                 Data[DataSize];  \
 		     }
 
+		/** Endpoint number for the CDC control interface event notification endpoint. */
 		#define CDC_NOTIFICATION_EPNUM         3
-		#define CDC_TX_EPNUM                   1	
-		#define CDC_RX_EPNUM                   2	
+
+		/** Size of the CDC control interface notification endpoint bank, in bytes */
 		#define CDC_NOTIFICATION_EPSIZE        8
+
+		/** Endpoint number for the CDC data interface TX (data IN) endpoint */
+		#define CDC_TX_EPNUM                   1	
+
+		/** Endpoint number for the CDC data interface RX (data OUT) endpoint */
+		#define CDC_RX_EPNUM                   2	
+
+		/** Size of the CDC data interface TX and RX data endpoint banks, in bytes */
 		#define CDC_TXRX_EPSIZE                16
 
 	/* Type Defines: */
-		typedef struct
-		{
-			USB_Descriptor_Header_t               Header;
-			uint8_t                               SubType;
-		} USB_Descriptor_CDCFunctional_Header_t;
-
+		/** Type define for the device configuration descriptor structure. This must be defined in the
+		 *  application code, as the configuration descriptor contains several sub-descriptors which
+		 *  vary between devices, and which describe the device's usage to the host.
+		 */
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t    Config;
@@ -70,8 +89,7 @@
 		} USB_Descriptor_Configuration_t;
 
 	/* Function Prototypes: */
-		bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
-		                       void** const DescriptorAddress, uint16_t* const DescriptorSize)
-		                       ATTR_WARN_UNUSED_RESULT ATTR_WEAK ATTR_NON_NULL_PTR_ARG(3, 4);
+		uint16_t USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
+		                           ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif

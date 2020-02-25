@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -30,22 +30,25 @@
 
 #include "Webserver.h"
 
-char HTTPHeader[] PROGMEM = "HTTP/1.1 200 OK\r\nServer: MyUSB RNDIS\r\nContent-type: text/html\r\nConnection: close\r\n\r\n";
-char HTTPPage[]   PROGMEM = 
+char PROGMEM HTTPHeader[] = "HTTP/1.1 200 OK\r\n"
+                            "Server: LUFA RNDIS\r\n"
+                            "Content-type: text/html\r\n"
+                            "Connection: close\r\n\r\n";
+char PROGMEM HTTPPage[]   = 
 		"<html>"
 		"	<head>"
 		"		<title>"
-		"			MyUSB Webserver Demo"
+		"			LUFA Webserver Demo"
 		"		</title>"
 		"	</head>"
 		"	<body>"
 		"		<h1>Hello from your USB AVR!</h1>"
 		"		<p>"
-		"			Hello! Welcome to the MyUSB RNDIS Demo Webserver test page, running on your USB AVR via the MyUSB library. This demonstrates the HTTP webserver, TCP/IP stack and RNDIS demo all running atop the MyUSB USB stack."
+		"			Hello! Welcome to the LUFA RNDIS Demo Webserver test page, running on your USB AVR via the LUFA library. This demonstrates the HTTP webserver, TCP/IP stack and RNDIS demo all running atop the LUFA USB stack."
 		"			<br /><br />"
-		"			<small>Project Information: <a href=\"http://www.fourwalledcubicle.com/MyUSB.php\">http://www.fourwalledcubicle.com/MyUSB.php</a>.</small>"
+		"			<small>Project Information: <a href=\"http://www.fourwalledcubicle.com/LUFA.php\">http://www.fourwalledcubicle.com/LUFA.php</a>.</small>"
 		"			<hr />"
-		"			<i>MyUSB Version: </i>" MYUSB_VERSION_STRING
+		"			<i>LUFA Version: </i>" LUFA_VERSION_STRING
 		"		</p>"
 		"	</body>"
 		"</html>";
@@ -62,7 +65,7 @@ static bool IsHTTPCommand(uint8_t* RequestHeader, char* Command)
 	return (strncmp((char*)RequestHeader, Command, strlen(Command)) == 0);
 }
 
-void Webserver_ApplicationCallback(TCP_ConnectionBuffer_t* Buffer)
+void Webserver_ApplicationCallback(TCP_ConnectionState_t* ConnectionState, TCP_ConnectionBuffer_t* Buffer)
 {
 	char*          BufferDataStr = (char*)Buffer->Data;
 	static uint8_t PageBlock     = 0;
@@ -113,12 +116,17 @@ void Webserver_ApplicationCallback(TCP_ConnectionBuffer_t* Buffer)
 		/* Copy the next buffer sized block of the page to the packet buffer */
 		strncpy_P(BufferDataStr, &HTTPPage[PageBlock * HTTP_REPLY_BLOCK_SIZE], Length);
 		
-		/* Check to see if the entire page has been sent, if so unlock the buffer so that packets can be
-		   received from the host again */
-		if (PageBlock++ == (sizeof(HTTPPage) / HTTP_REPLY_BLOCK_SIZE))
-		  TCP_APP_RELEASE_BUFFER(Buffer);
-		
 		/* Send the buffer contents to the host */
 		TCP_APP_SEND_BUFFER(Buffer, Length);
+
+		/* Check to see if the entire page has been sent */
+		if (PageBlock++ == (sizeof(HTTPPage) / HTTP_REPLY_BLOCK_SIZE))
+		{
+			/* Unlock the buffer so that the host can fill it with future packets */
+			TCP_APP_RELEASE_BUFFER(Buffer);
+			
+			/* Close the connection to the host */
+			TCP_APP_CLOSECONNECTION(ConnectionState);
+		}
 	}
 }

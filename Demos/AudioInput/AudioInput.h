@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,6 +28,11 @@
   this software.
 */
 
+/** \file
+ *
+ *  Header file for AudioOutput.c.
+ */
+ 
 #ifndef _AUDIO_OUTPUT_H_
 #define _AUDIO_OUTPUT_H_
 
@@ -37,26 +42,49 @@
 
 		#include "Descriptors.h"
 				
-		#include <MyUSB/Version.h>                      // Library Version Information
-		#include <MyUSB/Common/ButtLoadTag.h>           // PROGMEM tags readable by the ButtLoad project
-		#include <MyUSB/Drivers/USB/USB.h>              // USB Functionality
-		#include <MyUSB/Drivers/Board/LEDs.h>           // LEDs driver
-		#include <MyUSB/Drivers/AT90USBXXX/ADC.h>       // ADC driver
-		#include <MyUSB/Scheduler/Scheduler.h>          // Simple scheduler for task management
+		#include <LUFA/Version.h>                      // Library Version Information
+		#include <LUFA/Common/ButtLoadTag.h>           // PROGMEM tags readable by the ButtLoad project
+		#include <LUFA/Drivers/USB/USB.h>              // USB Functionality
+		#include <LUFA/Drivers/Board/LEDs.h>           // LEDs driver
+		#include <LUFA/Drivers/AT90USBXXX/ADC.h>       // ADC driver
+		#include <LUFA/Scheduler/Scheduler.h>          // Simple scheduler for task management
 
 	/* Macros: */
+		/** ADC channel number for the microphone input. */
 		#define MIC_IN_ADC_CHANNEL               2
 		
+		/** Maximum ADC sample value for the microphone input. */
 		#define SAMPLE_MAX_RANGE                 0xFFFF
+
+		/** Maximum ADC range for the microphone input. */
 		#define ADC_MAX_RANGE                    0x3FF
+
+	/* Enums: */
+		/** Enum for the possible status codes for passing to the UpdateStatus() function. */
+		enum AudioInput_StatusCodes_t
+		{
+			Status_USBNotReady    = 0, /**< USB is not ready (disconnected from a USB host) */
+			Status_USBEnumerating = 1, /**< USB interface is enumerating */
+			Status_USBReady       = 2, /**< USB interface is connected and ready */
+		};
 
 	/* Task Definitions: */
 		TASK(USB_Audio_Task);
 
 	/* Event Handlers: */
+		/** Indicates that this module will catch the USB_Connect event when thrown by the library. */
 		HANDLES_EVENT(USB_Connect);
+
+		/** Indicates that this module will catch the USB_Disconnect event when thrown by the library. */
 		HANDLES_EVENT(USB_Disconnect);
+
+		/** Indicates that this module will catch the USB_ConfigurationChanged event when thrown by the library. */
 		HANDLES_EVENT(USB_ConfigurationChanged);
+
+		/** Indicates that this module will catch the USB_UnhandledControlPacket event when thrown by the library. */
 		HANDLES_EVENT(USB_UnhandledControlPacket);
 
+	/* Function Prototypes: */
+		void UpdateStatus(uint8_t CurrentStatus);
+		
 #endif

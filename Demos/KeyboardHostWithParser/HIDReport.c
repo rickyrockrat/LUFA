@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -102,11 +102,5 @@ void DumpHIDReportItems(void)
 												 RItem->Attributes.Logical.Maximum,
 												 RItem->Attributes.Physical.Minimum,
 												 RItem->Attributes.Physical.Maximum);
-
-		/* Toggle status LED to indicate busy */
-		if (LEDs_GetLEDs() & LEDS_LED4)
-		  LEDs_TurnOffLEDs(LEDS_LED4);
-		else
-		  LEDs_TurnOnLEDs(LEDS_LED4);
 	}
 }

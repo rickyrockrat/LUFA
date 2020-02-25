@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -28,8 +28,20 @@
   this software.
 */
 
+/** \file
+ *
+ *  USB Device Descriptors, for library use when in USB device mode. Descriptors are special 
+ *  computer-readable structures which the host requests upon device enumeration, to determine
+ *  the device's capabilities and functions.  
+ */
+
 #include "Descriptors.h"
 
+/** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
+ *  device characteristics, including the supported USB version, control endpoint size and the
+ *  number of device configurations. The descriptor is read out by the USB host when the enumeration
+ *  process begins.
+ */
 USB_Descriptor_Device_t DeviceDescriptor =
 {
 	Header:                 {Size: sizeof(USB_Descriptor_Device_t), Type: DTYPE_Device},
@@ -39,19 +51,24 @@ USB_Descriptor_Device_t DeviceDescriptor =
 	SubClass:               0x00,
 	Protocol:               0x00,
 				
-	Endpoint0Size:          CONTROL_ENDPOINT_SIZE,
+	Endpoint0Size:          FIXED_CONTROL_ENDPOINT_SIZE,
 		
 	VendorID:               0x03EB,
 	ProductID:              PRODUCT_ID_CODE,
 	ReleaseNumber:          0x0000,
 		
-	ManufacturerStrIndex:   NO_DESCRIPTOR_STRING,
+	ManufacturerStrIndex:   NO_DESCRIPTOR,
 	ProductStrIndex:        0x01,
-	SerialNumStrIndex:      NO_DESCRIPTOR_STRING,
+	SerialNumStrIndex:      NO_DESCRIPTOR,
 		
 	NumberOfConfigurations: 1
 };
-	
+
+/** Configuration descriptor structure. This descriptor, located in FLASH memory, describes the usage
+ *  of the device in one of its supported configurations, including information about any device interfaces
+ *  and endpoints. The descriptor is read out by the USB host during the enumeration process when selecting
+ *  a configuration so that the host may correctly communicate with the USB device.
+ */
 USB_Descriptor_Configuration_t ConfigurationDescriptor =
 {
 	Config:
@@ -62,7 +79,7 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor =
 			TotalInterfaces:          1,
 
 			ConfigurationNumber:      1,
-			ConfigurationStrIndex:    NO_DESCRIPTOR_STRING,
+			ConfigurationStrIndex:    NO_DESCRIPTOR,
 				
 			ConfigAttributes:         (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_SELFPOWERED),
 			
@@ -82,7 +99,7 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor =
 			SubClass:               0x01,
 			Protocol:               0x02,
 
-			InterfaceStrIndex:      NO_DESCRIPTOR_STRING
+			InterfaceStrIndex:      NO_DESCRIPTOR
 		},
 		
 	DFUFunctional:
@@ -94,31 +111,47 @@ USB_Descriptor_Configuration_t ConfigurationDescriptor =
 			DetatchTimeout:         0x0000,
 			TransferSize:           0x0c00,
 		
-			DFUSpecification:       0x0101
+			DFUSpecification:       VERSION_BCD(01.01)
 		}
 };
 
-USB_Descriptor_String_t LanguageString PROGMEM =
+/** Language descriptor structure. This descriptor, located in FLASH memory, is returned when the host requests
+ *  the string descriptor with index 0 (the first index). It is actually an array of 16-bit integers, which indicate
+ *  via the language ID table available at USB.org what languages the device supports for its string descriptors.
+ */ 
+USB_Descriptor_String_t LanguageString =
 {
 	Header:                 {Size: USB_STRING_LEN(1), Type: DTYPE_String},
 		
 	UnicodeString:          {LANGUAGE_ID_ENG}
 };
 
+/** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
+ *  and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
+ *  Descriptor.
+ */
 USB_Descriptor_String_t ProductString =
 {
 	Header:                 {Size: USB_STRING_LEN(15), Type: DTYPE_String},
 		
-	UnicodeString:          L"AVR DFU BOOTLDR"
+	UnicodeString:          L"AVR DFU Bootloader"
 };
 
-bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
-                       void** const DescriptorAddress, uint16_t* const DescriptorSize)
+/** This function is called by the library when in device mode, and must be overridden (see StdDescriptors.h
+ *  documentation) by the application code so that the address and size of a requested descriptor can be given
+ *  to the USB library. When the device recieves a Get Descriptor request on the control endpoint, this function
+ *  is called so that the descriptor details can be passed back and the appropriate descriptor sent back to the
+ *  USB host.
+ */
+uint16_t USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress)
 {
-	void*    Address = NULL;
-	uint16_t Size    = 0;
+	const uint8_t  DescriptorType   = (wValue >> 8);
+	const uint8_t  DescriptorNumber = (wValue & 0xFF);
 
-	switch (wValue >> 8)
+	void*    Address = NULL;
+	uint16_t Size    = NO_DESCRIPTOR;
+
+	switch (DescriptorType)
 	{
 		case DTYPE_Device:
 			Address = DESCRIPTOR_ADDRESS(DeviceDescriptor);
@@ -129,7 +162,7 @@ bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 			Size    = sizeof(USB_Descriptor_Configuration_t);
 			break;
 		case DTYPE_String:
-			if (!(wValue))
+			if (!(DescriptorNumber))
 			{
 				Address = DESCRIPTOR_ADDRESS(LanguageString);
 				Size    = LanguageString.Header.Size;
@@ -143,13 +176,6 @@ bool USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 			break;
 	}
 	
-	if (Address != NULL)
-	{
-		*DescriptorAddress = Address;
-		*DescriptorSize    = Size;
-
-		return true;
-	}
-		
-	return false;
+	*DescriptorAddress = Address;
+	return Size;
 }

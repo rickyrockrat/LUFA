@@ -1,5 +1,5 @@
 /*
-             MyUSB Library
+             LUFA Library
      Copyright (C) Dean Camera, 2008.
               
   dean [at] fourwalledcubicle [dot] com
@@ -30,18 +30,18 @@
 
 #include "Telnet.h"
 
-char TelnetWelcome[]     PROGMEM = "****************************\r\n"
+char PROGMEM TelnetWelcome[]     = "****************************\r\n"
                                    "* Welcome to your USB AVR! *\r\n"
 							       "****************************\r\n"
 							       "\r\n"
 							       "Type HELP for a list of commands.\r\n\r\n\r\n";
 
-char TelnetCommand[]     PROGMEM = "Command > ";
-char TelnetCommandOK[]   PROGMEM = " Command completed sucessfully.\r\n\r\n";
-char TelnetCommandFail[] PROGMEM = " Command failed.\r\n\r\n";
-char TelnetCommandUnk[]  PROGMEM = " Unknown command. Type HELP for a list of commands.\r\n\r\n";
+char PROGMEM TelnetCommand[]     = "Command > ";
+char PROGMEM TelnetCommandOK[]   = " Command completed sucessfully.\r\n\r\n";
+char PROGMEM TelnetCommandFail[] = " Command failed.\r\n\r\n";
+char PROGMEM TelnetCommandUnk[]  = " Unknown command. Type HELP for a list of commands.\r\n\r\n";
 
-char TelnetHelp[]        PROGMEM = "\r\nCommand List:\r\n"
+char PROGMEM TelnetHelp[]        = "\r\nCommand List:\r\n"
                                    " > HELP    - Displays this message\r\n"
                                    " > LEDONx  - Turns LED number \"x\" on\r\n"
                                    " > LEDOFFx - Turns LED number \"x\" off\r\n\r\n";
@@ -58,7 +58,7 @@ static bool IsTELNETCommand(uint8_t* Data, char* Command)
 	return (strncmp((char*)Data, Command, strlen(Command)) == 0);
 }
 
-void Telnet_ApplicationCallback(TCP_ConnectionBuffer_t* Buffer)
+void Telnet_ApplicationCallback(TCP_ConnectionState_t* ConnectionState, TCP_ConnectionBuffer_t* Buffer)
 {
 	char* BufferDataStr = (char*)Buffer->Data;
 
