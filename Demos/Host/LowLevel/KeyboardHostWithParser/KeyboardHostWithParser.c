@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -181,7 +181,7 @@ void KeyboardHost_Task(void)
 {
 	if (USB_HostState != HOST_STATE_Configured)
 	  return;
-	
+
 	/* Select and unfreeze keyboard data pipe */
 	Pipe_SelectPipe(KEYBOARD_DATA_IN_PIPE);
 	Pipe_Unfreeze();
@@ -259,7 +259,7 @@ void ProcessKeyboardReport(uint8_t* KeyboardReport)
 				}
 				else if (KeyCode == HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS)
 				{
-					PressedKey = '0';						
+					PressedKey = '0';
 				}
 				else if (KeyCode == HID_KEYBOARD_SC_SPACE)
 				{

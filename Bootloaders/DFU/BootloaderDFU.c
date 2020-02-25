@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -113,10 +113,10 @@ int main(void)
 
 	/* If the TCK pin is not jumpered to ground, start the user application instead */
 	RunBootloader = (!(PINF & (1 << 4)));
-	
+
 	/* Re-enable JTAG debugging */
 	MCUCR &= ~(1 << JTD);
-	MCUCR &= ~(1 << JTD);	
+	MCUCR &= ~(1 << JTD);
 	#endif
 
 	/* Turn on first LED on the board to indicate that the bootloader has started */
@@ -137,7 +137,7 @@ int main(void)
 }
 
 /** Configures all hardware required for the bootloader. */
-void SetupHardware(void)
+static void SetupHardware(void)
 {
 	/* Disable watchdog if enabled by bootloader/fuses */
 	MCUSR &= ~(1 << WDRF);
@@ -150,20 +150,21 @@ void SetupHardware(void)
 	MCUCR = (1 << IVCE);
 	MCUCR = (1 << IVSEL);
 
-	/* Initialize the USB subsystem */
+	/* Initialize the USB and other board hardware drivers */
 	USB_Init();
 	LEDs_Init();
-	
+
 	/* Bootloader active LED toggle timer initialization */
 	TIMSK1 = (1 << TOIE1);
 	TCCR1B = ((1 << CS11) | (1 << CS10));
 }
 
 /** Resets all configured hardware required for the bootloader back to their original states. */
-void ResetHardware(void)
+static void ResetHardware(void)
 {
-	/* Shut down the USB subsystem */
+	/* Shut down the USB and other board hardware drivers */
 	USB_Disable();
+	LEDs_Disable();
 
 	/* Relocate the interrupt vector table back to the application section */
 	MCUCR = (1 << IVCE);
@@ -181,7 +182,7 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK)
  *  internally.
  */
 void EVENT_USB_Device_ControlRequest(void)
-{	
+{
 	/* Ignore any requests that aren't directed to the DFU interface */
 	if ((USB_ControlRequest.bmRequestType & (CONTROL_REQTYPE_TYPE | CONTROL_REQTYPE_RECIPIENT)) !=
 	    (REQTYPE_CLASS | REQREC_INTERFACE))

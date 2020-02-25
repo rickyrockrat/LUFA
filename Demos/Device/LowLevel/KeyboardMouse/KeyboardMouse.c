@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
   Copyright 2010  Denver Gingerich (denver [at] ossguy [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
@@ -219,7 +219,7 @@ void Keyboard_HID_Task(void)
 	if (!(Buttons_GetStatus() & BUTTONS_BUTTON1))
 	{
 		/* Make sent key uppercase by indicating that the left shift key is pressed */
-		KeyboardReportData.Modifier = HID_KEYBOARD_MODIFER_LEFTSHIFT;
+		KeyboardReportData.Modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
 
 		if (JoyStatus_LCL & JOY_UP)
 		  KeyboardReportData.KeyCode[0] = HID_KEYBOARD_SC_A;

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -42,7 +42,6 @@ FILE DiskStream = FDEV_SETUP_STREAM(NULL, Disk_getchar, _FDEV_SETUP_READ);
 
 /** Petite FAT Fs structure to hold the internal state of the FAT driver for the Dataflash contents. */
 FATFS DiskFATState;
-
 
 /** Stream character fetching routine for the FAT driver so that characters from the currently open file can be
  *  read in sequence when applied to a stdio stream.

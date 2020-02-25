@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -60,7 +60,7 @@
 		 *  (when DHCP is disabled).
 		 */
 		#define DEVICE_GATEWAY            (uint8_t[]){10, 0, 0, 1}
-		
+
 		/** Ethernet MAC address of the virtual webserver. When in device RNDIS mode, the virtual webserver requires
 		 *  a unique MAC address that it can use when sending packets to the RNDIS adapter, which contains a seperate
 		 *  MAC address as set in the RNDIS class driver configuration structure.

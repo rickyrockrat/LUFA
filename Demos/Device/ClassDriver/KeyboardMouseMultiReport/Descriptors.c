@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -77,7 +77,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM HIDReport[] =
 	        HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
 	    HID_RI_END_COLLECTION(0),
 	HID_RI_END_COLLECTION(0),
-	
+
 	/* Keyboard Report */
 	HID_RI_USAGE_PAGE(8, 0x01), /* Generic Desktop */
 	HID_RI_USAGE(8, 0x06), /* Keyboard */
@@ -158,7 +158,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.ConfigurationNumber    = 1,
 			.ConfigurationStrIndex  = NO_DESCRIPTOR,
 
-			.ConfigAttributes       = (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_SELFPOWERED),
+			.ConfigAttributes       = (USB_CONFIG_ATTR_RESERVED | USB_CONFIG_ATTR_SELFPOWERED),
 
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
@@ -280,7 +280,7 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 			break;
 		case HID_DTYPE_HID:
 			Address = &ConfigurationDescriptor.HID_HIDData;
-			Size    = sizeof(USB_HID_Descriptor_HID_t);			
+			Size    = sizeof(USB_HID_Descriptor_HID_t);
 			break;
 		case HID_DTYPE_Report:
 			Address = &HIDReport;

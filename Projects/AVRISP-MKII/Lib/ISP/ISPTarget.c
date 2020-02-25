@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -178,7 +178,7 @@ void ISPTarget_DisableTargetISP(void)
 	{
 		DDRB  &= ~((1 << 1) | (1 << 2));
 		PORTB &= ~((1 << 0) | (1 << 3));
-		
+
 		/* Must re-enable rescue clock once software ISP has exited, as the timer for the rescue clock is
 		 * re-purposed for software SPI */
 		ISPTarget_ConfigureRescueClock();
@@ -195,7 +195,7 @@ void ISPTarget_ConfigureRescueClock(void)
 	#if defined(XCK_RESCUE_CLOCK_ENABLE)
 		/* Configure XCK as an output for the specified AVR model */
 		DDRD  |= (1 << 5);
-		
+
 		/* Start USART to generate a 4MHz clock on the XCK pin */
 		UBRR1  = ((F_CPU / 2 / ISP_RESCUE_CLOCK_SPEED) - 1);
 		UCSR1B = (1 << TXEN1);
@@ -243,7 +243,8 @@ uint8_t ISPTarget_TransferSoftSPIByte(const uint8_t Byte)
 	SoftSPI_Data          = Byte;
 	SoftSPI_BitsRemaining = 8;
 
-	if (SoftSPI_Data & 0x01)
+	/* Set initial MOSI pin state according to the byte to be transferred */
+	if (SoftSPI_Data & (1 << 7))
 	  PORTB |=  (1 << 2);
 	else
 	  PORTB &= ~(1 << 2);
@@ -312,7 +313,7 @@ void ISPTarget_LoadExtendedAddress(void)
 /** Waits until the last issued target memory programming command has completed, via the check mode given and using
  *  the given parameters.
  *
- *  \param[in] ProgrammingMode  Programming mode used and completion check to use, a mask of PROG_MODE_* constants
+ *  \param[in] ProgrammingMode  Programming mode used and completion check to use, a mask of \c PROG_MODE_* constants
  *  \param[in] PollAddress      Memory address to poll for completion if polling check mode used
  *  \param[in] PollValue        Poll value to check against if polling check mode used
  *  \param[in] DelayMS          Milliseconds to delay before returning if delay check mode used
@@ -355,6 +356,9 @@ uint8_t ISPTarget_WaitForProgComplete(const uint8_t ProgrammingMode,
 			ProgrammingStatus = ISPTarget_WaitWhileTargetBusy();
 			break;
 	}
+
+	/* Program complete - reset timeout */
+	wdt_reset();
 
 	return ProgrammingStatus;
 }

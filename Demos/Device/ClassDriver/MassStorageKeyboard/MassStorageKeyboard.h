@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
   Copyright 2010  Matthias Hullin (lufa [at] matthias [dot] hullin [dot] net)
 
   Permission to use, copy, modify, distribute, and sell this
@@ -81,7 +81,7 @@
 
 		/** Indicates if the disk is write protected or not. */
 		#define DISK_READ_ONLY           false
-		
+
 	/* Function Prototypes: */
 		void SetupHardware(void);
 

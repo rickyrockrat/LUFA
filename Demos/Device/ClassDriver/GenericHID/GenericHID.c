@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -133,7 +133,7 @@ void EVENT_USB_Device_StartOfFrame(void)
  *  \param[in,out] ReportID    Report ID requested by the host if non-zero, otherwise callback should set to the generated report ID
  *  \param[in]     ReportType  Type of the report to create, either HID_REPORT_ITEM_In or HID_REPORT_ITEM_Feature
  *  \param[out]    ReportData  Pointer to a buffer where the created report should be stored
- *  \param[out]    ReportSize  Number of bytes written in the report (or zero if no report is to be sent
+ *  \param[out]    ReportSize  Number of bytes written in the report (or zero if no report is to be sent)
  *
  *  \return Boolean true to force the sending of the report, false to let the library determine if it needs to be sent
  */
@@ -145,7 +145,7 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 {
 	uint8_t* Data = (uint8_t*)ReportData;
 	uint8_t  CurrLEDMask = LEDs_GetLEDs();
-		
+
 	Data[0] = ((CurrLEDMask & LEDS_LED1) ? 1 : 0);
 	Data[1] = ((CurrLEDMask & LEDS_LED2) ? 1 : 0);
 	Data[2] = ((CurrLEDMask & LEDS_LED3) ? 1 : 0);
@@ -171,7 +171,7 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 {
 	uint8_t* Data = (uint8_t*)ReportData;
 	uint8_t  NewLEDMask = LEDS_NO_LEDS;
-	
+
 	if (Data[0])
 	  NewLEDMask |= LEDS_LED1;
 
@@ -183,7 +183,7 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 
 	if (Data[3])
 	  NewLEDMask |= LEDS_LED1;
-	  
+
 	LEDs_SetAllLEDs(NewLEDMask);
 }
 

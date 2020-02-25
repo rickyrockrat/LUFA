@@ -96,7 +96,13 @@ F_USB = $(F_CPU)
 # bytes, and so will need to be doubled to obtain the byte address needed by AVR-GCC.
 FLASH_SIZE_KB        = 128
 BOOT_SECTION_SIZE_KB = 4
+
+
+# Formulas used to calculate the starting address of the Bootloader section, and the User Application
+# API jump table (for more information on the latter, see the bootloader documentation). These formulas
+# should not need to be altered - modify the FLASH_SIZE_KB and BOOT_SECTION_KB values above instead.
 BOOT_START           = 0x$(shell echo "obase=16; ($(FLASH_SIZE_KB) - $(BOOT_SECTION_SIZE_KB)) * 1024" | bc)
+BOOT_API_TABLESTART  = 0x$(shell echo "obase=16; (($(FLASH_SIZE_KB) * 1024) - 32)" | bc)
 
 
 # Output format. (can be srec, ihex, binary)
@@ -142,6 +148,7 @@ include $(LUFA_PATH)/LUFA/makefile
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c                                                 \
+	  BootloaderAPI.c                                             \
 	  Descriptors.c                                               \
 	  $(LUFA_SRC_USB)                                             \
 
@@ -157,7 +164,7 @@ CPPSRC =
 #     Even though the DOS/Win* filesystem matches both .s and .S the same,
 #     it will preserve the spelling of the filenames, and gcc itself does
 #     care about how the name is spelled on its command-line.
-ASRC =
+ASRC = BootloaderAPITable.S
 
 
 # Optimization level, can be [0, 1, 2, 3, s].
@@ -338,7 +345,7 @@ EXTMEMOPTS =
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS  = -Wl,-Map=$(TARGET).map,--cref
-LDFLAGS += -Wl,--section-start=.text=$(BOOT_START)
+LDFLAGS += -Wl,--section-start=.text=$(BOOT_START) -Wl,--section-start=.apitable=$(BOOT_API_TABLESTART) -Wl,--undefined=BootloaderAPI_JumpTable
 LDFLAGS += -Wl,--relax
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += $(EXTMEMOPTS)

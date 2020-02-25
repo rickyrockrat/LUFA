@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -81,7 +81,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor =
 			.ConfigurationNumber    = 1,
 			.ConfigurationStrIndex  = NO_DESCRIPTOR,
 
-			.ConfigAttributes       = USB_CONFIG_ATTR_BUSPOWERED,
+			.ConfigAttributes       = USB_CONFIG_ATTR_RESERVED,
 
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
@@ -159,11 +159,11 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 			Address = &DeviceDescriptor;
 			Size    = sizeof(USB_Descriptor_Device_t);
 			break;
-		case DTYPE_Configuration: 
+		case DTYPE_Configuration:
 			Address = &ConfigurationDescriptor;
 			Size    = sizeof(USB_Descriptor_Configuration_t);
 			break;
-		case DTYPE_String: 
+		case DTYPE_String:
 			if (!(DescriptorNumber))
 			{
 				Address = &LanguageString;
@@ -174,10 +174,10 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 				Address = &ProductString;
 				Size    = ProductString.Header.Size;
 			}
-			
+
 			break;
 	}
-	
+
 	*DescriptorAddress = Address;
 	return Size;
 }

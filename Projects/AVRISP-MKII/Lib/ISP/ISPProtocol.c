@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -150,7 +150,7 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 	Endpoint_Read_Stream_LE(&Write_Memory_Params, (sizeof(Write_Memory_Params) -
 	                                               sizeof(Write_Memory_Params.ProgData)), NULL);
 	Write_Memory_Params.BytesToWrite = SwapEndian_16(Write_Memory_Params.BytesToWrite);
-	
+
 	if (Write_Memory_Params.BytesToWrite > sizeof(Write_Memory_Params.ProgData))
 	{
 		Endpoint_ClearOUT();
@@ -236,7 +236,7 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 			/* Must reset the polling address afterwards, so it is not erroneously used for the next byte */
 			PollAddress = 0;
 		}
-		
+
 		/* EEPROM just increments the address each byte, flash needs to increment on each word and
 		 * also check to ensure that a LOAD EXTENDED ADDRESS command is issued each time the extended
 		 * address boundary has been crossed during FLASH memory programming */
@@ -248,7 +248,7 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 			  MustLoadExtendedAddress = true;
 		}
 	}
-	
+
 	/* If the current page must be committed, send the PROGRAM PAGE command to the target */
 	if (Write_Memory_Params.ProgrammingMode & PROG_MODE_COMMIT_PAGE_MASK)
 	{
@@ -271,7 +271,7 @@ void ISPProtocol_ProgramMemory(uint8_t V2Command)
 		/* Check to see if the FLASH address has crossed the extended address boundary */
 		if ((V2Command == CMD_PROGRAM_FLASH_ISP) && !(CurrentAddress & 0xFFFF))
 		  MustLoadExtendedAddress = true;
-	}	
+	}
 
 	Endpoint_Write_8(V2Command);
 	Endpoint_Write_8(ProgrammingStatus);
@@ -293,7 +293,7 @@ void ISPProtocol_ReadMemory(uint8_t V2Command)
 
 	Endpoint_Read_Stream_LE(&Read_Memory_Params, sizeof(Read_Memory_Params), NULL);
 	Read_Memory_Params.BytesToRead = SwapEndian_16(Read_Memory_Params.BytesToRead);
-	
+
 	Endpoint_ClearOUT();
 	Endpoint_SelectEndpoint(AVRISP_DATA_IN_EPNUM);
 	Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
@@ -515,7 +515,9 @@ void ISPProtocol_SPIMulti(void)
 	}
 }
 
-/** Blocking delay for a given number of milliseconds.
+/** Blocking delay for a given number of milliseconds. This provides a simple wrapper around
+ *  the avr-libc provided delay function, so that the delay function can be called with a
+ *  constant value (to prevent run-time floating point operations being required).
  *
  *  \param[in] DelayMS  Number of milliseconds to delay for
  */
@@ -526,3 +528,4 @@ void ISPProtocol_DelayMS(uint8_t DelayMS)
 }
 
 #endif
+

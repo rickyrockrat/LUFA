@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -149,13 +149,18 @@ void XMEGANVM_DisablePDI(void)
 {
 	XMEGANVM_WaitWhileNVMBusBusy();
 
-	/* Clear the RESET key in the RESET PDI register to allow the XMEGA to run */
-	XPROGTarget_SendByte(PDI_CMD_STCS | PDI_RESET_REG);
-	XPROGTarget_SendByte(0x00);
+	/* Clear the RESET key in the RESET PDI register to allow the XMEGA to run - must perform this until the
+	 * change takes effect, as in some cases it takes multiple writes (silicon bug?).
+	 */
+	do
+	{
+		/* Clear reset register */
+		XPROGTarget_SendByte(PDI_CMD_STCS | PDI_RESET_REG);
+		XPROGTarget_SendByte(0x00);
 
-	/* Do it twice to make sure it takes effect (silicon bug?) */
-	XPROGTarget_SendByte(PDI_CMD_STCS | PDI_RESET_REG);
-	XPROGTarget_SendByte(0x00);
+		/* Read back the reset register, check to see if it took effect */
+		XPROGTarget_SendByte(PDI_CMD_LDCS | PDI_RESET_REG);
+	} while (XPROGTarget_ReceiveByte() != 0x00);
 
 	XPROGTarget_DisableTargetPDI();
 }
@@ -181,7 +186,7 @@ bool XMEGANVM_GetMemoryCRC(const uint8_t CRCCommand, uint32_t* const CRCDest)
 	/* Set CMDEX bit in NVM CTRLA register to start the CRC generation */
 	XPROGTarget_SendByte(PDI_CMD_STS | (PDI_DATSIZE_4BYTES << 2));
 	XMEGANVM_SendNVMRegAddress(XMEGA_NVM_REG_CTRLA);
-	XPROGTarget_SendByte(1 << 0);
+	XPROGTarget_SendByte(XMEGA_NVM_BIT_CTRLA_CMDEX);
 
 	/* Wait until the NVM bus is ready again */
 	if (!(XMEGANVM_WaitWhileNVMBusBusy()))
@@ -197,11 +202,11 @@ bool XMEGANVM_GetMemoryCRC(const uint8_t CRCCommand, uint32_t* const CRCDest)
 
 	/* Send the REPEAT command to grab the CRC bytes */
 	XPROGTarget_SendByte(PDI_CMD_REPEAT | PDI_DATSIZE_1BYTE);
-	XPROGTarget_SendByte(XMEGA_CRC_LENGTH - 1);
+	XPROGTarget_SendByte(XMEGA_CRC_LENGTH_BYTES - 1);
 
 	/* Read in the CRC bytes from the target */
 	XPROGTarget_SendByte(PDI_CMD_LD | (PDI_POINTER_INDIRECT_PI << 2) | PDI_DATSIZE_1BYTE);
-	for (uint8_t i = 0; i < XMEGA_CRC_LENGTH; i++)
+	for (uint8_t i = 0; i < XMEGA_CRC_LENGTH_BYTES; i++)
 	  ((uint8_t*)CRCDest)[i] = XPROGTarget_ReceiveByte();
 
 	return (TimeoutExpired == false);
@@ -299,7 +304,7 @@ bool XMEGANVM_WritePageMemory(const uint8_t WriteBuffCommand, const uint8_t Eras
 		/* Set CMDEX bit in NVM CTRLA register to start the buffer erase */
 		XPROGTarget_SendByte(PDI_CMD_STS | (PDI_DATSIZE_4BYTES << 2));
 		XMEGANVM_SendNVMRegAddress(XMEGA_NVM_REG_CTRLA);
-		XPROGTarget_SendByte(1 << 0);
+		XPROGTarget_SendByte(XMEGA_NVM_BIT_CTRLA_CMDEX);
 	}
 
 	if (WriteSize)
@@ -371,7 +376,7 @@ bool XMEGANVM_EraseMemory(const uint8_t EraseCommand, const uint32_t Address)
 		/* Set CMDEX bit in NVM CTRLA register to start the erase sequence */
 		XPROGTarget_SendByte(PDI_CMD_STS | (PDI_DATSIZE_4BYTES << 2));
 		XMEGANVM_SendNVMRegAddress(XMEGA_NVM_REG_CTRLA);
-		XPROGTarget_SendByte(1 << 0);
+		XPROGTarget_SendByte(XMEGA_NVM_BIT_CTRLA_CMDEX);
 	}
 	else if (EraseCommand == XMEGA_NVM_CMD_ERASEEEPROM)
 	{
@@ -383,7 +388,7 @@ bool XMEGANVM_EraseMemory(const uint8_t EraseCommand, const uint32_t Address)
 		/* Set CMDEX bit in NVM CTRLA register to start the buffer erase */
 		XPROGTarget_SendByte(PDI_CMD_STS | (PDI_DATSIZE_4BYTES << 2));
 		XMEGANVM_SendNVMRegAddress(XMEGA_NVM_REG_CTRLA);
-		XPROGTarget_SendByte(1 << 0);
+		XPROGTarget_SendByte(XMEGA_NVM_BIT_CTRLA_CMDEX);
 
 		/* Wait until the NVM controller is no longer busy */
 		if (!(XMEGANVM_WaitWhileNVMControllerBusy()))
@@ -415,7 +420,7 @@ bool XMEGANVM_EraseMemory(const uint8_t EraseCommand, const uint32_t Address)
 		/* Set CMDEX bit in NVM CTRLA register to start the EEPROM erase sequence */
 		XPROGTarget_SendByte(PDI_CMD_STS | (PDI_DATSIZE_4BYTES << 2));
 		XMEGANVM_SendNVMRegAddress(XMEGA_NVM_REG_CTRLA);
-		XPROGTarget_SendByte(1 << 0);
+		XPROGTarget_SendByte(XMEGA_NVM_BIT_CTRLA_CMDEX);
 	}
 	else
 	{

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -99,7 +99,7 @@ uint8_t ProcessConfigurationDescriptor(void)
 				}
 
 				/* Save the interface in case we need to refer back to it later */
-				AudioControlInterface = DESCRIPTOR_PCAST(CurrConfigLocation, USB_Descriptor_Interface_t);			
+				AudioControlInterface = DESCRIPTOR_PCAST(CurrConfigLocation, USB_Descriptor_Interface_t);
 
 				/* Find the next Audio Streaming interface within that Audio Control interface */
 				if (USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation,
@@ -218,3 +218,4 @@ uint8_t DComp_NextAudioInterfaceDataEndpoint(void* CurrentDescriptor)
 
 	return DESCRIPTOR_SEARCH_NotFound;
 }
+

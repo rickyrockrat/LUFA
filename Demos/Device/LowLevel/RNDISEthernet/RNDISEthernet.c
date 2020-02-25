@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -73,9 +73,9 @@ void SetupHardware(void)
 	LEDs_Init();
 	Serial_Init(9600, false);
 	USB_Init();
-	
+
 	/* Create a stdio stream for the serial port for stdin and stdout */
-	Serial_CreateStream(NULL);	
+	Serial_CreateStream(NULL);
 }
 
 /** Event handler for the USB_Connect event. This indicates that the device is enumerating via the status LEDs and

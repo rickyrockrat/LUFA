@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -146,9 +146,15 @@ void TINYNVM_DisableTPI(void)
 {
 	TINYNVM_WaitWhileNVMBusBusy();
 
-	/* Clear the NVMEN bit in the TPI STATUS register to disable TPI mode */
-	XPROGTarget_SendByte(TPI_CMD_SSTCS | TPI_STATUS_REG);
-	XPROGTarget_SendByte(0x00);
+	do
+	{
+		/* Clear the NVMEN bit in the TPI STATUS register to disable TPI mode */
+		XPROGTarget_SendByte(TPI_CMD_SSTCS | TPI_STATUS_REG);
+		XPROGTarget_SendByte(0x00);
+
+		/* Read back the STATUS register, check to see if it took effect */
+		XPROGTarget_SendByte(TPI_CMD_SLDCS | PDI_RESET_REG);
+	} while (XPROGTarget_ReceiveByte() != 0x00);
 
 	XPROGTarget_DisableTargetTPI();
 }

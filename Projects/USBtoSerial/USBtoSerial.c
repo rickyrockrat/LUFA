@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -97,7 +97,7 @@ int main(void)
 			if (!(ReceivedByte < 0))
 			  RingBuffer_Insert(&USBtoUSART_Buffer, ReceivedByte);
 		}
-		
+
 		/* Check if the UART receive buffer flush timer has expired or the buffer is nearly full */
 		uint16_t BufferCount = RingBuffer_GetCount(&USARTtoUSB_Buffer);
 		if ((TIFR0 & (1 << TOV0)) || (BufferCount > (uint8_t)(sizeof(USARTtoUSB_Buffer_Data) * .75)))

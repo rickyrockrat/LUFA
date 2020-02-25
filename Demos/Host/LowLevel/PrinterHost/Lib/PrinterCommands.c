@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -75,7 +75,7 @@ uint8_t Printer_SendData(const void* const PrinterCommands,
 uint8_t Printer_GetDeviceID(char* DeviceIDString,
                             const uint16_t BufferSize)
 {
-	uint8_t  ErrorCode = HOST_SENDCONTROL_Successful;
+	uint8_t  ErrorCode;
 	uint16_t DeviceIDStringLength = 0;
 
 	USB_ControlRequest = (USB_Request_Header_t)

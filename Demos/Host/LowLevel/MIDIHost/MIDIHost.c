@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2012  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -165,7 +165,7 @@ void MIDIHost_Task(void)
 {
 	if (USB_HostState != HOST_STATE_Configured)
 	  return;
-	  
+
 	Pipe_SelectPipe(MIDI_DATA_IN_PIPE);
 
 	if (Pipe_IsINReceived())
@@ -185,7 +185,7 @@ void MIDIHost_Task(void)
 			printf_P(PSTR("MIDI Note %s - Channel %d, Pitch %d, Velocity %d\r\n"), NoteOnEvent ? "On" : "Off",
 																				   ((MIDIEvent.Data1 & 0x0F) + 1),
 																				   MIDIEvent.Data2, MIDIEvent.Data3);
-		}				
+		}
 	}
 
 	Pipe_SelectPipe(MIDI_DATA_OUT_PIPE);

@@ -1,5 +1,5 @@
 /*
-     Copyright (C) Dean Camera, 2011.
+     Copyright (C) Dean Camera, 2012.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
@@ -23,7 +23,7 @@
 			uint8_t Month;
 			uint8_t Year;
 		} TimeDate_t;
-	
+
 		typedef struct
 		{
 			union
@@ -73,7 +73,7 @@
 
 				uint8_t IntVal;
 			} Byte4;
-		
+
 			union
 			{
 				struct
