@@ -87,12 +87,14 @@ int main(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
+#if (ARCH == ARCH_AVR8)
 	/* Disable watchdog if enabled by bootloader/fuses */
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
 
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);
+#endif
 
 	/* Hardware Initialization */
 	Serial_Init(9600, false);
@@ -259,7 +261,7 @@ void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
  *
  *  \param[in] CurrentItem  Pointer to the item the HID report parser is currently working with
  *
- *  \return Boolean true if the item should be stored into the HID report structure, false if it should be discarded
+ *  \return Boolean \c true if the item should be stored into the HID report structure, \c false if it should be discarded
  */
 bool CALLBACK_HIDParser_FilterHIDReportItem(HID_ReportItem_t* const CurrentItem)
 {

@@ -39,18 +39,18 @@
  *  \defgroup Group_Terminal ANSI Terminal Escape Codes - LUFA/Drivers/Misc/TerminalCodes.h
  *  \brief ANSI terminal special escape code macros.
  *
- *  \section Sec_Dependencies Module Source Dependencies
+ *  \section Sec_Terminal_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - None
  *
- *  \section Sec_ModDescription Module Description
+ *  \section Sec_Terminal_ModDescription Module Description
  *  Escape code macros for ANSI compliant text terminals.
  *
  *  \note If desired, the macro \c DISABLE_TERMINAL_CODES can be defined in the project makefile and passed to the GCC
  *        compiler via the -D switch to disable the terminal codes without modifying the source, for use with non
  *        compatible terminals (any terminal codes then equate to empty strings).
  *
- *  \section Sec_ExampleUsage Example Usage
+ *  \section Sec_Terminal_ExampleUsage Example Usage
  *  The following snippet is an example of how this module may be used within a typical
  *  application.
  *
@@ -93,7 +93,7 @@
 			/** Turns on inverse so that any following text is printed to the terminal in inverted colours. */
 			#define ESC_INVERSE_ON                  ANSI_ESCAPE_SEQUENCE("7m")
 
-			/** Turns on strikethrough so that any following text is printed to the terminal with a line through the
+			/** Turns on strike-through so that any following text is printed to the terminal with a line through the
 			 *  center.
 			 */
 			#define ESC_STRIKETHROUGH_ON            ANSI_ESCAPE_SEQUENCE("9m")
@@ -110,7 +110,7 @@
 			/** Turns off inverse so that any following text is printed to the terminal in non inverted colours. */
 			#define ESC_INVERSE_OFF                 ANSI_ESCAPE_SEQUENCE("27m")
 
-			/** Turns off strikethrough so that any following text is printed to the terminal without a line through
+			/** Turns off strike-through so that any following text is printed to the terminal without a line through
 			 *  the center.
 			 */
 			#define ESC_STRIKETHROUGH_OFF           ANSI_ESCAPE_SEQUENCE("29m")

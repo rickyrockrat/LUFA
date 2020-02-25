@@ -48,11 +48,11 @@
  *  \defgroup Group_Dataflash Dataflash Driver - LUFA/Drivers/Board/Dataflash.h
  *  \brief Atmel Dataflash storage IC board hardware driver.
  *
- *  \section Sec_Dependencies Module Source Dependencies
+ *  \section Sec_Dataflash_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - None
  *
- *  \section Sec_ModDescription Module Description
+ *  \section Sec_Dataflash_ModDescription Module Description
  *  Dataflash driver. This module provides an easy to use interface for the Dataflash ICs located on many boards,
  *  for the storage of large amounts of data into the Dataflash's non-volatile memory.
  *
@@ -61,7 +61,7 @@
  *
  *  For possible \c BOARD makefile values, see \ref Group_BoardTypes.
  *
- *  \section Sec_ExampleUsage Example Usage
+ *  \section Sec_Dataflash_ExampleUsage Example Usage
  *  The following snippet is an example of how this module may be used within a typical
  *  application.
  *
@@ -70,44 +70,44 @@
  *      SPI_Init(SPI_SPEED_FCPU_DIV_2 | SPI_ORDER_MSB_FIRST | SPI_SCK_LEAD_FALLING |
  *               SPI_SAMPLE_TRAILING | SPI_MODE_MASTER);
  *      Dataflash_Init();
- *      
+ *
  *      uint8_t WriteBuffer[DATAFLASH_PAGE_SIZE];
  *      uint8_t ReadBuffer[DATAFLASH_PAGE_SIZE];
- *      
+ *
  *      // Fill page write buffer with a repeating pattern
  *      for (uint16_t i = 0; i < DATAFLASH_PAGE_SIZE; i++)
  *        WriteBuffer[i] = (i & 0xFF);
- *      
+ *
  *      // Must select the chip of interest first before operating on it
  *      Dataflash_SelectChip(DATAFLASH_CHIP1);
- *      
+ *
  *      // Write to the Dataflash's first internal memory buffer
  *      printf("Writing data to first dataflash buffer:\r\n");
  *      Dataflash_SendByte(DF_CMD_BUFF1WRITE);
  *      Dataflash_SendAddressBytes(0, 0);
- *      
+ *
  *      for (uint16_t i = 0; i < DATAFLASH_PAGE_SIZE; i++)
  *        Dataflash_SendByte(WriteBuffer[i]);
- *      
+ *
  *      // Commit the Dataflash's first memory buffer to the non-volatile FLASH memory
  *      printf("Committing page to non-volatile memory page index 5:\r\n");
  *      Dataflash_SendByte(DF_CMD_BUFF1TOMAINMEMWITHERASE);
  *      Dataflash_SendAddressBytes(5, 0);
  *      Dataflash_WaitWhileBusy();
- *      
+ *
  *      // Read the page from non-volatile FLASH memory into the Dataflash's second memory buffer
  *      printf("Reading data into second dataflash buffer:\r\n");
  *      Dataflash_SendByte(DF_CMD_MAINMEMTOBUFF2);
  *      Dataflash_SendAddressBytes(5, 0);
  *      Dataflash_WaitWhileBusy();
- *      
+ *
  *      // Read the Dataflash's second internal memory buffer
  *      Dataflash_SendByte(DF_CMD_BUFF2READ);
  *      Dataflash_SendAddressBytes(0, 0);
- *      
+ *
  *      for (uint16_t i = 0; i < DATAFLASH_PAGE_SIZE; i++)
  *        ReadBuffer[i] = Dataflash_ReceiveByte();
- *      
+ *
  *      // Deselect the chip after use
  *      Dataflash_DeselectChip();
  *  \endcode
@@ -131,18 +131,16 @@
 
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
-			#if !defined(__DOXYGEN__)
-				#define __GET_DATAFLASH_MASK2(x, y) x ## y
-				#define __GET_DATAFLASH_MASK(x)     __GET_DATAFLASH_MASK2(DATAFLASH_CHIP,x)
-			#endif
-
 			/** Retrieves the Dataflash chip select mask for the given Dataflash chip index.
 			 *
-			 *  \param[in] index  Index of the dataflash chip mask to retrieve
+			 *  \attention This macro will only work correctly on chip index numbers that are compile-time
+			 *             constants defined by the preprocessor.
+			 *
+			 *  \param[in] index  Index of the dataflash chip mask to retrieve.
 			 *
 			 *  \return Mask for the given Dataflash chip's /CS pin
 			 */
-			#define DATAFLASH_CHIP_MASK(index)      __GET_DATAFLASH_MASK(index)
+			#define DATAFLASH_CHIP_MASK(index)      CONCAT_EXPANDED(DATAFLASH_CHIP, index)
 
 		/* Inline Functions: */
 			/** Initializes the dataflash driver so that commands and data may be sent to an attached dataflash IC.
@@ -222,7 +220,23 @@
 
 		/* Includes: */
 			#if (BOARD == BOARD_NONE)
-				#error The Board Dataflash driver cannot be used if the makefile BOARD option is not set.
+				#define DATAFLASH_TOTALCHIPS  0
+				#define DATAFLASH_NO_CHIP     0
+				#define DATAFLASH_CHIP1       0
+				#define DATAFLASH_PAGE_SIZE   0
+				#define DATAFLASH_PAGES       0
+				static inline void    Dataflash_Init(void) {};
+				static inline uint8_t Dataflash_TransferByte(const uint8_t Byte) { return 0; };
+				static inline void    Dataflash_SendByte(const uint8_t Byte) {};
+				static inline uint8_t Dataflash_ReceiveByte(void) { return 0; };
+				static inline uint8_t Dataflash_GetSelectedChip(void) { return 0; };
+				static inline void    Dataflash_SelectChip(const uint8_t ChipMask) {};
+				static inline void    Dataflash_DeselectChip(void) {};
+				static inline void    Dataflash_SelectChipFromPage(const uint16_t PageAddress) {};
+				static inline void    Dataflash_ToggleSelectedChipCS(void) {};
+				static inline void    Dataflash_WaitWhileBusy(void) {};
+				static inline void    Dataflash_SendAddressBytes(uint16_t PageAddress,
+				                                                 const uint16_t BufferByte) {};
 			#elif (BOARD == BOARD_USBKEY)
 				#include "AVR8/USBKEY/Dataflash.h"
 			#elif (BOARD == BOARD_STK525)

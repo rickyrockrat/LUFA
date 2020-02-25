@@ -1,20 +1,22 @@
 <asf xmlversion="1.0">
-	<project caption="Still Image Host Demo (Class Driver APIs)" id="lufa.demos.host.class.si.example">
+	<project caption="Still Image Host Demo (Class Driver APIs)" id="lufa.demos.host.class.si.example.avr8">
 		<require idref="lufa.demos.host.class.si"/>
 		<require idref="lufa.boards.dummy.avr8"/>
 		<generator value="as5_8"/>
 
 		<device-support value="at90usb1287"/>
-		<config name="lufa.drivers.board.name" value="usbkey"/>
+		<config name="lufa.drivers.board.name" value="none"/>
 
-		<build type="define" name="F_CPU" value="8000000UL"/>
-		<build type="define" name="F_USB" value="8000000UL"/>
+		<build type="define" name="F_CPU" value="16000000UL"/>
+		<build type="define" name="F_USB" value="16000000UL"/>
 	</project>
 
 	<module type="application" id="lufa.demos.host.class.si" caption="Still Image Host Demo (Class Driver APIs)">
 		<info type="description" value="summary">
-		Still Image Host demo, implementing a Still Image host that can send and receive PIMA data to and from an attached device.
+		Still Image Host demo, implementing a Still Image host that can send and receive PIMA data to and from an attached device. This demo uses the user-friendly USB Class Driver APIs to provide a simple, abstracted interface into the USB stack.
 		</info>
+
+ 		<info type="gui-flag" value="move-to-root"/>
 
 		<info type="keyword" value="Technology">
 			<keyword value="Class Driver APIs"/>

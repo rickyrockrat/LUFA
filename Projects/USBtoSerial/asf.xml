@@ -16,6 +16,8 @@
 		USB to Serial USART converter project.
 		</info>
 
+ 		<info type="gui-flag" value="move-to-root"/>
+
 		<info type="keyword" value="Technology">
 			<keyword value="Class Driver APIs"/>
 			<keyword value="USB Device"/>
@@ -39,7 +41,10 @@
 
 		<require idref="lufa.common"/>
 		<require idref="lufa.platform"/>
+		<require idref="lufa.drivers.peripheral.usart"/>
 		<require idref="lufa.drivers.usb"/>
+		<require idref="lufa.drivers.board"/>
+		<require idref="lufa.drivers.board.leds"/>
 		<require idref="lufa.drivers.misc.ringbuffer"/>
 	</module>
 </asf>

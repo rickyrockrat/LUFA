@@ -14,6 +14,18 @@ LUFA_ROOT := ../
 
 all:
 
+# Print a list of all filenames and line numbers that exceed an allowed threshold
+line-lengths:
+	awk '{ if (length > 120) { print FILENAME, ":", FNR, "[", length, "]" } }' `find $(LUFA_ROOT) -name *.[ch]`
+
+# Generate a header containing all library functions
+function-list:
+	$(MAKE) -C $(patsubst %/,%,$(LUFA_ROOT))/LUFA doxygen DOXYGEN_OVERRIDE_PARAMS="GENERATE_HTML=no GENERATE_XML=yes"
+	@xsltproc $(patsubst %/,%,$(LUFA_ROOT))/LUFA/Documentation/xml/combine.xslt $(patsubst %/,%,$(LUFA_ROOT))/LUFA/Documentation/xml/index.xml > temp.xml
+	@xsltproc lufa_functionlist_transform.xslt temp.xml > function_list.h
+	@sort function_list.h | uniq > function_list_unique.h
+	@rm temp.xml
+
 # Update all Doxygen configuration files to the latest Doxygen version - force Markdown support to be disabled
 upgrade-doxygen:
 	@echo Upgrading Doxygen.conf files...

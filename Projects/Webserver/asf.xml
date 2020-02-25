@@ -16,6 +16,8 @@
 		RNDIS Webserver project, using the open source uIP network stack.
 		</info>
 
+ 		<info type="gui-flag" value="move-to-root"/>
+
 		<info type="keyword" value="Technology">
 			<keyword value="Class Driver APIs"/>
 			<keyword value="USB Dual Role"/>
@@ -78,6 +80,7 @@
 		<build type="header-file" value="Lib/uip/uipopt.h"/>
 
 		<build type="module-config" subtype="path" value="Config"/>
+		<build type="module-config" subtype="required-header-file" value="AppConfig.h"/>
 		<build type="header-file" value="Config/AppConfig.h"/>
 		<build type="header-file" value="Config/LUFAConfig.h"/>
 

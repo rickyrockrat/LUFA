@@ -47,6 +47,12 @@
 		#include "Descriptors.h"
 
 		#include <LUFA/Drivers/USB/USB.h>
+		#include <LUFA/Platform/Platform.h>
+
+	/* Preprocessor Checks: */
+		#if !defined(__OPTIMIZE_SIZE__)
+			#error This bootloader requires that it be optimized for size, not speed, to fit into the target device. Change optimization settings and try again.
+		#endif
 
 	/* Macros: */
 		/** Bootloader special address to start the user application */
@@ -54,12 +60,12 @@
 
 		/** Magic bootloader key to unlock forced application start mode. */
 		#define MAGIC_BOOT_KEY             0xDC42
-		
+
 	/* Function Prototypes: */
 		static void SetupHardware(void);
 
 		void Application_Jump_Check(void) ATTR_INIT_SECTION(3);
-		
+
 		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_UnhandledControlRequest(void);
 

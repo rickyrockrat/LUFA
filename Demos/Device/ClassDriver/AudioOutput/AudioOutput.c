@@ -79,12 +79,14 @@ int main(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
+#if (ARCH == ARCH_AVR8)
 	/* Disable watchdog if enabled by bootloader/fuses */
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
 
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);
+#endif
 
 	/* Hardware Initialization */
 	LEDs_Init();
@@ -227,7 +229,7 @@ void EVENT_USB_Device_ControlRequest(void)
  *  \param[in,out] Data                Pointer to a location where the parameter data is stored for SET operations, or where
  *                                     the retrieved data is to be stored for GET operations.
  *
- *  \return Boolean true if the property get/set was successful, false otherwise
+ *  \return Boolean \c true if the property get/set was successful, \c false otherwise
  */
 bool CALLBACK_Audio_Device_GetSetEndpointProperty(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo,
                                                   const uint8_t EndpointProperty,
@@ -302,7 +304,7 @@ bool CALLBACK_Audio_Device_GetSetInterfaceProperty(USB_ClassInfo_Audio_Device_t*
                                                    const uint8_t EntityAddress,
                                                    const uint16_t Parameter,
                                                    uint16_t* const DataLength,
-                                                   uint8_t* Data) 
+                                                   uint8_t* Data)
 {
 	/* No audio interface entities in the device descriptor, thus no properties to get or set. */
 	return false;

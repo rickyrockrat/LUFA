@@ -16,6 +16,8 @@
 		Temperature Datalogger project.
 		</info>
 
+ 		<info type="gui-flag" value="move-to-root"/>
+
 		<info type="keyword" value="Technology">
 			<keyword value="Class Driver APIs"/>
 			<keyword value="USB Device"/>
@@ -28,6 +30,8 @@
 		<device-support-alias value="lufa_uc3"/>
 
 		<build type="distribute" subtype="user-file" value="TemperatureDataLogger.txt"/>
+		<build type="distribute" subtype="directory" value="TempLogHostApp"/>
+		<build type="distribute" subtype="directory" value="TempLogHostApp_Python"/>
 
 		<build type="c-source" value="TempDataLogger.c"/>
 		<build type="c-source" value="Descriptors.c"/>
@@ -36,13 +40,10 @@
 
 		<build type="c-source" value="Lib/DataflashManager.c"/>
 		<build type="header-file" value="Lib/DataflashManager.h"/>
-		<build type="c-source" value="Lib/DS1307.c"/>
-		<build type="header-file" value="Lib/DS1307.h"/>
+		<build type="c-source" value="Lib/RTC.c"/>
+		<build type="header-file" value="Lib/RTC.h"/>
 		<build type="c-source" value="Lib/SCSI.c"/>
 		<build type="header-file" value="Lib/SCSI.h"/>
-
-		<build type="c-source" value="Lib/DS1307.c"/>
-		<build type="header-file" value="Lib/DS1307.h"/>
 
 		<build type="include-path" value="Lib/FATFs/"/>
 		<build type="c-source" value="Lib/FATFs/ff.c"/>
@@ -53,6 +54,7 @@
 		<build type="header-file" value="Lib/FATFs/integer.h"/>
 
 		<build type="module-config" subtype="path" value="Config"/>
+		<build type="module-config" subtype="required-header-file" value="AppConfig.h"/>
 		<build type="header-file" value="Config/AppConfig.h"/>
 		<build type="header-file" value="Config/LUFAConfig.h"/>
 
@@ -64,5 +66,6 @@
 		<require idref="lufa.drivers.board.temperature"/>
 		<require idref="lufa.drivers.board.dataflash"/>
 		<require idref="lufa.drivers.peripheral.adc"/>
+		<require idref="lufa.drivers.peripheral.twi"/>
 	</module>
 </asf>

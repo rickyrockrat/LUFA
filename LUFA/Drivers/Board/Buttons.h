@@ -47,11 +47,11 @@
  *  \defgroup Group_Buttons Buttons Driver - LUFA/Drivers/Board/Buttons.h
  *  \brief Digital button board hardware driver.
  *
- *  \section Sec_Dependencies Module Source Dependencies
+ *  \section Sec_Buttons_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - None
  *
- *  \section Sec_ModDescription Module Description
+ *  \section Sec_Buttons_ModDescription Module Description
  *  Hardware buttons driver. This provides an easy to use driver for the hardware buttons present on many boards.
  *  It provides a way to easily configure and check the status of all the buttons on the board so that appropriate
  *  actions can be taken.
@@ -61,20 +61,20 @@
  *
  *  For possible \c BOARD makefile values, see \ref Group_BoardTypes.
  *
- *  \section Sec_ExampleUsage Example Usage
+ *  \section Sec_Buttons_ExampleUsage Example Usage
  *  The following snippet is an example of how this module may be used within a typical
  *  application.
  *
  *  \code
  *      // Initialize the button driver before first use
  *      Buttons_Init();
- *      
+ *
  *      printf("Waiting for button press...\r\n");
- *      
+ *
  *      // Loop until a board button has been pressed
  *      uint8_t ButtonPress;
  *      while (!(ButtonPress = Buttons_GetStatus())) {};
- *      
+ *
  *      // Display which button was pressed (assuming two board buttons)
  *      printf("Button pressed: %s\r\n", (ButtonPress == BUTTONS_BUTTON1) ? "Button 1" : "Button 2");
  *  \endcode
@@ -92,7 +92,9 @@
 		#include "../../Common/Common.h"
 
 		#if (BOARD == BOARD_NONE)
-			#error The Board Buttons driver cannot be used if the makefile BOARD option is not set.
+			#define BUTTONS_BUTTON1  0
+			static inline void       Buttons_Init(void) {};
+			static inline uint_reg_t Buttons_GetStatus(void) { return 0; };
 		#elif (BOARD == BOARD_USBKEY)
 			#include "AVR8/USBKEY/Buttons.h"
 		#elif (BOARD == BOARD_STK525)
@@ -153,6 +155,10 @@
 			#include "UC3/UC3A3_XPLAINED/Buttons.h"
 		#elif (BOARD == BOARD_STANGE_ISP)
 			#include "AVR8/STANGE_ISP/Buttons.h"
+		#elif (BOARD == BOARD_C3_XPLAINED)
+			#include "XMEGA/C3_XPLAINED/Buttons.h"
+		#elif (BOARD == BOARD_U2S)
+			#include "AVR8/U2S/Buttons.h"
 		#else
 			#include "Board/Buttons.h"
 		#endif

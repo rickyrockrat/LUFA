@@ -6,14 +6,14 @@
 
 /** \page Page_BuildSystem The LUFA Build System
  *
- *  \section Sec_BuildSystemOverview Overview of the LUFA Build System
+ *  \section Sec_BuildSystem_Overview Overview of the LUFA Build System
  *  The LUFA build system is an attempt at making a set of re-usable, modular build make files which
  *  can be referenced in a LUFA powered project, to minimize the amount of code required in an
  *  application makefile. The system is written in GNU Make, and each module is independent of
  *  one-another.
  *
  *  For details on the prerequisites needed for Linux and Windows machines to be able to use the LUFA
- *  build system, see \ref Sec_Prerequisites.
+ *  build system, see \ref Sec_CompilingApps_Prerequisites.
  *
  *  To use a LUFA build system module, simply add an include to your project makefile. All user projects
  *  should at a minimum include \ref Page_BuildModule_CORE for base functionality:
@@ -25,13 +25,13 @@
  *  project's build makefile targets automatically. To call a build target, run <tt>make {TARGET_NAME}</tt>
  *  from the command line, substituting in the appropriate target name.
  *
- *  \see \ref Sec_AppMakefileParams for a copy of the sample LUFA project makefile.
+ *  \see \ref Sec_ConfiguringApps_AppMakefileParams for a copy of the sample LUFA project makefile.
  *
  *  Each build module may have one or more mandatory parameters (GNU Make variables) which <i>must</i>
  *  be supplied in the project makefile for the module to work, and one or more optional parameters which
  *  may be defined and which will assume a sensible default if not.
  *
- *  \section SSec_BuildSystemModules Available Modules
+ *  \section SSec_BuildSystem_Modules Available Modules
  *
  *  The following modules are included in this LUFA release:
  *
@@ -86,6 +86,10 @@
  *   <tr>
  *    <td><tt>elf</tt></td>
  *    <td>Build and link the application into an ELF debug file.</td>
+ *   </tr>
+ *   <tr>
+ *    <td><tt>bin</tt></td>
+ *    <td>Build and link the application and produce a BIN binary file.</td>
  *   </tr>
  *   <tr>
  *    <td><tt>hex</tt></td>
@@ -316,7 +320,7 @@
  *  \section SSec_BuildModule_ATPROGRAM_Requirements Requirements
  *  This module requires the <tt>atprogram.exe</tt> utility to be available in your system's <b>PATH</b>
  *  variable. The <tt>atprogram.exe</tt> utility is distributed in Atmel AVR Studio 5.x and Atmel Studio 6.x
- *  inside the application install folder's "\avrdbg" subdirectory.
+ *  inside the application install folder's "\atbackend" subdirectory.
  *
  *  \section SSec_BuildModule_ATPROGRAM_Targets Targets
  *
@@ -785,7 +789,7 @@
  *
  *  The SOURCES LUFA build system module, providing variables listing the various LUFA source files
  *  required to be build by a project for a given LUFA module. This module gives a way to reference
- *  LUFA source files symbollically, so that changes to the library structure do not break the library
+ *  LUFA source files symbolically, so that changes to the library structure do not break the library
  *  makefile.
  *
  *  To use this module in your application makefile, add the following code:
@@ -905,7 +909,7 @@
  *   <tr>
  *    <td>Error &quot;<b><tt>Makefile <i>{X}</i> option must be Y or N</tt></b>&quot; shown when compiling.</td>
  *    <td>The specified Makefile value was configured in your project's makefile or on the command line, but was set to a value other than a Y (for "Yes") or "N" (for "No").
- *        This configuration option is required to be one of the aformentioned boolean values, and other values are invalid. Set this option to either Y or N and try again.</td>
+ *        This configuration option is required to be one of the aforementioned boolean values, and other values are invalid. Set this option to either Y or N and try again.</td>
  *   </tr>
  *   <tr>
  *    <td>Error &quot;<b><tt>Unknown input source file formats: <i>{X}</i></tt></b>&quot; shown when compiling.</td>
@@ -916,7 +920,7 @@
  *    <td>Error &quot;<b><tt>Cannot build with OBJDIR parameter set - one or more object file name is not unique</tt></b>&quot; shown when compiling.</td>
  *    <td>When a project is built with a non-empty <tt>OBJDIR</tt> object directory name set, all input source files must have unique names, excluding extension and path.
  *        This means that input files that are named identically and differ only by their path or extension are invalid when this mode is used.</td>
- *   </tr> 
+ *   </tr>
  *   <tr>
  *    <td>Error &quot;<b><tt>Source file does not exist: <i>{X}</i></tt></b>&quot; shown when compiling.</td>
  *    <td>The nominated input source file, specified in the user project's <tt>SRC</tt> parameter, could not be found. Ensure the source file exists and the absolute or
@@ -933,17 +937,6 @@
  *    <td>An unrecognised option was supplied to the compiler, usually in the <tt>C_FLAGS</tt>, <tt>CPP_FLAGS</tt>, <tt>ASM_FLAGS</tt> or <tt>CC_FLAGS</tt> configuration
  *        options. The nominated compiler switch may be invalid, or unsupported by the version of AVR-GCC on the host system. Remove the unrecognised flag if invalid, or
  *        upgrade to the latest AVR-GCC. If the option is a valid linker option, use the prefix "-Wl," to ensure it is passed to the linker correctly.</td>
- *   </tr>
- *   <tr>
- *    <td>Error &quot;<b><tt>avr-gcc: error: unrecognized option '<i>{X}</i>'</tt></b>&quot; shown when compiling.</td>
- *    <td>An unrecognised option was supplied to the compiler, usually in the <tt>C_FLAGS</tt>, <tt>CPP_FLAGS</tt>, <tt>ASM_FLAGS</tt> or <tt>CC_FLAGS</tt> configuration
- *        options. The nominated compiler switch may be invalid, or unsupported by the version of AVR-GCC on the host system. Remove the unrecognised flag if invalid, or
- *        upgrade to the latest AVR-GCC. If the option is a valid linker option, use the prefix "-Wl," to ensure it is passed to the linker correctly.</td>
- *   </tr>
- *   <tr>
- *    <td>Error &quot;<b><tt>makefile:{X}: {Y}.mk: No such file or directory</tt></b>&quot; shown when make is invoked.</td>
- *    <td>The path to the nominated makefile module was incorrect. This usually indicates that the makefile <tt>LUFA_PATH</tt> option is not set to a valid relative or
- *        absolute path to the LUFA library core.</td>
  *   </tr>
  *   <tr>
  *    <td>Error &quot;<b><tt>makefile:{X}: {Y}.mk: No such file or directory</tt></b>&quot; shown when make is invoked.</td>
@@ -964,13 +957,8 @@
  *   </tr>
  *   <tr>
  *    <td>Error &quot;<b><tt>unknown MCU '<i>{X}</i>' specified</tt></b>&quot; shown when compiling.</td>
- *    <td>The specified micocontroller device model name set in the user application's makefile as the <tt>MCU</tt> parameter is incorrect, or unsupported by the
+ *    <td>The specified microcontroller device model name set in the user application's makefile as the <tt>MCU</tt> parameter is incorrect, or unsupported by the
  *        version of the compiler being used. Make sure the model name is correct, or upgrade to the latest Atmel Toolchain to obtain newer device support.</td>
- *   </tr>
- *   <tr>
- *    <td>Error &quot;<b><tt>error: invalid suffix "x" on integer constant</tt></b>&quot; shown when compiling a bootloader.</td>
- *    <td>This is usually caused by the <tt>bc.exe</tt> application not being found in the system's <tt>PATH</tt> variable. Make sure you have the <tt>bc.exe</tt> tool
- *        installed correctly (see \ref Sec_Prerequisites).</td>
  *   </tr>
  *   <tr>
  *    <td>Error &quot;<b><tt>undefined reference to `<i>{X}</i>'</tt></b>&quot; shown when compiling.</td>

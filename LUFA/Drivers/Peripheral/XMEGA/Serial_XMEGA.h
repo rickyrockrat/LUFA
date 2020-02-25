@@ -40,13 +40,13 @@
 /** \ingroup Group_Serial
  *  \defgroup Group_Serial_XMEGA Serial USART Peripheral Driver (XMEGA)
  *
- *  \section Sec_ModDescription Module Description
+ *  \section Sec_Serial_XMEGA_ModDescription Module Description
  *  On-chip serial USART driver for the XMEGA AVR microcontrollers.
  *
  *  \note This file should not be included directly. It is automatically included as needed by the USART driver
  *        dispatch header located in LUFA/Drivers/Peripheral/Serial.h.
  *
- *  \section Sec_ExampleUsage Example Usage
+ *  \section Sec_Serial_XMEGA_ExampleUsage Example Usage
  *  The following snippet is an example of how this module may be used within a typical
  *  application.
  *
@@ -139,7 +139,8 @@
 			 *  \param[in]     Length  Length of the data to send, in bytes.
 			 */
 			void Serial_SendData(USART_t* const USART,
-			                     const void* Buffer, uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
+			                     const void* Buffer,
+			                     uint16_t Length) ATTR_NON_NULL_PTR_ARG(1);
 
 			/** Creates a standard character stream from the USART so that it can be used with all the regular functions
 			 *  in the avr-libc \c <stdio.h> library that accept a \c FILE stream as a destination (e.g. \c fprintf). The created
@@ -177,6 +178,9 @@
 			 */
 			static inline void Serial_Init(USART_t* const USART,
 			                               const uint32_t BaudRate,
+			                               const bool DoubleSpeed) ATTR_NON_NULL_PTR_ARG(1);
+			static inline void Serial_Init(USART_t* const USART,
+			                               const uint32_t BaudRate,
 			                               const bool DoubleSpeed)
 			{
 				uint16_t BaudValue = (DoubleSpeed ? SERIAL_2X_UBBRVAL(BaudRate) : SERIAL_UBBRVAL(BaudRate));
@@ -192,6 +196,7 @@
 			 *
 			 *  \param[in,out] USART  Pointer to the base of the USART peripheral within the device.
 			 */
+			static inline void Serial_Disable(USART_t* const USART) ATTR_ALWAYS_INLINE ATTR_NON_NULL_PTR_ARG(1);
 			static inline void Serial_Disable(USART_t* const USART)
 			{
 				USART->CTRLA = 0;
@@ -205,7 +210,7 @@
 			 *
 			 *  \return Boolean \c true if a character has been received, \c false otherwise.
 			 */
-			static inline bool Serial_IsCharReceived(USART_t* const USART) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
+			static inline bool Serial_IsCharReceived(USART_t* const USART) ATTR_ALWAYS_INLINE ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(1);
 			static inline bool Serial_IsCharReceived(USART_t* const USART)
 			{
 				return ((USART->STATUS & USART_RXCIF_bm) ? true : false);
@@ -217,7 +222,7 @@
 			 *  \param[in]     DataByte  Byte to transmit through the USART.
 			 */
 			static inline void Serial_SendByte(USART_t* const USART,
-			                                   const char DataByte) ATTR_ALWAYS_INLINE;
+			                                   const char DataByte) ATTR_ALWAYS_INLINE ATTR_NON_NULL_PTR_ARG(1);
 			static inline void Serial_SendByte(USART_t* const USART,
 			                                   const char DataByte)
 			{
@@ -231,7 +236,7 @@
 			 *
 			 *  \return Next byte received from the USART, or a negative value if no byte has been received.
 			 */
-			static inline int16_t Serial_ReceiveByte(USART_t* const USART) ATTR_ALWAYS_INLINE;
+			static inline int16_t Serial_ReceiveByte(USART_t* const USART) ATTR_ALWAYS_INLINE ATTR_NON_NULL_PTR_ARG(1);
 			static inline int16_t Serial_ReceiveByte(USART_t* const USART)
 			{
 				if (!(Serial_IsCharReceived(USART)))

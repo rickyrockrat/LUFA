@@ -16,6 +16,8 @@
 		Benito AVR programmer.
 		</info>
 
+ 		<info type="gui-flag" value="move-to-root"/>
+
 		<info type="keyword" value="Technology">
 			<keyword value="Class Driver APIs"/>
 			<keyword value="USB Device"/>
@@ -27,7 +29,7 @@
 		<device-support-alias value="lufa_uc3"/>
 
 		<build type="distribute" subtype="user-file" value="Benito.txt"/>
-		<build type="distribute" subtype="user-file" value="Benito Programmer.inf"/>
+		<build type="distribute" subtype="user-file" value="LUFA Benito Programmer.inf"/>
 
 		<build type="c-source" value="Benito.c"/>
 		<build type="c-source" value="Descriptors.c"/>
@@ -35,6 +37,7 @@
 		<build type="header-file" value="Descriptors.h"/>
 
 		<build type="module-config" subtype="path" value="Config"/>
+		<build type="module-config" subtype="required-header-file" value="AppConfig.h"/>
 		<build type="header-file" value="Config/AppConfig.h"/>
 		<build type="header-file" value="Config/LUFAConfig.h"/>
 

@@ -47,7 +47,7 @@
  *  \defgroup Group_BoardInfo Board Information Driver - LUFA/Drivers/Board/Board.h
  *  \brief Board hardware information driver.
  *
- *  \section Sec_Dependencies Module Source Dependencies
+ *  \section Sec_BoardInfo_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - None
  *
@@ -149,6 +149,10 @@
 			#include "UC3/UC3A3_XPLAINED/Board.h"
 		#elif (BOARD == BOARD_STANGE_ISP)
 			#include "AVR8/STANGE_ISP/Board.h"
+		#elif (BOARD == BOARD_C3_XPLAINED)
+			#include "XMEGA/C3_XPLAINED/Board.h"
+		#elif (BOARD == BOARD_U2S)
+			#include "AVR8/U2S/Board.h"
 		#else
 			#include "Board/Board.h"
 		#endif

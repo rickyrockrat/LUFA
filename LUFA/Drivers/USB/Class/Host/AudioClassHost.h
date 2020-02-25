@@ -40,11 +40,11 @@
 /** \ingroup Group_USBClassAudio
  *  \defgroup Group_USBClassAudioHost Audio 1.0 Class Host Mode Driver
  *
- *  \section Sec_Dependencies Module Source Dependencies
+ *  \section Sec_USBClassAudioHost_Dependencies Module Source Dependencies
  *  The following files must be built with any user project that uses this module:
  *    - LUFA/Drivers/USB/Class/Host/AudioClassHost.c <i>(Makefile source module name: LUFA_SRC_USBCLASS)</i>
  *
- *  \section Sec_ModDescription Module Description
+ *  \section Sec_USBClassAudioHost_ModDescription Module Description
  *  Host Mode USB Class driver framework interface, for the Audio 1.0 USB Class driver.
  *
  *  @{
@@ -131,7 +131,7 @@
 			 *  send and/or received.
 			 *
 			 *  \param[in,out] AudioInterfaceInfo  Pointer to a structure containing an Audio Class host configuration and state.
-			 *  \param[in]     EnableStreaming     Boolean true to enable streaming of the specified interface, false to disable
+			 *  \param[in]     EnableStreaming     Boolean true to enable streaming of the specified interface, \c false to disable
 			 *
 			 *  \return A value from the \ref USB_Host_SendControlErrorCodes_t enum.
 			 */

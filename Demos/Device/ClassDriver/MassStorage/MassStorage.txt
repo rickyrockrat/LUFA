@@ -14,6 +14,9 @@
  *  \li Series 6 USB AVRs (AT90USBxxx6)
  *  \li Series 4 USB AVRs (ATMEGAxxU4)
  *  \li Series 2 USB AVRs (AT90USBxx2, ATMEGAxxU2)
+ *  \li Series AU XMEGA AVRs (ATXMEGAxxxAxU)
+ *  \li Series B XMEGA AVRs (ATXMEGAxxxBxU)
+ *  \li Series C XMEGA AVRs (ATXMEGAxxxCxU)
  *
  *  \section Sec_Info USB Information:
  *
@@ -77,9 +80,9 @@
  *
  *  <table>
  *   <tr>
- *    <td><b>Define Name:</b></td>
- *    <td><b>Location:</b></td>
- *    <td><b>Description:</b></td>
+ *    <th><b>Define Name:</b></th>
+ *    <th><b>Location:</b></th>
+ *    <th><b>Description:</b></th>
  *   </tr>
  *   <tr>
  *    <td>TOTAL_LUNS</td>

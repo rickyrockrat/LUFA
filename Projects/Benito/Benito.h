@@ -39,6 +39,7 @@
 	/* Includes: */
 		#include <avr/io.h>
 		#include <avr/wdt.h>
+		#include <avr/power.h>
 		#include <avr/interrupt.h>
 
 		#include "Descriptors.h"
@@ -48,6 +49,7 @@
 		#include <LUFA/Drivers/Peripheral/Serial.h>
 		#include <LUFA/Drivers/Misc/RingBuffer.h>
 		#include <LUFA/Drivers/USB/USB.h>
+		#include <LUFA/Platform/Platform.h>
 
 	/* Macros: */
 		/** LED mask for the library LED driver, to indicate TX activity. */

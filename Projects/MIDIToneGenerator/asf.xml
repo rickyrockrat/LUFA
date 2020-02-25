@@ -16,6 +16,8 @@
 		MIDI tone generator project.
 		</info>
 
+ 		<info type="gui-flag" value="move-to-root"/>
+
 		<info type="keyword" value="Technology">
 			<keyword value="Class Driver APIs"/>
 			<keyword value="USB Device"/>
@@ -34,6 +36,7 @@
 		<build type="header-file" value="Descriptors.h"/>
 
 		<build type="module-config" subtype="path" value="Config"/>
+		<build type="module-config" subtype="required-header-file" value="AppConfig.h"/>
 		<build type="header-file" value="Config/AppConfig.h"/>
 		<build type="header-file" value="Config/LUFAConfig.h"/>
 

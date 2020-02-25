@@ -53,7 +53,7 @@ USB_ClassInfo_AOA_Host_t AndroidDevice_AOA_Interface =
 					{
 						.Address        = (PIPE_DIR_OUT | 2),
 						.Banks          = 1,
-					},				
+					},
 				.PropertyStrings =
 					{
 						[AOA_STRING_Manufacturer] = "Dean Camera",
@@ -73,7 +73,7 @@ USB_ClassInfo_AOA_Host_t AndroidDevice_AOA_Interface =
 int main(void)
 {
 	SetupHardware();
-	
+
 	puts_P(PSTR(ESC_FG_CYAN "Android Accessory Host Demo running.\r\n" ESC_FG_WHITE));
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
@@ -91,12 +91,14 @@ int main(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
+#if (ARCH == ARCH_AVR8)
 	/* Disable watchdog if enabled by bootloader/fuses */
 	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
 
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);
+#endif
 
 	/* Hardware Initialization */
 	Serial_Init(9600, false);
@@ -120,7 +122,12 @@ void AOAHost_Task(void)
 		/* Echo received bytes from the attached device through the USART */
 		int16_t ReceivedByte = AOA_Host_ReceiveByte(&AndroidDevice_AOA_Interface);
 		if (!(ReceivedByte < 0))
-		  putchar(ReceivedByte);
+		{
+			/* Turn on and off LED1 based on the bytes received */
+			LEDs_ChangeLEDs(LEDS_LED1, ReceivedByte ? LEDS_LED1 : LEDS_NO_LEDS);
+
+			putchar(ReceivedByte);
+		}
 	}
 }
 
@@ -155,7 +162,7 @@ void EVENT_USB_Host_DeviceEnumerationComplete(void)
 	{
 		puts_P(PSTR("Error Retrieving Device Descriptor.\r\n"));
 		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-		return;	
+		return;
 	}
 
 	bool NeedModeSwitch;
@@ -165,7 +172,7 @@ void EVENT_USB_Host_DeviceEnumerationComplete(void)
 		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 		return;
 	}
-	
+
 	if (NeedModeSwitch)
 	{
 		puts_P(PSTR("Not in Accessory mode, switching...\r\n"));

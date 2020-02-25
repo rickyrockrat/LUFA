@@ -41,14 +41,14 @@
 /** \ingroup Group_ADC
  *  \defgroup Group_ADC_AVR8 ADC Peripheral Driver (AVR8)
  *
- *  \section Sec_ModDescription Module Description
+ *  \section Sec_ADC_AVR8_ModDescription Module Description
  *  On-chip Analogue-to-Digital converter (ADC) driver for supported U4, U6 and U7 model AVRs that contain an ADC
  *  peripheral internally.
  *
  *  \note This file should not be included directly. It is automatically included as needed by the ADC driver
  *        dispatch header located in LUFA/Drivers/Peripheral/ADC.h.
  *
- *  \section Sec_ExampleUsage Example Usage
+ *  \section Sec_ADC_AVR8_ExampleUsage Example Usage
  *  The following snippet is an example of how this module may be used within a typical
  *  application.
  *
@@ -96,13 +96,6 @@
 			  defined(__AVR_ATmega16U4__)  || defined(__AVR_ATmega32U4__))
 			#error The ADC peripheral driver is not currently available for your selected microcontroller model.
 		#endif
-
-	/* Private Interface - For use in library only: */
-	#if !defined(__DOXYGEN__)
-		/* Macros: */
-			#define _ADC_GET_MUX_MASK2(y)           ADC_CHANNEL ## y
-			#define _ADC_GET_MUX_MASK(y)            _ADC_GET_MUX_MASK2(y)
-	#endif
 
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
@@ -257,7 +250,7 @@
 			 *
 			 *  \param[in] Channel  Index of the ADC channel whose MUX mask is to be retrieved.
 			 */
-			#define ADC_GET_CHANNEL_MASK(Channel)   _ADC_GET_MUX_MASK(Channel)
+			#define ADC_GET_CHANNEL_MASK(Channel)   CONCAT_EXPANDED(ADC_CHANNEL, Channel)
 			//@}
 
 		/* Inline Functions: */
@@ -369,7 +362,7 @@
 
 			/** Indicates if the current ADC conversion is completed, or still in progress.
 			 *
-			 *  \return Boolean false if the reading is still taking place, or true if the conversion is
+			 *  \return Boolean \c false if the reading is still taking place, or true if the conversion is
 			 *          complete and ready to be read out with \ref ADC_GetResult().
 			 */
 			static inline bool ADC_IsReadingComplete(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;

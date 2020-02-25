@@ -115,6 +115,7 @@
  *   - Olimex AVR-ISP-MK2
  *   - Paranoid Studio's US2AX (V1, V2 and V3 hardware revisions)
  *   - PJRC Teensy (1.x and 2.x versions)
+ *   - Rikus' U2S
  *   - Sparkfun U2 Breakout Board
  *   - Stange ISP Programmer Board
  *   - TCNISO Blackcat USB JTAG
@@ -410,6 +411,7 @@
  *  Currently supported Atmel XMEGA boards (see \ref Group_BoardTypes):
  *   - XMEGA A3BU Xplained
  *   - XMEGA B1 Xplained
+ *   - XMEGA C3 Xplained
  *
  *  \section Sec_XMEGASupport_ThirdParty Supported Third Party Boards
  *  Currently supported third-party boards (see \ref Group_BoardTypes for makefile \c BOARD constant names):
